@@ -19,29 +19,26 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Install Gradle
-        run: sudo apt-get update && sudo apt-get install -y gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.12.0
 
-      # 🔥 Wrapper generate karega (main missing part)
       - name: Generate Gradle Wrapper
-        run: gradle wrapper --gradle-version 8.13
+        run: gradle wrapper --gradle-version 8.12.0
 
-      # 🔥 permission fix
       - name: Grant execute permission
         run: chmod +x gradlew
 
-      # 🔥 Build APK
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
-      # 🔥 APK upload
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: app/build/outputs/apk/debug/*.apk
 
-      # 🔥 Wrapper repo me save karega
       - name: Commit Wrapper
         run: |
           git config user.name "bot"
