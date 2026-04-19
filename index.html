@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoxSherpa TTS</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:         #0B1220;
+    --bg2:        #131B2D;
+    --surface:    #1A2235;
+    --border:     #1E293B;
+    --blue:       #1D61FF;
+    --blue-dim:   rgba(29,97,255,0.15);
+    --blue-glow:  0 0 24px rgba(29,97,255,0.4);
+    --text:       #FFFFFF;
+    --text-mid:   #94A3B8;
+    --text-dim:   #566580;
+    --text-dark:  #2D3A4F;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CURSOR */
+  .cursor {
+    width:10px; height:10px;
+    background: var(--blue);
+    border-radius:50%;
+    position:fixed; pointer-events:none; z-index:9999;
+    transition:transform 0.1s;
+    box-shadow: var(--blue-glow);
+  }
+  .cursor-ring {
+    width:32px; height:32px;
+    border:1px solid rgba(29,97,255,0.4);
+    border-radius:50%;
+    position:fixed; pointer-events:none; z-index:9998;
+    transition:all 0.15s ease;
+  }
+
+  /* GRID BG */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(29,97,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(29,97,255,0.04) 1px, transparent 1px);
+    background-size:40px 40px;
+    pointer-events:none; z-index:0;
+  }
+
+  /* SCANLINES */
+  body::after {
+    content:'';
+    position:fixed; inset:0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px
+    );
+    pointer-events:none; z-index:1;
+  }
+
+  .container { max-width:900px; margin:0 auto; padding:0 24px; position:relative; z-index:2; }
+
+  /* CORNERS */
+  .corner { position:fixed; width:50px; height:50px; pointer-events:none; z-index:3; }
+  .corner-tl { top:16px; left:16px;  border-top:1px solid rgba(29,97,255,0.3); border-left:1px solid rgba(29,97,255,0.3); }
+  .corner-tr { top:16px; right:16px; border-top:1px solid rgba(29,97,255,0.3); border-right:1px solid rgba(29,97,255,0.3); }
+  .corner-bl { bottom:16px; left:16px;  border-bottom:1px solid rgba(29,97,255,0.3); border-left:1px solid rgba(29,97,255,0.3); }
+  .corner-br { bottom:16px; right:16px; border-bottom:1px solid rgba(29,97,255,0.3); border-right:1px solid rgba(29,97,255,0.3); }
+
+  /* HERO */
+  .hero {
+    min-height:100vh;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    text-align:center; padding:60px 24px;
+    position:relative; z-index:2;
+  }
+  .hero-glow {
+    position:absolute;
+    width:600px; height:600px;
+    background:radial-gradient(circle, rgba(29,97,255,0.08) 0%, transparent 70%);
+    top:50%; left:50%; transform:translate(-50%,-50%);
+    pointer-events:none;
+    animation:glowpulse 4s ease-in-out infinite;
+  }
+  @keyframes glowpulse {
+    0%,100% { opacity:0.5; transform:translate(-50%,-50%) scale(1); }
+    50%      { opacity:1;   transform:translate(-50%,-50%) scale(1.15); }
+  }
+
+  .ascii-art {
+    font-family:'Share Tech Mono', monospace;
+    font-size:clamp(5px, 1.1vw, 10px);
+    color: var(--blue);
+    line-height:1.2;
+    text-shadow:0 0 12px rgba(29,97,255,0.6);
+    white-space:pre;
+    margin-bottom:28px;
+    animation:flicker 9s ease-in-out infinite;
+  }
+  @keyframes flicker {
+    0%,94%,100% { opacity:1; }
+    95% { opacity:0.3; }
+    96% { opacity:1; }
+    97% { opacity:0.5; }
+    98% { opacity:1; }
+  }
+
+  .tagline {
+    font-family:'Syne', sans-serif;
+    font-size:clamp(12px, 2.2vw, 16px);
+    font-weight:400; color:var(--text-dim);
+    letter-spacing:5px; text-transform:uppercase;
+    margin-bottom:40px;
+  }
+  .tagline span { color:var(--blue); font-weight:700; }
+
+  .badges { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:44px; }
+  .badge {
+    padding:7px 14px;
+    border:1px solid var(--blue);
+    color:var(--blue);
+    font-family:'Share Tech Mono', monospace;
+    font-size:11px; letter-spacing:1px; text-transform:uppercase;
+    transition:all 0.3s; position:relative; overflow:hidden; background:transparent;
+    text-decoration:none; display:inline-block;
+  }
+  .badge::before { content:''; position:absolute; inset:0; background:var(--blue); opacity:0; transition:opacity 0.3s; }
+  .badge:hover::before { opacity:0.12; }
+  .badge:hover { transform:translateY(-2px); box-shadow:var(--blue-glow); }
+  .badge-dim { border-color:var(--text-dark); color:var(--text-dark); }
+  .badge-dim:hover { border-color:var(--blue); color:var(--blue); }
+  .badge span { position:relative; z-index:1; }
+
+  .hero-desc {
+    max-width:580px; font-size:14px; line-height:1.9;
+    color:var(--text-mid);
+    border-left:2px solid var(--blue);
+    padding-left:20px; text-align:left;
+  }
+  .hero-desc strong { color:var(--blue); }
+
+  .scroll-hint {
+    position:absolute; bottom:28px; left:50%; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    color:var(--text-dark); font-size:10px; letter-spacing:2px;
+    animation:bounce 2s ease-in-out infinite;
+  }
+  @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
+  .scroll-line { width:1px; height:40px; background:linear-gradient(to bottom, var(--blue), transparent); }
+
+  /* SECTIONS */
+  section { padding:80px 0; }
+  .section-label {
+    font-family:'Share Tech Mono', monospace;
+    font-size:11px; color:var(--blue);
+    letter-spacing:3px; text-transform:uppercase;
+    margin-bottom:16px;
+  }
+  .section-title {
+    font-family:'Syne', sans-serif;
+    font-size:clamp(28px, 5vw, 48px);
+    font-weight:800; letter-spacing:-1.5px;
+    line-height:1.1; margin-bottom:40px;
+  }
+  .hl { color:var(--blue); }
+
+  /* FEATURES */
+  .features-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; }
+  .feature-card {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:4px; padding:28px;
+    transition:border-color 0.3s, transform 0.3s;
+    position:relative; overflow:hidden;
+  }
+  .feature-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, transparent, var(--blue), transparent);
+    opacity:0; transition:opacity 0.3s;
+  }
+  .feature-card:hover { border-color:rgba(29,97,255,0.5); transform:translateY(-4px); }
+  .feature-card:hover::before { opacity:1; }
+  .feature-icon { font-size:24px; margin-bottom:14px; }
+  .feature-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:800; margin-bottom:10px; color:var(--text); }
+  .feature-desc { font-size:12px; color:var(--text-mid); line-height:1.8; }
+
+  /* SCREENSHOTS */
+  .screenshots-grid {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin-top:8px;
+  }
+  @media(max-width:640px){ .screenshots-grid { grid-template-columns:repeat(2,1fr); } }
+  .screenshot-frame {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:16px; overflow:hidden;
+    transition:transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+  }
+  .screenshot-frame:hover {
+    transform:translateY(-6px) scale(1.02);
+    border-color:rgba(29,97,255,0.5);
+    box-shadow:0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(29,97,255,0.15);
+  }
+  .screenshot-frame img { width:100%; display:block; }
+  .screenshot-label {
+    text-align:center; padding:10px 6px 12px;
+    font-size:10px; color:var(--text-dim);
+    font-family:'Share Tech Mono',monospace;
+    letter-spacing:1px; text-transform:uppercase;
+  }
+
+  /* TERMINAL */
+  .terminal {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:4px; overflow:hidden;
+    font-family:'JetBrains Mono', monospace; font-size:13px;
+  }
+  .terminal-header {
+    background:var(--surface); padding:12px 16px;
+    display:flex; align-items:center; gap:8px;
+    border-bottom:1px solid var(--border);
+  }
+  .dot { width:12px; height:12px; border-radius:50%; }
+  .dot-r { background:#FF5F57; }
+  .dot-y { background:#FEBC2E; }
+  .dot-g { background:#28C840; }
+  .terminal-title { margin-left:8px; font-size:12px; color:var(--text-dim); }
+  .terminal-body { padding:20px; line-height:2; }
+  .t-prompt { color:var(--blue); }
+  .t-cmd    { color:var(--text); }
+  .t-key    { color:#7DD3FC; }
+  .t-val    { color:#86EFAC; }
+  .t-dim    { color:var(--text-dim); }
+  .type-cursor { display:inline-block; width:8px; height:14px; background:var(--blue); animation:blink 1s step-end infinite; vertical-align:middle; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* ENGINES */
+  .engines { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media(max-width:640px){ .engines { grid-template-columns:1fr; } }
+  .engine-card {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:4px; padding:32px;
+  }
+  .engine-card.featured { border-color:rgba(29,97,255,0.4); background:linear-gradient(135deg, var(--bg2), rgba(29,97,255,0.06)); }
+  .engine-tag {
+    display:inline-block; font-size:10px; font-weight:700;
+    letter-spacing:0.1em; text-transform:uppercase;
+    padding:4px 12px; border-radius:2px; margin-bottom:16px;
+    font-family:'Share Tech Mono',monospace;
+  }
+  .engine-tag.premium { background:var(--blue-dim); color:var(--blue); border:1px solid rgba(29,97,255,0.3); }
+  .engine-tag.fast    { background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.3); }
+  .engine-card h3 { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; margin-bottom:10px; }
+  .engine-card p  { font-size:13px; color:var(--text-mid); line-height:1.8; margin-bottom:20px; }
+  .engine-meta { display:flex; flex-direction:column; gap:8px; }
+  .engine-stat { display:flex; align-items:center; gap:10px; font-size:12px; color:var(--text-mid); }
+  .engine-stat-dot { width:5px; height:5px; border-radius:50%; background:var(--blue); flex-shrink:0; }
+
+  /* LANGUAGES */
+  .lang-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .lang-chip {
+    background:var(--bg2); border:1px solid var(--border);
+    padding:7px 14px; font-size:12px; font-weight:600;
+    font-family:'Share Tech Mono',monospace;
+    transition:border-color 0.2s, background 0.2s;
+  }
+  .lang-chip:hover { border-color:rgba(29,97,255,0.4); background:var(--blue-dim); }
+  .lang-chip.hi { border-color:rgba(29,97,255,0.4); color:var(--blue); background:var(--blue-dim); }
+
+  /* PERF TABLE */
+  .perf-wrap { background:var(--bg2); border:1px solid var(--border); border-radius:4px; overflow:hidden; }
+  .perf-table { width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; }
+  .perf-table th { text-align:left; padding:12px 20px; font-size:11px; color:var(--text-dim); font-weight:600; letter-spacing:0.08em; text-transform:uppercase; border-bottom:1px solid var(--border); }
+  .perf-table td { padding:16px 20px; font-size:12px; border-bottom:1px solid rgba(30,41,59,0.5); }
+  .perf-table tr:last-child td { border-bottom:none; }
+  .perf-table tbody tr:hover { background:rgba(29,97,255,0.04); }
+  .tier { display:flex; align-items:center; gap:10px; font-weight:600; }
+  .td-g { color:#10b981; } .td-y { color:#f59e0b; } .td-r { color:#FF4B4B; }
+
+  /* STEPS */
+  .steps { display:flex; flex-direction:column; gap:0; }
+  .step {
+    display:flex; gap:24px; align-items:flex-start;
+    padding:24px 0; border-bottom:1px solid var(--border);
+  }
+  .step:last-child { border-bottom:none; }
+  .step-num {
+    font-family:'Syne',sans-serif; font-size:36px; font-weight:800;
+    color:var(--blue); opacity:0.3; flex-shrink:0; width:56px; line-height:1;
+    transition:opacity 0.3s;
+  }
+  .step:hover .step-num { opacity:1; }
+  .step-content h3 { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; margin-bottom:8px; }
+  .step-content p  { font-size:13px; color:var(--text-mid); line-height:1.8; }
+  .step-content code { color:var(--blue); background:var(--blue-dim); padding:2px 6px; border-radius:2px; }
+
+  /* CONTRIB */
+  .contrib-block {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:4px; padding:24px;
+    font-size:13px; line-height:2.2; color:var(--text-mid);
+  }
+  .c-num { color:var(--blue); margin-right:12px; }
+  .c-cmd { color:#7DD3FC; }
+  .c-str { color:#86EFAC; }
+
+  /* LICENSE */
+  .license-block {
+    background:var(--bg2); border:1px solid var(--border); border-radius:4px;
+    padding:24px; font-size:12px; line-height:1.9; color:var(--text-mid);
+  }
+  .license-block a { color:var(--blue); }
+
+  /* REVEAL */
+  .reveal { opacity:0; transform:translateY(28px); transition:opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+
+  /* FOOTER */
+  footer { padding:48px 0 32px; border-top:1px solid var(--border); text-align:center; position:relative; z-index:2; }
+  .footer-name { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; margin-bottom:8px; }
+  .footer-name span { color:var(--blue); }
+  .footer-quote { font-size:13px; color:var(--text-dim); margin-bottom:16px; font-style:italic; }
+  .footer-link { color:var(--text-dim); text-decoration:none; font-size:12px; letter-spacing:1px; transition:color 0.2s; }
+  .footer-link:hover { color:var(--blue); }
+
+  a { color:var(--blue); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div>
+<div class="corner corner-br"></div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <pre class="ascii-art">
+ ___      ___  ________     ___    ___ ________  ___  ___  _______   ________  ________  ________     
+|\  \    /  /||\   __  \   |\  \  /  /|\   ____\|\  \|\  \|\  ___ \ |\   __  \|\   __  \|\   __  \    
+\ \  \  /  / /\ \  \|\  \  \ \  \/  / | \  \___|\ \  \\\  \ \   __/|\ \  \|\  \ \  \|\  \ \  \|\  \   
+ \ \  \/  / /  \ \  \\\  \  \ \    / / \ \_____  \ \   __  \ \  \_|/_\ \   _  _\ \   ____\ \   __  \  
+  \ \    / /    \ \  \\\  \  /     \/   \|____|\  \ \  \ \  \ \  \_|\ \ \  \\  \\ \  \___|\ \  \ \  \ 
+   \ \__/ /      \ \_______\/  /\   \     ____\_\  \ \__\ \__\ \_______\ \__\\ _\\ \__\    \ \__\ \__\
+    \|__|/        \|_______/__/ /\ __\   |\_________\|__|\|__|\|_______|\|__|\|__|\|__|     \|__|\|__|
+                           |__|/ \|__|   \|_________|                                                   
+  </pre>
+  <p class="tagline">Offline Neural TTS · <span>Android</span> · No Cloud · No Limits</p>
+  <div class="badges">
+    <a href="https://huggingface.co/CodeBySonu95/Sherpa-onnx-models/resolve/main/VoxSherpa-TTS_test.apk" class="badge"><span>↓ Download APK v1.0-beta</span></a>
+    <a href="https://github.com/CodeBySonu95/VoxSherpa-TTS" class="badge badge-dim"><span>★ GitHub</span></a>
+    <span class="badge badge-dim"><span>GPL v3.0</span></span>
+    <span class="badge badge-dim"><span>Android 11+</span></span>
+    <span class="badge badge-dim"><span>F-Droid — Soon</span></span>
+  </div>
+  <p class="hero-desc">
+    <strong>VoxSherpa TTS</strong> runs studio-quality neural text-to-speech entirely on your Android device.<br><br>
+    Powered by <strong>Sherpa-ONNX</strong> — supports <strong>Kokoro-82M</strong>, Piper, and VITS engines.<br>
+    Hindi, English, Japanese, Chinese and <strong>50+ languages</strong> — zero internet required.
+  </p>
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    SCROLL
+  </div>
+</div>
+
+<!-- SCREENSHOTS -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">01 // SCREENSHOTS</div>
+    <h2 class="section-title reveal">See it in <span class="hl">action</span></h2>
+    <div class="screenshots-grid reveal">
+      <div class="screenshot-frame">
+        <img src="https://raw.githubusercontent.com/CodeBySonu95/VoxSherpa-TTS/main/fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" alt="Generate">
+        <div class="screenshot-label">Generate</div>
+      </div>
+      <div class="screenshot-frame">
+        <img src="https://raw.githubusercontent.com/CodeBySonu95/VoxSherpa-TTS/main/fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" alt="Models">
+        <div class="screenshot-label">Models</div>
+      </div>
+      <div class="screenshot-frame">
+        <img src="https://raw.githubusercontent.com/CodeBySonu95/VoxSherpa-TTS/main/fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpg" alt="Library">
+        <div class="screenshot-label">Library</div>
+      </div>
+      <div class="screenshot-frame">
+        <img src="https://raw.githubusercontent.com/CodeBySonu95/VoxSherpa-TTS/main/fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpg" alt="Settings">
+        <div class="screenshot-label">Settings</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">02 // FEATURES</div>
+    <h2 class="section-title reveal">Everything you need.<br/><span class="hl">Nothing you don't.</span></h2>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon">🔒</div>
+        <div class="feature-title">100% Offline & Private</div>
+        <div class="feature-desc">All processing on your device. No internet after model download. No account, no telemetry. Your text never leaves your phone.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">🌐</div>
+        <div class="feature-title">50+ Languages</div>
+        <div class="feature-desc">Hindi, English, British, Japanese, Chinese, French, Spanish and more. First offline Android TTS with serious Hindi support.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">📦</div>
+        <div class="feature-title">Flexible Model Import</div>
+        <div class="feature-desc">Download models inside the app or import your own .onnx files from local storage. Multiple models simultaneously.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">🎧</div>
+        <div class="feature-title">Audio Controls</div>
+        <div class="feature-desc">Real-time waveform visualization, adjustable speed & pitch, play/pause/replay, export as WAV with correct sample rate per model.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">📚</div>
+        <div class="feature-title">Speech Library</div>
+        <div class="feature-desc">Save all generated audio locally. Favorites system, generation history with timestamps, voice model attribution per recording.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">⚙️</div>
+        <div class="feature-title">Emotion Tags</div>
+        <div class="feature-desc">Smart Punctuation for natural pauses. Express emotion with <code style="color:var(--blue)">[whisper]</code> <code style="color:var(--blue)">[angry]</code> <code style="color:var(--blue)">[happy]</code> tags. 100+ Kokoro voices.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ENGINES -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">03 // ENGINES</div>
+    <h2 class="section-title reveal">Two engines.<br/><span class="hl">One app.</span></h2>
+    <div class="engines reveal">
+      <div class="engine-card featured">
+        <div class="engine-tag premium">⭐ Studio Quality</div>
+        <h3>Kokoro-82M</h3>
+        <p>82 million parameter neural model. Same architecture powering top commercial TTS — running fully offline on your phone.</p>
+        <div class="engine-meta">
+          <div class="engine-stat"><div class="engine-stat-dot"></div>Rivals ElevenLabs quality</div>
+          <div class="engine-stat"><div class="engine-stat-dot"></div>100+ speaker voices</div>
+          <div class="engine-stat"><div class="engine-stat-dot"></div>Best for audiobooks & voiceovers</div>
+          <div class="engine-stat"><div class="engine-stat-dot"></div>82M params · FP32 · Sherpa-ONNX</div>
+        </div>
+      </div>
+      <div class="engine-card">
+        <div class="engine-tag fast">⚡ Fast</div>
+        <h3>Piper / VITS</h3>
+        <p>Lightweight and fast. Generates natural speech in seconds on any Android device — perfect for daily use.</p>
+        <div class="engine-meta">
+          <div class="engine-stat"><div class="engine-stat-dot"></div>Fast on budget hardware</div>
+          <div class="engine-stat"><div class="engine-stat-dot"></div>Natural, clear output</div>
+          <div class="engine-stat"><div class="engine-stat-dot"></div>Best for quick synthesis</div>
+          <div class="engine-stat"><div class="engine-stat-dot"></div>Low memory footprint</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LANGUAGES -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">04 // LANGUAGES</div>
+    <h2 class="section-title reveal">Speak <span class="hl">every language</span><br/>offline.</h2>
+    <div class="lang-grid reveal">
+      <span class="lang-chip hi">🇮🇳 Hindi</span>
+      <span class="lang-chip hi">🇬🇧 English</span>
+      <span class="lang-chip hi">🇬🇧 British English</span>
+      <span class="lang-chip hi">🇯🇵 Japanese</span>
+      <span class="lang-chip hi">🇨🇳 Chinese</span>
+      <span class="lang-chip">🇫🇷 French</span>
+      <span class="lang-chip">🇪🇸 Spanish</span>
+      <span class="lang-chip">🇩🇪 German</span>
+      <span class="lang-chip">🇵🇹 Portuguese</span>
+      <span class="lang-chip">🇮🇹 Italian</span>
+      <span class="lang-chip">🇰🇷 Korean</span>
+      <span class="lang-chip">🇷🇺 Russian</span>
+      <span class="lang-chip">🇵🇱 Polish</span>
+      <span class="lang-chip">+ 37 more</span>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">05 // TECH STACK</div>
+    <h2 class="section-title reveal">What's inside <span class="hl">the build?</span></h2>
+    <div class="terminal reveal">
+      <div class="terminal-header">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+        <span class="terminal-title">tech-stack.json</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="t-prompt">[$] </span><span class="t-cmd">cat tech-stack.json</span></div>
+        <div>&nbsp;</div>
+        <div><span class="t-dim">{</span></div>
+        <div>&nbsp;&nbsp;<span class="t-key">"language"</span><span class="t-dim">      →  </span><span class="t-val">"Java"</span></div>
+        <div>&nbsp;&nbsp;<span class="t-key">"platform"</span><span class="t-dim">      →  </span><span class="t-val">"Android 11+"</span></div>
+        <div>&nbsp;&nbsp;<span class="t-key">"built_with"</span><span class="t-dim">    →  </span><span class="t-val">"Sketchware Pro"</span></div>
+        <div>&nbsp;&nbsp;<span class="t-key">"inference"</span><span class="t-dim">     →  </span><span class="t-val">"Sherpa-ONNX · ONNX Runtime"</span></div>
+        <div>&nbsp;&nbsp;<span class="t-key">"tts_engines"</span><span class="t-dim">   →  </span><span class="t-val">["Kokoro-82M", "Piper", "VITS"]</span></div>
+        <div>&nbsp;&nbsp;<span class="t-key">"audio_api"</span><span class="t-dim">     →  </span><span class="t-val">"Android AudioTrack (PCM)"</span></div>
+        <div>&nbsp;&nbsp;<span class="t-key">"theme"</span><span class="t-dim">         →  </span><span class="t-val">"Dark Navy  #0B1220 + #1D61FF"</span></div>
+        <div>&nbsp;&nbsp;<span class="t-key">"license"</span><span class="t-dim">       →  </span><span class="t-val">"GNU GPL v3.0"</span></div>
+        <div><span class="t-dim">}</span></div>
+        <div>&nbsp;</div>
+        <div><span class="t-prompt">[$] </span><span class="type-cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PERFORMANCE -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">06 // PERFORMANCE</div>
+    <h2 class="section-title reveal">Honest numbers.<br/><span class="hl">Real hardware.</span></h2>
+    <div class="perf-wrap reveal">
+      <table class="perf-table">
+        <thead>
+          <tr>
+            <th>Device Tier</th>
+            <th>Kokoro-82M</th>
+            <th>Piper / VITS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="td-g">● Flagship (SD 8 Gen 3)</span></td>
+            <td>~20–40 sec / min audio</td>
+            <td>~5 sec / min audio</td>
+          </tr>
+          <tr>
+            <td><span class="td-y">● Mid-range (8-core)</span></td>
+            <td>~60–90 sec / min audio</td>
+            <td>~10 sec / min audio</td>
+          </tr>
+          <tr>
+            <td><span class="td-r">● Budget (6-core)</span></td>
+            <td>~2–3 min / min audio</td>
+            <td>~20 sec / min audio</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- CONTRIBUTE -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">07 // CONTRIBUTE</div>
+    <h2 class="section-title reveal">Open Source —<br/><span class="hl">contributions welcome</span></h2>
+    <div class="contrib-block reveal">
+      <div><span class="c-num">1.</span> Fork the repo</div>
+      <div><span class="c-num">2.</span> <span class="c-cmd">git checkout -b</span> <span class="c-str">feature/YourFeature</span></div>
+      <div><span class="c-num">3.</span> <span class="c-cmd">git commit -m</span> <span class="c-str">"Add YourFeature"</span></div>
+      <div><span class="c-num">4.</span> <span class="c-cmd">git push origin</span> <span class="c-str">feature/YourFeature</span></div>
+      <div><span class="c-num">5.</span> Open a Pull Request</div>
+    </div>
+    <p style="margin-top:20px;font-size:12px;color:var(--text-dim)">
+      Found a bug? → <a href="https://github.com/CodeBySonu95/VoxSherpa-TTS/issues">Open an Issue</a>
+    </p>
+  </div>
+</section>
+
+<!-- LICENSE -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">08 // LICENSE</div>
+    <h2 class="section-title reveal"><span class="hl">GNU GPL</span> v3.0</h2>
+    <div class="license-block reveal">
+      VoxSherpa TTS — Copyright (C) 2025 CodeBySonu95<br><br>
+      This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.<br><br>
+      This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.<br><br>
+      See the full <a href="https://github.com/CodeBySonu95/VoxSherpa-TTS/blob/main/LICENSE">LICENSE</a> file for details.
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-name">Code<span>By</span>Sonu95</div>
+    <p class="footer-quote">"Built with obsession. Runs without internet."</p>
+    <a href="https://github.com/CodeBySonu95" class="footer-link">⬡ github.com/CodeBySonu95</a>
+  </div>
+</footer>
+
+<script>
+  const cursor = document.getElementById('cursor');
+  const ring   = document.getElementById('cursorRing');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove', e => {
+    mx=e.clientX; my=e.clientY;
+    cursor.style.left=mx-5+'px'; cursor.style.top=my-5+'px';
+  });
+  (function animRing(){
+    rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12;
+    ring.style.left=rx-16+'px'; ring.style.top=ry-16+'px';
+    requestAnimationFrame(animRing);
+  })();
+  document.querySelectorAll('a,.feature-card,.badge,.step-num,.footer-link,.screenshot-frame').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{ cursor.style.transform='scale(2)'; ring.style.transform='scale(1.5)'; });
+    el.addEventListener('mouseleave',()=>{ cursor.style.transform='scale(1)';  ring.style.transform='scale(1)'; });
+  });
+  const obs = new IntersectionObserver(entries=>{
+    entries.forEach((e,i)=>{
+      if(e.isIntersecting) setTimeout(()=>e.target.classList.add('visible'), i*80);
+    });
+  },{threshold:0.1});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>

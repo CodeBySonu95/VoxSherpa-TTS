@@ -1,0 +1,53 @@
+name: Build Unsigned Release APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK
+        run: echo "y" | sdkmanager "ndk;25.2.9519653"
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --no-daemon --warning-mode all -Dorg.gradle.jvmargs="-Xmx4g"
+
+      - name: Rename and Collect APKs
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          if [ -z "$VERSION" ]; then
+            VERSION="run-${{ github.run_number }}"
+          fi
+          mkdir -p all_apks
+          find app/build/outputs/apk/release -type f -name "*.apk" | while read apk; do
+            filename=$(basename "$apk")
+            clean_name=${filename/app-/}
+            new_name="VoxSherpa-TTS-${VERSION}-${clean_name}"
+            cp "$apk" "all_apks/$new_name"
+          done
+
+      - name: Upload Unsigned APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoxSherpa-Unsigned-Release
+          path: all_apks/*.apk

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Support VoxSherpa TTS</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #060910;
+    --surface: #0d1420;
+    --border: #1a2540;
+    --accent: #1D61FF;
+    --accent2: #39D353;
+    --text: #e8edf5;
+    --muted: #5a6a85;
+    --glow: rgba(29,97,255,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(29,97,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(29,97,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: 0;
+    animation: gridPulse 8s ease-in-out infinite;
+  }
+
+  @keyframes gridPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* Glow orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+    animation: float 12s ease-in-out infinite;
+  }
+  .orb-1 {
+    width: 400px; height: 400px;
+    background: rgba(29,97,255,0.12);
+    top: -100px; left: -100px;
+  }
+  .orb-2 {
+    width: 300px; height: 300px;
+    background: rgba(57,211,83,0.08);
+    bottom: -50px; right: -50px;
+    animation-delay: -6s;
+  }
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(20px, 20px); }
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .logo-ring {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    background: var(--glow);
+    box-shadow: 0 0 32px rgba(29,97,255,0.3);
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 32px rgba(29,97,255,0.3); }
+    50% { box-shadow: 0 0 48px rgba(29,97,255,0.5); }
+  }
+
+  .logo-ring svg {
+    width: 36px; height: 36px;
+    fill: var(--accent);
+  }
+
+  .app-name {
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-size: clamp(28px, 6vw, 40px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #e8edf5 0%, #8aa0c8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  /* Stats bar */
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin: 32px 0 0;
+    padding: 20px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    animation: fadeUp 0.8s 0.1s ease both;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* Section label */
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-bottom: 16px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 16px;
+    transition: border-color 0.3s, transform 0.3s;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .card-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .card-icon.blue { background: rgba(29,97,255,0.15); }
+  .card-icon.green { background: rgba(57,211,83,0.12); }
+
+  .card-title {
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  .card-tag {
+    margin-left: auto;
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+
+  .tag-intl { background: rgba(29,97,255,0.15); color: var(--accent); }
+  .tag-india { background: rgba(57,211,83,0.12); color: var(--accent2); }
+
+  /* PayPal button */
+  .btn-paypal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px 20px;
+    background: #003087;
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .btn-paypal:hover {
+    background: #0045b5;
+    transform: translateY(-1px);
+  }
+
+  .paypal-logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    background: linear-gradient(135deg, #009cde, #012169);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+  }
+
+  /* UPI section */
+  .upi-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .qr-box {
+    flex-shrink: 0;
+    width: 140px; height: 140px;
+    background: #fff;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    border: 3px solid var(--accent2);
+    box-shadow: 0 0 20px rgba(57,211,83,0.2);
+  }
+
+  .qr-box img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  .upi-info {
+    flex: 1;
+  }
+
+  .upi-id-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .upi-id-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+    word-break: break-all;
+  }
+
+  .copy-btn {
+    background: rgba(57,211,83,0.12);
+    border: 1px solid rgba(57,211,83,0.3);
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: var(--accent2);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  .copy-btn:hover { background: rgba(57,211,83,0.25); }
+  .copy-btn.copied { color: #fff; background: rgba(57,211,83,0.4); }
+
+  .upi-apps {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .upi-apps span {
+    display: inline-block;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    margin: 2px;
+    font-size: 11px;
+  }
+
+  /* Note */
+  .note {
+    margin-top: 40px;
+    padding: 20px 24px;
+    border-left: 3px solid var(--accent);
+    background: rgba(29,97,255,0.05);
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    animation: fadeUp 0.8s 0.4s ease both;
+  }
+
+  .note strong { color: var(--text); }
+
+  /* Back link */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 40px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    transition: color 0.2s;
+    animation: fadeUp 0.8s 0.5s ease both;
+  }
+
+  .back-link:hover { color: var(--accent); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card:nth-child(1) { animation-delay: 0.2s; }
+  .card:nth-child(2) { animation-delay: 0.3s; }
+
+  @media (max-width: 480px) {
+    .upi-layout { flex-direction: column; align-items: center; }
+    .qr-box { width: 160px; height: 160px; }
+    .stats { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-ring">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+      </svg>
+    </div>
+    <div class="app-name">VoxSherpa TTS</div>
+    <h1>Support This Project</h1>
+    <p class="subtitle">
+      VoxSherpa is free, open source, and built solo —
+      no company, no team, no funding. Your support keeps development going.
+    </p>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-num" id="stat-downloads">—</span>
+        <span class="stat-label">Downloads</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" id="stat-stars">—</span>
+        <span class="stat-label">GitHub Stars</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">100%</span>
+        <span class="stat-label">Offline</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PayPal Card -->
+  <p class="section-label">Choose a method</p>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon blue">💳</div>
+      <span class="card-title">PayPal</span>
+      <span class="card-tag tag-intl">International</span>
+    </div>
+    <a class="btn-paypal" href="https://www.paypal.me/CodeBySonu" target="_blank" rel="noopener">
+      <span>Donate via PayPal</span>
+    </a>
+  </div>
+
+  <!-- UPI Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon green">📱</div>
+      <span class="card-title">UPI</span>
+      <span class="card-tag tag-india">India</span>
+    </div>
+
+    <div class="upi-layout">
+      <div class="qr-box">
+        <img
+          src="https://raw.githubusercontent.com/sonusingh9572/VoxSherpa-TTS/main/assets/UPI_QR.jpg"
+          alt="UPI QR Code"
+        />
+      </div>
+
+      <div class="upi-info">
+        <div class="upi-id-label">UPI ID</div>
+        <div class="upi-id-box">
+          <span id="upi-id">9106367134@kotakbank</span>
+          <button class="copy-btn" id="copyBtn" onclick="copyUPI()">COPY</button>
+        </div>
+        <div class="upi-apps">
+          Scan QR or pay to UPI ID using:
+          <br/>
+          <span>GPay</span>
+          <span>PhonePe</span>
+          <span>Paytm</span>
+          <span>BHIM</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Note -->
+  <div class="note">
+    <strong>Every contribution matters.</strong> Even a small amount helps cover
+    hosting, model storage on HuggingFace, and time spent building features.
+    VoxSherpa will always remain <strong>free and open source</strong> — this is purely optional.
+  </div>
+
+  <!-- Back link -->
+  <a class="back-link" href="https://github.com/CodeBySonu95/VoxSherpa-TTS">
+    ← Back to VoxSherpa TTS
+  </a>
+
+</div>
+
+<script>
+  // GitHub API — live stats
+  async function loadStats() {
+    try {
+      const [repoRes, releasesRes] = await Promise.all([
+        fetch('https://api.github.com/repos/CodeBySonu95/VoxSherpa-TTS'),
+        fetch('https://api.github.com/repos/CodeBySonu95/VoxSherpa-TTS/releases')
+      ]);
+
+      if (repoRes.ok) {
+        const repo = await repoRes.json();
+        document.getElementById('stat-stars').textContent = repo.stargazers_count;
+      }
+
+      if (releasesRes.ok) {
+        const releases = await releasesRes.json();
+        let total = 0;
+        releases.forEach(r => {
+          r.assets.forEach(a => { total += a.download_count; });
+        });
+        document.getElementById('stat-downloads').textContent = total > 0 ? total + '+' : '60+';
+      }
+    } catch (e) {
+      // API fail hone par fallback values
+      document.getElementById('stat-downloads').textContent = '60+';
+      document.getElementById('stat-stars').textContent = '23';
+    }
+  }
+
+  loadStats();
+
+  // UPI copy
+  function copyUPI() {
+    const id = document.getElementById('upi-id').textContent;
+    const btn = document.getElementById('copyBtn');
+    navigator.clipboard.writeText(id).then(() => {
+      btn.textContent = 'COPIED!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'COPY';
+        btn.classList.remove('copied');
+      }, 2000);
+    }).catch(() => {
+      const el = document.createElement('textarea');
+      el.value = id;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      btn.textContent = 'COPIED!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'COPY';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+</script>
+
+</body>
+</html>
