@@ -1,0 +1,174 @@
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:id="@+id/linear_root"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:paddingTop="12dp"
+	android:paddingBottom="24dp"
+	android:orientation="vertical">
+	<View
+		android:id="@+id/view_handle"
+		android:layout_width="40dp"
+		android:layout_height="4dp"
+		android:layout_marginBottom="16dp"
+		android:background="#414D63"
+		android:layout_gravity="center_horizontal" />
+	<TextView
+		android:id="@+id/tv_sort_title"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginBottom="12dp"
+		android:text="Filter &amp; Sort"
+		android:textSize="16sp"
+		android:textStyle="bold"
+		android:textColor="#FFFFFF"
+		android:focusable="false"
+		android:layout_marginStart="16dp" />
+	<LinearLayout
+		android:id="@+id/layout_all_models"
+		android:layout_width="match_parent"
+		android:layout_height="48dp"
+		android:gravity="center_vertical"
+		android:orientation="horizontal"
+		android:focusable="true"
+		android:paddingStart="16dp"
+		android:paddingEnd="16dp"
+		android:background="?attr/selectableItemBackground">
+		<TextView
+			android:id="@+id/tv_all_models"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:text="All Models"
+			android:textSize="14sp"
+			android:textStyle="bold"
+			android:textColor="#FFFFFF"
+			android:layout_weight="1"
+			android:focusable="false" />
+		<RadioButton
+			android:id="@+id/rb_all_models"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="12sp"
+			android:clickable="false"
+			android:focusable="false"
+			android:buttonTint="#1D61FF" />
+	</LinearLayout>
+	<LinearLayout
+		android:id="@+id/layout_download"
+		android:layout_width="match_parent"
+		android:layout_height="48dp"
+		android:gravity="center_vertical"
+		android:orientation="horizontal"
+		android:focusable="true"
+		android:paddingStart="16dp"
+		android:paddingEnd="16dp"
+		android:background="?attr/selectableItemBackground">
+		<TextView
+			android:id="@+id/tv_download"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:text="Download"
+			android:textSize="14sp"
+			android:textStyle="bold"
+			android:textColor="#FFFFFF"
+			android:layout_weight="1"
+			android:focusable="false" />
+		<RadioButton
+			android:id="@+id/rb_download"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="12sp"
+			android:clickable="false"
+			android:focusable="false"
+			android:buttonTint="#1D61FF" />
+	</LinearLayout>
+	<LinearLayout
+		android:id="@+id/layout_installed"
+		android:layout_width="match_parent"
+		android:layout_height="48dp"
+		android:gravity="center_vertical"
+		android:orientation="horizontal"
+		android:focusable="true"
+		android:paddingStart="16dp"
+		android:paddingEnd="16dp"
+		android:background="?attr/selectableItemBackground">
+		<TextView
+			android:id="@+id/tv_installed"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:text="Installed"
+			android:textSize="14sp"
+			android:textStyle="bold"
+			android:textColor="#FFFFFF"
+			android:layout_weight="1"
+			android:focusable="false" />
+		<RadioButton
+			android:id="@+id/rb_installed"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="12sp"
+			android:clickable="false"
+			android:focusable="false"
+			android:buttonTint="#1D61FF" />
+	</LinearLayout>
+	<LinearLayout
+		android:id="@+id/layout_newest"
+		android:layout_width="match_parent"
+		android:layout_height="48dp"
+		android:gravity="center_vertical"
+		android:orientation="horizontal"
+		android:focusable="true"
+		android:paddingStart="16dp"
+		android:paddingEnd="16dp"
+		android:background="?attr/selectableItemBackground">
+		<TextView
+			android:id="@+id/tv_newest"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:text="Newest"
+			android:textSize="14sp"
+			android:textStyle="bold"
+			android:textColor="#FFFFFF"
+			android:layout_weight="1"
+			android:focusable="false" />
+		<RadioButton
+			android:id="@+id/rb_newest"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="12sp"
+			android:clickable="false"
+			android:focusable="false"
+			android:buttonTint="#1D61FF" />
+	</LinearLayout>
+	<LinearLayout
+		android:id="@+id/layout_oldest"
+		android:layout_width="match_parent"
+		android:layout_height="48dp"
+		android:gravity="center_vertical"
+		android:orientation="horizontal"
+		android:focusable="true"
+		android:paddingStart="16dp"
+		android:paddingEnd="16dp"
+		android:background="?attr/selectableItemBackground">
+		<TextView
+			android:id="@+id/tv_oldest"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:text="Oldest"
+			android:textSize="14sp"
+			android:textStyle="bold"
+			android:textColor="#FFFFFF"
+			android:layout_weight="1"
+			android:focusable="false" />
+		<RadioButton
+			android:id="@+id/rb_oldest"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="12sp"
+			android:clickable="false"
+			android:focusable="false"
+			android:buttonTint="#1D61FF" />
+	</LinearLayout>
+</LinearLayout>

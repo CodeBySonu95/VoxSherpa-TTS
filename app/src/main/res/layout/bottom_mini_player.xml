@@ -1,0 +1,99 @@
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:orientation="vertical"
+	android:background="@android:color/transparent">
+	<com.google.android.material.card.MaterialCardView
+		android:id="@+id/bottom_player_card"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginLeft="8dp"
+		android:layout_marginTop="4dp"
+		android:layout_marginRight="8dp"
+		android:layout_marginBottom="8dp"
+		app:cardBackgroundColor="#131B2D"
+		app:cardCornerRadius="12dp"
+		app:strokeColor="#1E293B"
+		app:strokeWidth="1dp"
+		app:cardElevation="6dp">
+		<LinearLayout
+			android:id="@+id/linear10"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical">
+			<LinearLayout
+				android:id="@+id/linear11"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:paddingLeft="12dp"
+				android:paddingTop="10dp"
+				android:paddingRight="8dp"
+				android:gravity="center_vertical"
+				android:orientation="horizontal">
+				<ImageView
+					android:id="@+id/btnPlayPause"
+					android:focusable="false"
+					android:layout_width="32dp"
+					android:layout_height="32dp"
+					android:background="?attr/selectableItemBackgroundBorderless"
+					android:src="@drawable/icon_play_circle"
+					android:scaleType="fitXY"
+					app:tint="#1D61FF" />
+				<LinearLayout
+					android:id="@+id/linear12"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:orientation="vertical"
+					android:layout_weight="1"
+					android:layout_marginStart="12dp"
+					android:layout_marginEnd="8dp">
+					<TextView
+						android:id="@+id/tvMiniTitle"
+						android:focusable="false"
+						android:layout_width="match_parent"
+						android:layout_height="wrap_content"
+						android:text="Select an audio to play..."
+						android:textSize="14sp"
+						android:textStyle="bold"
+						android:textColor="#FFFFFF"
+						android:singleLine="true"
+						android:ellipsize="marquee" />
+					<TextView
+						android:id="@+id/tvTime"
+						android:focusable="false"
+						android:layout_width="match_parent"
+						android:layout_height="wrap_content"
+						android:layout_marginTop="1dp"
+						android:text="0:00 / 0:00"
+						android:textSize="11sp"
+						android:textColor="#718096" />
+				</LinearLayout>
+				<ImageView
+					android:id="@+id/btnClosePlayer"
+					android:focusable="false"
+					android:layout_width="26dp"
+					android:layout_height="26dp"
+					android:padding="4dp"
+					android:background="?attr/selectableItemBackgroundBorderless"
+					android:src="@drawable/ic_close"
+					android:scaleType="fitXY"
+					app:tint="#718096" />
+			</LinearLayout>
+			<SeekBar
+				android:id="@+id/seekBar"
+				android:focusable="false"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="2dp"
+				android:layout_marginBottom="6dp"
+				android:max="1000"
+				android:paddingStart="12dp"
+				android:paddingEnd="12dp"
+				android:progressTint="#1D61FF"
+				android:thumbTint="#1D61FF" />
+		</LinearLayout>
+	</com.google.android.material.card.MaterialCardView>
+</LinearLayout>

@@ -1,0 +1,7 @@
+
+<paths>
+    <external-path
+        name="vox_audio_files"
+        path="Music/VoxEngine/" />
+
+</paths>

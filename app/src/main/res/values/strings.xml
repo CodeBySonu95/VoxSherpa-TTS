@@ -1,0 +1,57 @@
+<resources>
+    <string name="app_name" translatable="false">VoxSherpa TTS</string>
+
+    <string-array name="language_list">
+        <item>English</item>
+        <item>Hindi</item>
+        <item>Spanish</item>
+        <item>French</item>
+        <item>German</item>
+        <item>Chinese (Mandarin)</item>
+        <item>Japanese</item>
+        <item>Korean</item>
+        <item>Russian</item>
+        <item>Arabic</item>
+        <item>Portuguese</item>
+        <item>Italian</item>
+        <item>Dutch</item>
+        <item>Polish</item>
+        <item>Turkish</item>
+        <item>Vietnamese</item>
+        <item>Indonesian</item>
+        <item>Thai</item>
+        <item>Greek</item>
+        <item>Czech</item>
+        <item>Romanian</item>
+        <item>Hungarian</item>
+        <item>Swedish</item>
+        <item>Danish</item>
+        <item>Finnish</item>
+        <item>Norwegian</item>
+        <item>Ukrainian</item>
+        <item>Bulgarian</item>
+        <item>Serbian</item>
+        <item>Croatian</item>
+        <item>Slovak</item>
+        <item>Slovenian</item>
+        <item>Hebrew</item>
+        <item>Persian</item>
+        <item>Urdu</item>
+        <item>Bengali</item>
+        <item>Tamil</item>
+        <item>Telugu</item>
+        <item>Kannada</item>
+        <item>Malayalam</item>
+        <item>Marathi</item>
+        <item>Gujarati</item>
+        <item>Punjabi</item>
+        <item>Nepali</item>
+        <item>Sinhala</item>
+        <item>Malay</item>
+        <item>Swahili</item>
+        <item>Afrikaans</item>
+        <item>Latvian</item>
+        <item>Lithuanian</item>
+    </string-array>
+
+</resources>

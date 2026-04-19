@@ -1,0 +1,19 @@
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:background="#131B2D"
+	android:orientation="horizontal">
+	<TextView
+		android:id="@+id/text1"
+		android:focusable="false"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text="loading"
+		android:textSize="15sp"
+		android:textColor="#FFFFFF"
+		android:paddingHorizontal="16dp"
+		android:paddingVertical="14dp" />
+</LinearLayout>
