@@ -1,16 +1,13 @@
-name: Build Alpha Release APK (Direct)
+name: Build Alpha APK (Artifact Only)
 
 on:
   push:
     branches:
       - alpha
 
-permissions:
-  contents: write
-
 jobs:
-  build-and-release:
-    name: Build APK and Create Release
+  build:
+    name: Build and Upload APK
     runs-on: ubuntu-latest
 
     steps:
@@ -26,23 +23,14 @@ jobs:
       - name: Make Gradle Wrapper Executable
         run: chmod +x ./gradlew
 
-      - name: Build Release APK
-        # assembleRelease strips out heavy debug symbols from native libraries like sherpa-onnx
-        run: ./gradlew assembleRelease --no-daemon --warning-mode all
+      - name: Build Optimized Release APK
+        # assembleRelease karne se size 35-40mb ho jayega
+        run: ./gradlew assembleRelease --no-daemon
 
-      - name: Generate Release Tag
-        id: generate_tag
-        run: echo "RELEASE_TAG=alpha-$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
-
-      - name: Upload Direct APK to Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload APK to Actions Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          name: Alpha Release ${{ env.RELEASE_TAG }}
-          body: "Direct Release APK optimized for size. 32-bit architectures removed."
-          # Changed path to release folder
-          files: app/build/outputs/apk/release/*.apk
-          draft: false
-          prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: VoxSherpa-Alpha-APK
+          # Yeh optimized release folder se APK uthayega
+          path: app/build/outputs/apk/release/*.apk
+          retention-days: 5
