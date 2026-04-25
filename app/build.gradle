@@ -29,7 +29,7 @@ android {
     
     buildTypes {
         release {
-            // ADDED: Use debug signing for release testing
+            // Use debug signing for release testing so it can be installed directly
             signingConfig signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -48,4 +48,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-database'
     implementation 'com.google.code.gson:gson:2.11.0'
     implementation 'com.tom-roush:pdfbox-android:2.0.27.0'
+    
+    // Added sherpa-onnx dependency back because the local sketchware .jar was deleted
+    implementation 'com.github.k2-fsa:sherpa-onnx:1.12.26'
 }
