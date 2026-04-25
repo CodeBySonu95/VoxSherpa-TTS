@@ -1,53 +1,34 @@
-name: Build Unsigned Release APK
+name: Build Alpha APK (Artifact)
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - alpha
 
 jobs:
   build:
+    name: Build APK
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
-      - name: Checkout
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 17
-          cache: gradle
+          distribution: 'zulu'
+          java-version: '17' # AGP 8.12.0 ke liye Java 17 zaroori hai
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x ./gradlew
 
-      - name: Install NDK
-        run: echo "y" | sdkmanager "ndk;25.2.9519653"
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
 
-      - name: Grant execute permission
-        run: chmod +x gradlew
-
-      - name: Build Release APK
-        run: ./gradlew assembleRelease --no-daemon --warning-mode all -Dorg.gradle.jvmargs="-Xmx4g"
-
-      - name: Rename and Collect APKs
-        run: |
-          VERSION="${{ github.event.release.tag_name }}"
-          if [ -z "$VERSION" ]; then
-            VERSION="run-${{ github.run_number }}"
-          fi
-          mkdir -p all_apks
-          find app/build/outputs/apk/release -type f -name "*.apk" | while read apk; do
-            filename=$(basename "$apk")
-            clean_name=${filename/app-/}
-            new_name="VoxSherpa-TTS-${VERSION}-${clean_name}"
-            cp "$apk" "all_apks/$new_name"
-          done
-
-      - name: Upload Unsigned APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: VoxSherpa-Unsigned-Release
-          path: all_apks/*.apk
+          name: VoxSherpa-Alpha-APK
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 7 # Yeh APK 7 dino tak GitHub par rahega
