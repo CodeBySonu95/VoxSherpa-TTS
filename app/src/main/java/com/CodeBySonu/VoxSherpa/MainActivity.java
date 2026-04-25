@@ -23,6 +23,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import com.CodeBySonu.VoxSherpa.databinding.*;
+import com.google.android.material.*;
 import com.google.firebase.FirebaseApp;
 import com.k2fsa.sherpa.onnx.*;
 import com.tom_roush.pdfbox.*;
@@ -47,8 +48,7 @@ import androidx.core.graphics.Insets;
 import androidx.viewpager2.widget.ViewPager2;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
-import androidx.fragment.app.Fragment;
-
+import androidx.fragment.app.Fragment;
 
 public class MainActivity extends AppCompatActivity {
 	
@@ -68,7 +68,10 @@ public class MainActivity extends AppCompatActivity {
 	}
 	
 	private void initializeLogic() {
+		
 		com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(getApplicationContext());
+		
+		
 		
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 		
@@ -78,7 +81,6 @@ public class MainActivity extends AppCompatActivity {
 			@Override
 			public WindowInsetsCompat onApplyWindowInsets(View v, WindowInsetsCompat windowInsets) {
 				Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-				// Top (Status bar) aur Bottom (Navigation bar) ke barabar padding set karna
 				v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
 				return WindowInsetsCompat.CONSUMED;
 			}
@@ -99,14 +101,13 @@ public class MainActivity extends AppCompatActivity {
 			
 			@Override
 			public int getItemCount() {
-				return 4; // Total 4 Tabs
+				return 4;
 			}
 		});
 		
-		// 2. STATE PRESERVATION
 		binding.viewpager.setOffscreenPageLimit(3); 
 		
-		// 3. SYNC UI WITH SWIPES & CLICKS
+		// 1. SYNC UI WITH SWIPES & CLICKS
 		binding.viewpager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
 			@Override
 			public void onPageSelected(int position) {
@@ -150,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
 			}
 		});
 		
-		// 4. BOTTOM NAV CLICK LISTENERS (Instant Switch Trick)
+		// 2. BOTTOM NAV CLICK LISTENERS (Instant Switch Trick)
 		binding.navGenerate.setOnClickListener(v -> {
 			binding.viewpager.setCurrentItem(0, false); 
 		});
@@ -169,12 +170,4 @@ public class MainActivity extends AppCompatActivity {
 		
 	}
 	
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		
-		com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().destroy();
-	}
-	
-
-}
+}

@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 
 public class AudioHelper {
 
-    // Added the sampleRate parameter — Kokoro=24000, Piper/Vits=22050
     public static String saveWavFile(byte[] pcmData, String fileName, int sampleRate, Context context) {
         try {
             File musicDir = new File(android.os.Environment.getExternalStoragePublicDirectory(

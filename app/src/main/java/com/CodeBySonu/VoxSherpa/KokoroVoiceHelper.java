@@ -8,12 +8,12 @@ public class KokoroVoiceHelper {
     // ── Data class ──────────────────────────────────────────────────────────
     public static class VoiceItem {
         public final int    speakerId;
-        public final String voiceKey;
-        public final String displayName;
-        public final String language;
-        public final String languageCode;
-        public final String gender;
-        public final String flag;
+        public final String voiceKey;      // e.g. "hf_alpha"
+        public final String displayName;   // e.g. "Alpha"
+        public final String language;      // e.g. "Hindi"
+        public final String languageCode;  // e.g. "hi"
+        public final String gender;        // "Female" / "Male"
+        public final String flag;          // emoji flag
 
         public VoiceItem(int speakerId, String voiceKey,
                          String displayName, String language,
@@ -27,10 +27,12 @@ public class KokoroVoiceHelper {
             this.flag         = flag;
         }
 
+        /** Subtitle shown in the list: e.g. "Hindi • Female" */
         public String getSubtitle() {
             return language + " • " + gender;
         }
 
+        /** Full label: e.g. "🇮🇳 Alpha (Hindi Female)" */
         public String getFullLabel() {
             return flag + " " + displayName + " (" + language + " " + gender + ")";
         }
@@ -157,6 +159,7 @@ public class KokoroVoiceHelper {
         return null;
     }
 
+    /** VoiceKey se VoiceItem lo: getByKey("hm_omega") */
     public static VoiceItem getByKey(String voiceKey) {
         for (VoiceItem v : ALL_VOICES) {
             if (v.voiceKey.equals(voiceKey)) return v;
@@ -164,6 +167,7 @@ public class KokoroVoiceHelper {
         return null;
     }
 
+    /** Available unique languages list (for filter tabs/chips) */
     public static List<String> getAvailableLanguages() {
         List<String> langs = new ArrayList<>();
         for (VoiceItem v : ALL_VOICES) {
@@ -172,6 +176,7 @@ public class KokoroVoiceHelper {
         return langs;
     }
 
+    /** Default voice (hf_alpha = Hindi Female, ID 31) */
     public static VoiceItem getDefaultVoice() {
         return getById(31);
     }

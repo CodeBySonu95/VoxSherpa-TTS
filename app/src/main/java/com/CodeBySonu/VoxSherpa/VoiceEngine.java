@@ -122,7 +122,7 @@ public class VoiceEngine {
 
                 OfflineTts candidate = new OfflineTts(null, config);
 
-                GeneratedAudio test = candidate.generate("...", 0, 1.0f);
+                GeneratedAudio test = candidate.generate("Hello", 0, 1.0f);
                 if (test != null && test.getSamples() != null && test.getSamples().length > 0) {
                     return candidate;
                 }
@@ -173,6 +173,7 @@ public class VoiceEngine {
 
     // ── Generate audio PCM ───────────────────────────────────────────────────
     public byte[] generateAudioPCM(String inputText, float speedValue, float pitchValue) {
+        
         if (cancelRequested) return null;
         if (inputText == null || inputText.trim().isEmpty()) return null;
 
@@ -186,6 +187,7 @@ public class VoiceEngine {
             if (cancelRequested) return null;
 
             GeneratedAudio audio = localTts.generate(inputText.trim(), 0, speedValue);
+
             if (cancelRequested) return null;
 
             if (audio == null) return null;
@@ -193,12 +195,13 @@ public class VoiceEngine {
             float[] audioFloats = audio.getSamples();
             if (audioFloats == null || audioFloats.length == 0) return null;
 
+            // FIX 2: Float → Short (With Anti-Clipping Logic for safety)
             short[] shortSamples = new short[audioFloats.length];
             for (int i = 0; i < audioFloats.length; i++) {
-                int val = (int) (audioFloats[i] * 32767.0f);
-                if (val > 32767)  val = 32767;
-                if (val < -32768) val = -32768;
-                shortSamples[i] = (short) val;
+                float f = audioFloats[i];
+                if (f > 1.0f) f = 1.0f;
+                if (f < -1.0f) f = -1.0f;
+                shortSamples[i] = (short) (f * 32767.0f);
             }
 
             if (pitchValue != 1.0f) {
@@ -209,9 +212,11 @@ public class VoiceEngine {
                 sonic.writeShortToStream(shortSamples, shortSamples.length);
                 sonic.flushStream();
                 int available = sonic.samplesAvailable();
-                short[] outSamples = new short[available];
-                sonic.readShortFromStream(outSamples, available);
-                shortSamples = outSamples;
+                if (available > 0) {
+                    short[] outSamples = new short[available];
+                    sonic.readShortFromStream(outSamples, available);
+                    shortSamples = outSamples;
+                }
             }
 
             if (cancelRequested) return null;

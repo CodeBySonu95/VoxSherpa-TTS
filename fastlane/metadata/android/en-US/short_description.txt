@@ -1,1 +1,0 @@
-Offline Neural TTS with Kokoro & Piper — Studio quality, no internet needed.

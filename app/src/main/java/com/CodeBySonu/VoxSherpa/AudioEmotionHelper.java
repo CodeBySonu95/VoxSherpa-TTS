@@ -7,11 +7,9 @@ import java.util.regex.Pattern;
 
 public class AudioEmotionHelper {
 
-    // 24000 Hz Kokoro, 22050 Hz Piper. Engine dynamically bata dega
     private static int SAMPLE_RATE = 22050;
     private static int BYTES_PER_SECOND = 44100;
     
-    // Track the last volume to create a smooth transition between chunks
     private static float lastTargetVolume = 1.0f;
     private static final Random random = new Random();
 
@@ -48,7 +46,6 @@ public class AudioEmotionHelper {
             // Reset state variables for a fresh new generation
             lastTargetVolume = baseVolume;
             
-            // Default Profile
             EmotionProfile currentProfile = new EmotionProfile(baseVolume, baseSpeed, basePitch, 1500);
 
             // Regex: Finds Tags like [sad], [angry] AND Punctuation like ..., ., ,, !, ?, ।
@@ -70,12 +67,9 @@ public class AudioEmotionHelper {
                     lastTargetVolume = currentProfile.volume; // Update for the next chunk
                 }
 
-                // Identify what the special token is
                 String token = matcher.group();
 
                 if (token.startsWith("[")) {
-                    // --- EMOTION TAG LOGIC (SUBTLE & GRADUAL) ---
-                    // Note: Engine tag read na kare isliye hum tag process karte hi aage badh jayenge
                     if (isEmotionOn) {
                         String tag = token.toLowerCase();
                         switch (tag) {
@@ -131,10 +125,8 @@ public class AudioEmotionHelper {
                         }
 
                         if (baseSilenceMs > 0) {
-                            // Adjust pause based on current speaking speed
                             baseSilenceMs = (int)(baseSilenceMs / currentProfile.speed);
 
-                            // Soft jitter ±10%
                             int jitterRange = (int)(baseSilenceMs * 0.10f);
                             int finalSilenceMs = baseSilenceMs;
 
@@ -142,7 +134,6 @@ public class AudioEmotionHelper {
                                 finalSilenceMs += (random.nextInt(jitterRange * 2) - jitterRange);
                             }
 
-                            // Safety clamp
                             if (finalSilenceMs < 60) finalSilenceMs = 60;
                             if (finalSilenceMs > 600) finalSilenceMs = 600;
 
@@ -155,9 +146,7 @@ public class AudioEmotionHelper {
                 lastEnd = matcher.end();
             }
 
-            // Generate voice for the remaining text AFTER the last token
             String remainingText = inputText.substring(lastEnd).trim();
-            // If the remaining text is just tags, skip it.
             if (!remainingText.isEmpty() && !remainingText.matches("\\[[a-zA-Z]+\\]")) {
                 byte[] chunkAudio = generateWithEngine(remainingText, currentProfile, lastTargetVolume);
                 if (chunkAudio != null) {
@@ -205,7 +194,6 @@ public class AudioEmotionHelper {
         int totalSamples = rawPcm.length / 2;
         int transitionSamples = (SAMPLE_RATE * profile.attackTimeMs) / 1000; 
         
-        // Agar audio chunk chhota hai, toh transition poore audio par dreere-dreere lagega
         transitionSamples = Math.min(transitionSamples, totalSamples); 
         
         float volumeStep = 0f;

@@ -69,7 +69,6 @@ public class TextImportHelper {
                 stripper.setEndPage(i);
                 String pageText = stripper.getText(document);
                 
-                // NAYA: PDF se text nikalte hi usko Hindi ke liye fix kar do
                 pageText = _fixHindiPdfText(pageText);
                 
                 stringBuilder.append(pageText).append("\n");
@@ -100,9 +99,9 @@ public class TextImportHelper {
         return stringBuilder.toString();
     }
 
+        
     private static String _fixHindiPdfText(String text) {
         if (text == null || text.isEmpty()) return "";
-
         text = text.replaceAll("ि([क-हक़-य़])", "$1ि");
         text = text.replaceAll("([,\\.;:'\"!?\\-])([ािीुूृेैोौंँः])", "$2$1");
         text = text.replaceAll(" ([ािीुूृेैोौंँः])", "$1 ");

@@ -5,6 +5,9 @@
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 	<application
 android:allowBackup="true" android:resizeableActivity="true"
 		android:icon="@mipmap/ic_launcher"
@@ -66,26 +69,37 @@ android:screenOrientation="unspecified"
 				android:name="android.support.FILE_PROVIDER_PATHS"
 				android:resource="@xml/provider_paths" />
 		</provider>
-<service
-    android:name=".VoxSherpaTtsService"
-    android:label="VoxSherpa TTS"
-    android:permission="android.permission.BIND_TEXT_TO_SPEECH_ENGINE"
+<service  
+    android:name=".system.VoxSherpaTtsService"  
+    android:label="VoxSherpa TTS"  
+    android:permission="android.permission.BIND_TEXT_TO_SPEECH_ENGINE"  
     android:exported="true">
     <intent-filter>
         <action android:name="android.intent.action.TTS_SERVICE" />
         <category android:name="android.intent.category.DEFAULT" />
     </intent-filter>
-    
-    <meta-data
-        android:name="android.speech.tts"
+
+    <meta-data  
+        android:name="android.speech.tts"  
         android:resource="@xml/tts_engine" />
-</service>
+</service>  
 <property android:name="android.window.PROPERTY_COMPAT_ALLOW_ORIENTATION_OVERRIDE" android:value="true" />
-<activity android:name=".CheckTtsDataActivity" android:exported="true" android:theme="@android:style/Theme.NoDisplay">
+<activity 
+    android:name=".system.CheckTtsDataActivity" 
+    android:exported="true" 
+    android:theme="@android:style/Theme.NoDisplay">
     <intent-filter>
         <action android:name="android.speech.tts.engine.CHECK_TTS_DATA" />
         <category android:name="android.intent.category.DEFAULT" />
     </intent-filter>
 </activity>
+<service
+    android:name=".system.VoxMediaService"
+    android:exported="false"
+    android:foregroundServiceType="mediaPlayback">
+    <intent-filter>
+        <action android:name="android.intent.action.MEDIA_BUTTON" />
+    </intent-filter>
+</service>
 </application>
 </manifest>

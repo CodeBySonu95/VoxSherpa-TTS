@@ -12,8 +12,8 @@ android {
 		namespace "com.CodeBySonu.VoxSherpa"
 		minSdkVersion 21
 		targetSdkVersion 36
-		versionCode 6
-		versionName "2.4"
+		versionCode 8
+		versionName "2.6"
 	}
 	
 	buildTypes {
@@ -36,4 +36,5 @@ dependencies {
 	implementation 'com.google.code.gson:gson:2.11.0'
 	implementation 'com.github.k2-fsa:sherpa-onnx:1.12.26'
 	implementation 'com.tom-roush:pdfbox-android:2.0.27.0'
+	implementation 'com.google.android.material:material:1.9.0'
 }

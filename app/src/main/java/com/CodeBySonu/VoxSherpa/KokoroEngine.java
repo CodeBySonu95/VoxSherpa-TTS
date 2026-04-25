@@ -24,6 +24,7 @@ public class KokoroEngine {
     private static volatile KokoroEngine instance;
     private OfflineTts tts;
     private String activeModelUri = "";
+    private String activeLangCode = ""; 
     private String espeakDataPath = "";
     private int activeSpeakerId = 31;
     private volatile boolean cancelRequested = false;
@@ -98,6 +99,7 @@ public class KokoroEngine {
 
         for (String provider : providers) {
             try {
+                // Cancel check — model load ke dauran bhi
                 if (cancelRequested) return null;
 
                 KokoroVoiceHelper.VoiceItem currentVoice = KokoroVoiceHelper.getById(activeSpeakerId);
@@ -141,7 +143,12 @@ public class KokoroEngine {
                                           String tokensPath, String voicesBinPath) {
         cancelRequested = false; // Reset on new load
 
-        if (tts != null && activeModelUri.equals(onnxPath)) return "Success";
+        KokoroVoiceHelper.VoiceItem currentVoice = KokoroVoiceHelper.getById(activeSpeakerId);
+        String targetLangCode = (currentVoice != null) ? currentVoice.languageCode : "en";
+
+        if (tts != null && activeModelUri.equals(onnxPath) && activeLangCode.equals(targetLangCode)) {
+            return "Success";
+        }
 
         if (onnxPath == null || onnxPath.isEmpty())           return "Error: ONNX path is empty.";
         if (tokensPath == null || tokensPath.isEmpty())       return "Error: Tokens path is empty.";
@@ -167,10 +174,12 @@ public class KokoroEngine {
             if (tts == null) return "Error: Model load failed on all providers.";
 
             activeModelUri = onnxPath;
+            activeLangCode = targetLangCode;
             return "Success";
 
         } catch (Throwable t) {
             activeModelUri = "";
+            activeLangCode = "";
             tts = null;
             return "Error: " + (t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
         }
@@ -185,11 +194,10 @@ public class KokoroEngine {
         OfflineTts localTts;
         synchronized (this) {
             if (tts == null) return null;
-            localTts = tts; // Local reference — lock ke bahar use karenge
+            localTts = tts;
         }
 
         try {
-            // Cancel check — native call se ek baar aur pehle
             if (cancelRequested) return null;
 
             GeneratedAudio audio = localTts.generate(inputText.trim(), activeSpeakerId, speedValue);
@@ -203,12 +211,11 @@ public class KokoroEngine {
 
             short[] shortSamples = new short[audioFloats.length];
             for (int i = 0; i < audioFloats.length; i++) {
-                int val = (int) (audioFloats[i] * 32767.0f);
-                if (val > 32767)  val = 32767;
-                if (val < -32768) val = -32768;
-                shortSamples[i] = (short) val;
+                float f = audioFloats[i];
+                if (f > 1.0f) f = 1.0f;
+                if (f < -1.0f) f = -1.0f;
+                shortSamples[i] = (short) (f * 32767.0f);
             }
-
             if (pitchValue != 1.0f) {
                 if (cancelRequested) return null;
                 int sampleRate = localTts.sampleRate();
@@ -229,6 +236,7 @@ public class KokoroEngine {
                 }
             }
 
+            // Step 3: Short → Byte (Little Endian)
             if (cancelRequested) return null;
 
             byte[] pcmData = new byte[shortSamples.length * 2];
@@ -291,6 +299,7 @@ public class KokoroEngine {
             try { tts.release(); } catch (Throwable ignored) {}
             tts = null;
             activeModelUri = "";
+            activeLangCode = ""; 
         }
     }
 }
