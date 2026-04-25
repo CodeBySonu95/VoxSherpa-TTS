@@ -1,13 +1,16 @@
-name: Build Alpha APK (Artifact)
+name: Build Alpha Release APK (Direct)
 
 on:
   push:
     branches:
       - alpha
 
+permissions:
+  contents: write
+
 jobs:
-  build:
-    name: Build APK
+  build-and-release:
+    name: Build APK and Create Release
     runs-on: ubuntu-latest
 
     steps:
@@ -18,17 +21,28 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17' # AGP 8.12.0 ke liye Java 17 zaroori hai
+          java-version: '17'
 
       - name: Make Gradle Wrapper Executable
         run: chmod +x ./gradlew
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
+      - name: Build Release APK
+        # assembleRelease strips out heavy debug symbols from native libraries like sherpa-onnx
+        run: ./gradlew assembleRelease --no-daemon --warning-mode all
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
+      - name: Generate Release Tag
+        id: generate_tag
+        run: echo "RELEASE_TAG=alpha-$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+
+      - name: Upload Direct APK to Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: VoxSherpa-Alpha-APK
-          path: app/build/outputs/apk/debug/*.apk
-          retention-days: 7 # Yeh APK 7 dino tak GitHub par rahega
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Alpha Release ${{ env.RELEASE_TAG }}
+          body: "Direct Release APK optimized for size. 32-bit architectures removed."
+          # Changed path to release folder
+          files: app/build/outputs/apk/release/*.apk
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
