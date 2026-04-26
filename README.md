@@ -5,7 +5,7 @@
 <br/>
 <br/>
 
-[![Join Beta](https://img.shields.io/badge/Join-Beta%20v2.1-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://docs.google.com/forms/d/e/1FAIpQLSd-_VgF3DlbiG2eU00Dw_cZECMinUIuSx_Nr6NJt1DeUcIwTQ/viewform?usp=publish-editor)
+[![Get it on Google Play](https://img.shields.io/badge/Google_Play-Available_Now-brightgreen?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa)
 [![Support](https://img.shields.io/badge/💙_Support-This%20Project-FF5E5B?style=for-the-badge)](https://codebysonu95.github.io/VoxSherpa-TTS/assets/support.html)
 [![Android](https://img.shields.io/badge/Android-11%2B-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://android.com)
 [![License](https://img.shields.io/badge/License-GPL%20v3.0-blue?style=for-the-badge)](LICENSE)
@@ -76,6 +76,8 @@ It runs two professional-grade neural engines entirely on your device:
 ### 🎧 Audio Controls
 - Real-time waveform visualization
 - Adjustable speed and pitch
+- Interactive audio seeking with mini player controls
+- MediaStyle notification with full playback controls
 - Play, pause, and replay generated audio
 - Export as WAV with correct sample rate per model
 
@@ -89,6 +91,7 @@ It runs two professional-grade neural engines entirely on your device:
 - **Smart Punctuation** — natural pauses after sentence breaks
 - **Emotion Tags** — `[whisper]`, `[angry]`, `[happy]` support
 - Per-model voice selection (Kokoro supports 100+ speakers)
+- System-wide TTS engine with pitch & speed control
 - Theme-aware UI
 
 ---
@@ -131,25 +134,65 @@ Generation speed depends entirely on your device's processor:
 
 ## Installation
 
-### 🧪 Help Me Reach Google Play — Join the Beta!
+### 🎉 Now Live on Google Play!
 
-I've submitted **VoxSherpa TTS V2.1** to Google Play, but according to Play Store rules, I need at least **12 testers for 14 days** before I can publish to production.
+VoxSherpa TTS is officially available on the **Google Play Store**. No forms, no waitlists — just tap and install.
 
-If you find this project useful and want early access to V2.1 — I'd really appreciate your help. All you need to do is install the app and keep it for 14 days. You don't have to do anything else.
+<div align="center">
 
-**What's new in V2.4:**
-- 🔊 System-wide TTS engine — use VoxSherpa in any app (Chrome, WhatsApp, etc.)
-- 📄 PDF to Audio
-- 📑 TXT to Audio
+<a href="https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa">
+  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="80"/>
+</a>
 
-**How to join:**
-1. Fill out the form below with your Gmail
-2. I'll add you manually to the closed test
-3. You'll receive a Play Store opt-in link
+</div>
 
-[![Join Beta](https://img.shields.io/badge/Join-Beta%20v2.1-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://docs.google.com/forms/d/e/1FAIpQLSd-_VgF3DlbiG2eU00Dw_cZECMinUIuSx_Nr6NJt1DeUcIwTQ/viewform?usp=publish-editor)
+**Requirements:** Android 11+ · ARM64
 
-> Source code for V2.0 and V2.1 will be pushed to GitHub after beta testing is complete.
+---
+
+## Changelog
+
+### V2.6 — Media Notification *(Latest)*
+- 🔔 MediaStyle notification with full playback controls
+- 🎚️ Pitch control in System TTS
+- ⚡ Speed control in System TTS
+- Improved performance and stability
+- Bug fixes and optimizations
+- Minor UI improvements
+
+### V2.5 — Stability
+- Bug fixes and stability improvements
+- Improved overall performance
+
+### V2.4 — Bug Fixes
+- Improved System TTS support with better language detection
+- Enhanced UI & overall app experience
+- Improved compatibility for large screen devices
+- Various bug fixes
+
+### V2.3 — Playback Upgrade
+- Interactive audio seeking
+- New mini player controls
+- Smoother and faster UI performance
+- Fixed cancel generation delay issue
+
+### V2.2 — Core Improvements
+- Regenerate audio on voice change
+- Improved smart punctuation
+- Improved emotion tags
+- Pitch control added
+- Send feedback feature
+- UI/UX improvements
+
+### V1.0 — Foundation
+- Text to Audio
+- Piper (fast models) + Kokoro (high-quality voices)
+- Save audio (.wav) · Favorites support
+- Speed control · Models download · Import Custom Model
+- Chunk-based playback · Smart pause handling
+- System TTS integration · PDF to Audio · TXT to Audio
+
+---
 
 ## Model Import (Technical Users)
 
