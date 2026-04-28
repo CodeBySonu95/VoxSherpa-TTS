@@ -10,9 +10,9 @@ repositories {
 
 android {
     compileSdk 34
-    
+
     useLibrary 'org.apache.http.legacy'
-    
+
     defaultConfig {
         applicationId "com.CodeBySonu.VoxSherpa"
         namespace "com.CodeBySonu.VoxSherpa"
@@ -20,33 +20,47 @@ android {
         targetSdkVersion 36
         versionCode 8
         versionName "2.6"
+        
+        // Single APK configuration supporting both 64-bit Mobile and 64-bit Emulator
         ndk {
-            abiFilters 'x86_64', 'arm64-v8a'
+            abiFilters 'arm64-v8a', 'x86_64'
         }
     }
-    
+
     buildTypes {
         release {
             minifyEnabled true
             shrinkResources true
             signingConfig signingConfigs.debug
             
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Using standard proguard rules instead of optimize version to save RAM
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    
+
     buildFeatures {
         viewBinding true
     }
-    
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging true
+        }
+        pickFirst '**/*.so'
+    }
+
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    
+    implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.14'
+    implementation 'com.squareup.okio:okio-jvm:3.9.0'
+    
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.12.0'
     implementation platform('com.google.firebase:firebase-bom:34.1.0')
