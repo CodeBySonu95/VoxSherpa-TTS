@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
-    name: Build Optimized APK
+  build-and-artifact:
+    name: Build and Upload Artifact
     runs-on: ubuntu-latest
 
     steps:
@@ -30,14 +30,9 @@ jobs:
         # Skipping tests and lint to save RAM during the build process
         run: ./gradlew assembleRelease --no-daemon -x test -x lint
 
-      - name: Upload Direct APK (Overwrite Latest)
-        uses: softprops/action-gh-release@v2
+      - name: Upload APK to Actions Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: latest-main
-          name: Latest Main Build
-          body: "Auto-updated optimized APK. 64-bit universal build. RAM issues bypassed."
-          files: app/build/outputs/apk/release/*.apk
-          overwrite: true
-          prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: VoxSherpa-Main-APK
+          path: app/build/outputs/apk/release/*.apk
+          retention-days: 5
