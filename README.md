@@ -5,7 +5,13 @@
 <br/>
 <br/>
 
-[![Get it on Google Play](https://img.shields.io/badge/Google_Play-Available_Now-brightgreen?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa)
+<a href="https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa">
+  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="90"/>
+</a>
+
+<br/>
+<br/>
+
 [![Support](https://img.shields.io/badge/💙_Support-This%20Project-FF5E5B?style=for-the-badge)](https://codebysonu95.github.io/VoxSherpa-TTS/assets/support.html)
 [![Android](https://img.shields.io/badge/Android-11%2B-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://android.com)
 [![License](https://img.shields.io/badge/License-GPL%20v3.0-blue?style=for-the-badge)](LICENSE)
@@ -58,7 +64,7 @@ It runs two professional-grade neural engines entirely on your device:
 ## Features
 
 ### 🎙️ Dual Neural Engine
-- **Kokoro-82M** — 82 million parameter neural model. Multilingual support including Hindi, English, British English, French, Spanish, Chinese, Japanese and 50+ more languages. Same architecture used by top-tier commercial TTS services.
+- **Kokoro-82M** — 82 million parameter neural model. Multilingual support including Hindi, English, British English, French, Spanish, Chinese, Japanese and 50+ languages. Same architecture used by top-tier commercial TTS services.
 - **Piper / VITS** — Fast, lightweight, natural. Generates speech in seconds on any Android device.
 
 ### 🔒 100% Offline & Private
@@ -66,6 +72,11 @@ It runs two professional-grade neural engines entirely on your device:
 - No internet required after model download
 - No account, no telemetry, no data collection
 - Your text never leaves your phone
+
+### 📄 Document to Audio
+- PDF to Audio — listen to any document hands-free
+- TXT to Audio — convert plain text files instantly
+- System-wide TTS engine — use VoxSherpa in Chrome, WhatsApp, any app
 
 ### 📦 Model Management
 - Download models directly from the app
@@ -78,7 +89,6 @@ It runs two professional-grade neural engines entirely on your device:
 - Adjustable speed and pitch
 - Interactive audio seeking with mini player controls
 - MediaStyle notification with full playback controls
-- Play, pause, and replay generated audio
 - Export as WAV with correct sample rate per model
 
 ### 📚 Speech Library
@@ -86,6 +96,7 @@ It runs two professional-grade neural engines entirely on your device:
 - Favorites system for quick access
 - View generation history with timestamps
 - Voice model attribution per recording
+- Regenerate audio on voice change
 
 ### ⚙️ Smart Settings
 - **Smart Punctuation** — natural pauses after sentence breaks
@@ -134,10 +145,6 @@ Generation speed depends entirely on your device's processor:
 
 ## Installation
 
-### 🎉 Now Live on Google Play!
-
-VoxSherpa TTS is officially available on the **Google Play Store**. No forms, no waitlists — just tap and install.
-
 <div align="center">
 
 <a href="https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa">
@@ -146,51 +153,7 @@ VoxSherpa TTS is officially available on the **Google Play Store**. No forms, no
 
 </div>
 
-**Requirements:** Android 11+ · ARM64
-
----
-
-## Changelog
-
-### V2.6 — Media Notification *(Latest)*
-- 🔔 MediaStyle notification with full playback controls
-- 🎚️ Pitch control in System TTS
-- ⚡ Speed control in System TTS
-- Improved performance and stability
-- Bug fixes and optimizations
-- Minor UI improvements
-
-### V2.5 — Stability
-- Bug fixes and stability improvements
-- Improved overall performance
-
-### V2.4 — Bug Fixes
-- Improved System TTS support with better language detection
-- Enhanced UI & overall app experience
-- Improved compatibility for large screen devices
-- Various bug fixes
-
-### V2.3 — Playback Upgrade
-- Interactive audio seeking
-- New mini player controls
-- Smoother and faster UI performance
-- Fixed cancel generation delay issue
-
-### V2.2 — Core Improvements
-- Regenerate audio on voice change
-- Improved smart punctuation
-- Improved emotion tags
-- Pitch control added
-- Send feedback feature
-- UI/UX improvements
-
-### V1.0 — Foundation
-- Text to Audio
-- Piper (fast models) + Kokoro (high-quality voices)
-- Save audio (.wav) · Favorites support
-- Speed control · Models download · Import Custom Model
-- Chunk-based playback · Smart pause handling
-- System TTS integration · PDF to Audio · TXT to Audio
+**Requirements:** Android 11+ · ARM64 · ~500 MB free storage recommended (for models)
 
 ---
 
