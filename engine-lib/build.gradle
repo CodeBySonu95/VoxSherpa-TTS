@@ -13,6 +13,7 @@
 
 plugins {
     id 'com.android.library'
+    id 'maven-publish'
 }
 
 repositories {
@@ -63,8 +64,30 @@ android {
         }
         pickFirst '**/*.so'
     }
+
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+        }
+    }
 }
 
 dependencies {
     implementation 'com.github.k2-fsa:sherpa-onnx:1.12.26'
+}
+
+// JitPack publishing — invokes `publishToMavenLocal` on a tagged build and
+// pushes the resulting AAR to its public Maven cache so consumers can
+// reference it as `com.github.jphein:VoxSherpa-TTS:vX.Y.Z:engine-lib`.
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                groupId = (project.findProperty('group') ?: 'com.github.jphein').toString()
+                artifactId = 'engine-lib'
+                version = (project.findProperty('version') ?: 'unspecified').toString()
+            }
+        }
+    }
 }
