@@ -149,9 +149,15 @@ public class VoxSherpaTtsService extends TextToSpeechService {
             String modelType = sp.getString("active_model_type", "");
             CharSequence charText = request.getCharSequenceText();
 
-            // 1a. Empty text is a legitimate empty utterance — emit a valid (silent) frame.
+            // 1a. Empty text — call start()+done() (no audio). The framework treats this
+            // as a successful zero-length utterance, which is the correct semantic for
+            // empty input. If start() itself fails, surface as error().
             if (charText == null || charText.toString().trim().isEmpty()) {
-                callback.start(22050, AudioFormat.ENCODING_PCM_16BIT, 1);
+                int startResult = callback.start(22050, AudioFormat.ENCODING_PCM_16BIT, 1);
+                if (startResult != TextToSpeech.SUCCESS) {
+                    callback.error();
+                    hasError = true;
+                }
                 return;
             }
 
@@ -282,7 +288,15 @@ public class VoxSherpaTtsService extends TextToSpeechService {
                 if (isSynthesisCancelled) break;
 
                 if (chunkPcm != null && chunkPcm.length > 0) {
-                    if (_streamAudioChunks(chunkPcm, callback)) {
+                    StreamResult result = _streamAudioChunks(chunkPcm, callback);
+                    if (result == StreamResult.PARTIAL_FAILURE) {
+                        // audioAvailable() rejected a chunk mid-stream. The utterance
+                        // is incomplete — surface as error rather than silent partial success.
+                        callback.error();
+                        hasError = true;
+                        return;
+                    }
+                    if (result == StreamResult.COMPLETE) {
                         emittedAudio = true;
                     }
                 }
@@ -307,11 +321,22 @@ public class VoxSherpaTtsService extends TextToSpeechService {
         }
     }
 
+    /** Outcome of streaming a single sentence's PCM to the framework. */
+    private enum StreamResult {
+        /** No audio was written (input was empty or first write was rejected). */
+        NO_AUDIO,
+        /** Some chunks streamed successfully, then a later audioAvailable() failed. */
+        PARTIAL_FAILURE,
+        /** All chunks delivered cleanly, or stopped because the caller cancelled. */
+        COMPLETE,
+    }
+
     // Dynamic Chunk Streaming logic mapped to OS Buffer Limits.
-    // Returns true if at least one PCM chunk was successfully delivered to the
-    // callback; callers use this to detect engine "dry runs" where audio was
-    // expected but never written.
-    private boolean _streamAudioChunks(byte[] pcm, SynthesisCallback callback) {
+    // Returns one of {NO_AUDIO, PARTIAL_FAILURE, COMPLETE} so the caller can
+    // distinguish a clean stream from a partial-failure (which must be surfaced
+    // as callback.error()) and from an empty/dry stream (which feeds the
+    // emittedAudio guard at the top level).
+    private StreamResult _streamAudioChunks(byte[] pcm, SynthesisCallback callback) {
         boolean wroteAny = false;
         try {
             int maxBufferSize = callback.getMaxBufferSize();
@@ -326,12 +351,13 @@ public class VoxSherpaTtsService extends TextToSpeechService {
                 int writeStatus = callback.audioAvailable(pcm, offset, end - offset);
 
                 if (writeStatus != TextToSpeech.SUCCESS) {
-                    break;
+                    return wroteAny ? StreamResult.PARTIAL_FAILURE : StreamResult.NO_AUDIO;
                 }
                 wroteAny = true;
             }
         } catch (Exception ignored) {
+            return wroteAny ? StreamResult.PARTIAL_FAILURE : StreamResult.NO_AUDIO;
         }
-        return wroteAny;
+        return wroteAny ? StreamResult.COMPLETE : StreamResult.NO_AUDIO;
     }
 }
