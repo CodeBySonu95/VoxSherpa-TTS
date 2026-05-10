@@ -1,13 +1,19 @@
-name: Build Alpha APK (Artifact Only)
+name: Build Optimized Main APK
 
 on:
   push:
     branches:
-      - alpha
+      - main
+  pull_request: 
+    branches:
+      - main
+
+permissions:
+  contents: write
 
 jobs:
-  build:
-    name: Build and Upload APK
+  build-and-artifact:
+    name: Build and Upload Artifact
     runs-on: ubuntu-latest
 
     steps:
@@ -23,14 +29,13 @@ jobs:
       - name: Make Gradle Wrapper Executable
         run: chmod +x ./gradlew
 
-      - name: Build Optimized Release APK
-        # assembleRelease karne se size 35-40mb ho jayega
-        run: ./gradlew assembleRelease --no-daemon
+      - name: Build Minified Release APK
+        # Skipping tests and lint to save RAM during the build process
+        run: ./gradlew assembleRelease --no-daemon -x test -x lint
 
       - name: Upload APK to Actions Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: VoxSherpa-Alpha-APK
-          # Yeh optimized release folder se APK uthayega
+          name: VoxSherpa-Main-APK
           path: app/build/outputs/apk/release/*.apk
           retention-days: 5
