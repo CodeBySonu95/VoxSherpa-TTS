@@ -24,8 +24,19 @@ public class VoiceEngine {
     private static volatile VoiceEngine instance;
     private OfflineTts tts;
     private String activeModelUri = "";
+    private String activeTokensUri = "";
     private String espeakDataPath = "";
     private volatile boolean cancelRequested = false;
+
+    // ── VITS sampling knobs ──────────────────────────────────────────────────
+    // VoxSherpa's "calmed" defaults — lower than sherpa-onnx upstream
+    // (0.667 / 0.8) for steadier, more deterministic Piper output. Consumers
+    // can flip these via setNoiseScale[W]() to opt into more expressive
+    // (but less reproducible) synthesis.
+    public static final float DEFAULT_NOISE_SCALE = 0.35f;
+    public static final float DEFAULT_NOISE_SCALE_W = 0.667f;
+    private volatile float noiseScale = DEFAULT_NOISE_SCALE;
+    private volatile float noiseScaleW = DEFAULT_NOISE_SCALE_W;
 
     private VoiceEngine() {}
 
@@ -106,8 +117,8 @@ public class VoiceEngine {
                 vits.setModel(modelPath);
                 vits.setTokens(tokensPath);
                 vits.setDataDir(espeakDataPath);
-                vits.setNoiseScale(0.35f);
-                vits.setNoiseScaleW(0.667f);
+                vits.setNoiseScale(noiseScale);
+                vits.setNoiseScaleW(noiseScaleW);
                 vits.setLengthScale(1.0f);
 
                 OfflineTtsModelConfig modelConfig = new OfflineTtsModelConfig();
@@ -163,6 +174,7 @@ public class VoiceEngine {
             if (tts == null) return "Error: Model load failed on all providers.";
 
             activeModelUri = modelPath;
+            activeTokensUri = tokensPath;
             return "Success";
 
         } catch (Throwable t) {
@@ -249,6 +261,80 @@ public class VoiceEngine {
             try { tts.release(); } catch (Throwable ignored) {}
             tts = null;
             activeModelUri = "";
+            activeTokensUri = "";
+        }
+    }
+
+    // ── Noise-scale tuning (VITS / Piper / Matcha) ───────────────────────────
+    //
+    // `noise_scale` and `noise_scale_w` are sampling knobs on the VITS prior:
+    //  • Lower values → drier, more deterministic output. Identical input text
+    //    re-renders sound nearly identical between runs.
+    //  • Higher values → the model samples more from its prior, giving slightly
+    //    different prosody on each generation.
+    //
+    // VoxSherpa's calmed defaults are (0.35, 0.667). sherpa-onnx upstream's
+    // "Vanilla" Piper defaults are (0.667, 0.8). Consumers (e.g. storyvox's
+    // Voice Determinism toggle) flip between presets.
+    //
+    // Behavior:
+    //  • If a model is currently loaded, the engine destroys + reconstructs
+    //    `OfflineTts` with the new config. This blocks for ~1-3s on Piper.
+    //  • If no model is loaded, the new value is stored and applied on the
+    //    next loadModel() call.
+    //  • Calling during synthesis: the synchronized monitor on the engine
+    //    serializes against loadModel/destroy, but a thread already inside
+    //    `generateAudioPCM` past the synchronized block holds a `localTts`
+    //    reference and may finish a generation against the *old* config
+    //    before observing the swap. cancelRequested is raised so cooperating
+    //    callers bail early. This matches `loadModel`'s existing semantics.
+    //
+    // No-op if the supplied value equals the currently-active value, so
+    // settings UIs can call freely without forcing a reload.
+    public synchronized void setNoiseScale(float scale) {
+        if (this.noiseScale == scale) return;
+        this.noiseScale = scale;
+        _reloadIfActive();
+    }
+
+    public synchronized void setNoiseScaleW(float scaleW) {
+        if (this.noiseScaleW == scaleW) return;
+        this.noiseScaleW = scaleW;
+        _reloadIfActive();
+    }
+
+    public float getNoiseScale() {
+        return noiseScale;
+    }
+
+    public float getNoiseScaleW() {
+        return noiseScaleW;
+    }
+
+    // Internal: rebuild OfflineTts with the current (model, tokens, noise*)
+    // values. Caller must hold the monitor on `this`. No-op if no model is
+    // loaded.
+    private void _reloadIfActive() {
+        if (tts == null || activeModelUri.isEmpty() || activeTokensUri.isEmpty()) {
+            return;
+        }
+        cancelRequested = true;
+
+        String model = activeModelUri;
+        String tokens = activeTokensUri;
+
+        try { tts.release(); } catch (Throwable ignored) {}
+        tts = null;
+        activeModelUri = "";
+        activeTokensUri = "";
+
+        cancelRequested = false;
+
+        OfflineTts rebuilt = _createTtsWithFallback(model, tokens);
+        if (rebuilt != null) {
+            tts = rebuilt;
+            activeModelUri = model;
+            activeTokensUri = tokens;
         }
     }
 }
