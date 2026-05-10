@@ -1,4 +1,4 @@
-    <div align="center">
+<div align="center">
 
 <img src="https://raw.githubusercontent.com/CodeBySonu95/VoxSherpa-TTS/main/fastlane/metadata/android/en-US/images/featureGraphic.png" width="100%" alt="VoxSherpa TTS Banner"/>
 
@@ -76,13 +76,21 @@ It runs two professional-grade neural engines entirely on your device:
 ### 📄 Document to Audio
 - PDF to Audio — listen to any document hands-free
 - TXT to Audio — convert plain text files instantly
-- System-wide TTS engine — use VoxSherpa in Chrome, WhatsApp, any app
+- Share any text directly to VoxSherpa from any app
 
 ### 📦 Model Management
 - Download models directly from the app
+- Filter voice models by language or type
+- Sample voice preview before selecting a model
 - Import your own `.onnx` models from local storage
 - Multiple models installed simultaneously
 - Smart storage tracking
+
+### 🔊 System-Wide TTS
+- Set VoxSherpa as your default Android TTS engine
+- All downloaded models exposed to System TTS — use any voice in Chrome, WhatsApp, TalkBack, and more
+- Pitch & speed control in System TTS mode
+- Sample voice preview for all models
 
 ### 🎧 Audio Controls
 - Real-time waveform visualization
@@ -102,7 +110,6 @@ It runs two professional-grade neural engines entirely on your device:
 - **Smart Punctuation** — natural pauses after sentence breaks
 - **Emotion Tags** — `[whisper]`, `[angry]`, `[happy]` support
 - Per-model voice selection (Kokoro supports 100+ speakers)
-- System-wide TTS engine with pitch & speed control
 - Theme-aware UI
 
 ---
