@@ -119,7 +119,6 @@ public class KokoroVoiceHelper {
 
     // ── Public query methods ─────────────────────────────────────────────────
 
-    /** Sab voices return karo */
     public static List<VoiceItem> getAllVoices() {
         return ALL_VOICES;
     }

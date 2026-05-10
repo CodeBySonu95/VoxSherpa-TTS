@@ -1,0 +1,71 @@
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:orientation="vertical"
+	android:paddingHorizontal="16dp"
+	android:paddingVertical="6dp">
+	<com.google.android.material.card.MaterialCardView
+		android:id="@+id/main_group_card"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		app:cardBackgroundColor="#131B2D"
+		app:cardCornerRadius="16dp"
+		app:strokeColor="#2D2D3F"
+		app:strokeWidth="1dp">
+		<LinearLayout
+			android:id="@+id/linear2"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical">
+			<RelativeLayout
+				android:id="@+id/header_layout"
+				android:layout_width="match_parent"
+				android:layout_height="60dp"
+				android:background="?attr/selectableItemBackground"
+				android:focusable="true"
+				android:paddingHorizontal="16dp">
+				<ImageView
+					android:id="@+id/img_lang_icon"
+					android:focusable="false"
+					android:layout_width="24dp"
+					android:layout_height="24dp"
+					android:src="@drawable/icon_translate"
+					android:scaleType="fitXY"
+					app:tint="#A0AEC0"
+					android:layout_centerVertical="true" />
+				<TextView
+					android:id="@+id/txt_language_name"
+					android:focusable="false"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="Hindi (India)"
+					android:textSize="16sp"
+					android:textStyle="bold"
+					android:textColor="#FFFFFF"
+					android:layout_marginStart="16dp"
+					android:layout_toEndOf="@id/img_lang_icon"
+					android:layout_centerVertical="true" />
+				<ImageView
+					android:id="@+id/img_expand_arrow"
+					android:focusable="false"
+					android:layout_width="24dp"
+					android:layout_height="24dp"
+					android:src="@drawable/icon_keyboard_arrow"
+					android:scaleType="fitXY"
+					app:tint="#A0AEC0"
+					android:layout_alignParentEnd="true"
+					android:layout_centerVertical="true" />
+			</RelativeLayout>
+			<LinearLayout
+				android:id="@+id/expandable_voice_container"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:paddingBottom="8dp"
+				android:orientation="vertical"
+				android:visibility="gone" />
+		</LinearLayout>
+	</com.google.android.material.card.MaterialCardView>
+</LinearLayout>

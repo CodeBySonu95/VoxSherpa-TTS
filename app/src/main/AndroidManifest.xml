@@ -14,7 +14,6 @@ android:allowBackup="true" android:resizeableActivity="true"
 		android:label="@string/app_name"
 		android:name=".SketchApplication"
 		android:requestLegacyExternalStorage="true"
-		android:usesCleartextTraffic="true"
 		android:theme="@style/AppTheme">
 		<activity
 			android:name=".MainActivity"
@@ -24,9 +23,30 @@ android:allowBackup="true" android:resizeableActivity="true"
 			android:exported="true">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
-				<category android:name="android.intent.category.LAUNCHER" />
+<category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+			<intent-filter android:label="VoxSherpa">
+				<action android:name="android.intent.action.PROCESS_TEXT" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<data android:mimeType="text/plain" />
+			</intent-filter>
+			<intent-filter>
+				<action android:name="android.intent.action.SEND" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<data android:mimeType="text/plain" />
 			</intent-filter>
 		</activity>
+		<activity
+			android:name=".TtssettingsActivity"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:hardwareAccelerated="true"
+android:supportsPictureInPicture="true"
+android:exported="true">
+    <intent-filter>
+        <action android:name="android.speech.tts.engine.INSTALL_TTS_DATA" />
+        <category android:name="android.intent.category.DEFAULT" />
+    </intent-filter>
+</activity>
 		<activity
 			android:name=".DebugActivity"
 android:screenOrientation="unspecified"
@@ -57,9 +77,6 @@ android:screenOrientation="unspecified"
 				android:name="com.google.firebase.components:com.google.firebase.database.DatabaseRegistrar"
 				android:value="com.google.firebase.components.ComponentRegistrar" />
 		</service>
-		<uses-library
-			android:name="org.apache.http.legacy"
-			android:required="false" />
 		<provider
 			android:name="androidx.core.content.FileProvider"
 			android:authorities="com.CodeBySonu.VoxSherpa.provider"

@@ -99,9 +99,9 @@ public class TextImportHelper {
         return stringBuilder.toString();
     }
 
-        
     private static String _fixHindiPdfText(String text) {
         if (text == null || text.isEmpty()) return "";
+
         text = text.replaceAll("ि([क-हक़-य़])", "$1ि");
         text = text.replaceAll("([,\\.;:'\"!?\\-])([ािीुूृेैोौंँः])", "$2$1");
         text = text.replaceAll(" ([ािीुूृेैोौंँः])", "$1 ");

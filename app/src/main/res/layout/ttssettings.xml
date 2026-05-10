@@ -1,0 +1,108 @@
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="#0B1220"
+	android:orientation="vertical">
+	<RelativeLayout
+		android:id="@+id/relativelayout2"
+		android:layout_width="match_parent"
+		android:layout_height="50dp"
+		android:paddingHorizontal="16dp">
+		<ImageView
+			android:id="@+id/img_back"
+			android:layout_width="24dp"
+			android:layout_height="24dp"
+			android:src="@drawable/icon_arrow_back"
+			android:scaleType="fitXY"
+			app:tint="#FFFFFF"
+			android:layout_centerVertical="true" />
+		<TextView
+			android:id="@+id/textview3"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="TTS Settings"
+			android:textSize="18sp"
+			android:textStyle="bold"
+			android:textColor="#FFFFFF"
+			android:layout_marginStart="32dp"
+			android:layout_toEndOf="@id/img_back"
+			android:layout_centerVertical="true" />
+		<ImageView
+			android:id="@+id/img_more"
+			android:layout_width="34dp"
+			android:layout_height="34dp"
+			android:padding="3dp"
+			android:src="@drawable/icon_more_vert"
+			android:scaleType="fitXY"
+			app:tint="#FFFFFF"
+			android:layout_alignParentEnd="true"
+			android:layout_centerVertical="true" />
+	</RelativeLayout>
+	<LinearLayout
+		android:id="@+id/linear2"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="6dp"
+		android:paddingLeft="12dp"
+		android:paddingTop="8dp"
+		android:paddingRight="12dp"
+		android:paddingBottom="8dp"
+		android:background="#1A2235"
+		android:orientation="vertical"
+		android:layout_marginHorizontal="16dp">
+		<TextView
+			android:id="@+id/textview4"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="4dp"
+			android:text="Engine Note"
+			android:textSize="12sp"
+			android:textStyle="bold"
+			android:textColor="#FFB74D" />
+		<TextView
+			android:id="@+id/textview5"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Kokoro is a heavy studio-quality neural model. It takes longer to initialize and generate audio. Using Piper models is highly recommended for standard System TTS tasks."
+			android:textSize="12sp"
+			android:textColor="#A0AEC0" />
+	</LinearLayout>
+	<TextView
+		android:id="@+id/textview6"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="12dp"
+		android:layout_marginBottom="6dp"
+		android:text="INSTALLED LANGUAGES"
+		android:textSize="12sp"
+		android:textStyle="bold"
+		android:textColor="#1D61FF"
+		android:layout_marginHorizontal="16dp"
+		android:letterSpacing="0.1" />
+	<RelativeLayout
+		android:id="@+id/relativelayout3"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent">
+		<TextView
+			android:id="@+id/txt_no_model"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity="center_horizontal|center_vertical"
+			android:text="No Models Found\nDownload a voice model to set up TTS"
+			android:textSize="16sp"
+			android:textStyle="bold"
+			android:textColor="#718096"
+			android:lineSpacingExtra="4dp"
+			android:visibility="gone"
+			android:layout_centerInParent="true" />
+		<androidx.recyclerview.widget.RecyclerView
+			android:id="@+id/recyclerview_voices"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:paddingBottom="20dp"
+			android:clipToPadding="false" />
+	</RelativeLayout>
+</LinearLayout>

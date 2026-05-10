@@ -24,6 +24,8 @@ public class KokoroEngine {
     private static volatile KokoroEngine instance;
     private OfflineTts tts;
     private String activeModelUri = "";
+    
+    // Tracks the current language context to prevent unnecessary reloads
     private String activeLangCode = ""; 
     private String espeakDataPath = "";
     private int activeSpeakerId = 31;
@@ -35,7 +37,9 @@ public class KokoroEngine {
     public static KokoroEngine getInstance() {
         if (instance == null) {
             synchronized (KokoroEngine.class) {
-                if (instance == null) instance = new KokoroEngine();
+                if (instance == null) {
+                    instance = new KokoroEngine();
+                }
             }
         }
         return instance;
@@ -92,14 +96,12 @@ public class KokoroEngine {
     }
 
     // ── Provider fallback: XNNPACK → CPU ────────────────────────────────────
-    private OfflineTts createTtsWithFallback(String onnxPath,
-                                              String tokensPath,
-                                              String voicesBinPath) {
+    private OfflineTts createTtsWithFallback(String onnxPath, String tokensPath, String voicesBinPath) {
         String[] providers = {"xnnpack", "cpu"};
 
         for (String provider : providers) {
             try {
-                // Cancel check — model load ke dauran bhi
+                // Cancel check before initialization
                 if (cancelRequested) return null;
 
                 KokoroVoiceHelper.VoiceItem currentVoice = KokoroVoiceHelper.getById(activeSpeakerId);
@@ -120,11 +122,12 @@ public class KokoroEngine {
 
                 OfflineTtsConfig config = new OfflineTtsConfig();
                 config.setModel(modelConfig);
-                config.setMaxNumSentences(3);
+                config.setMaxNumSentences(1);
                 config.setSilenceScale(0.2f);
 
                 OfflineTts candidate = new OfflineTts(null, config);
 
+                // As confirmed by the user, Kokoro supports punctuations perfectly.
                 GeneratedAudio test = candidate.generate("...", activeSpeakerId, 1.0f);
                 if (test != null && test.getSamples() != null && test.getSamples().length > 0) {
                     return candidate;
@@ -139,13 +142,13 @@ public class KokoroEngine {
     }
 
     // ── Load model ───────────────────────────────────────────────────────────
-    public synchronized String loadModel(Context context, String onnxPath,
-                                          String tokensPath, String voicesBinPath) {
-        cancelRequested = false; // Reset on new load
+    public synchronized String loadModel(Context context, String onnxPath, String tokensPath, String voicesBinPath) {
+        cancelRequested = false; 
 
         KokoroVoiceHelper.VoiceItem currentVoice = KokoroVoiceHelper.getById(activeSpeakerId);
         String targetLangCode = (currentVoice != null) ? currentVoice.languageCode : "en";
 
+        // Avoid reloading if the exact same model and language code are already active
         if (tts != null && activeModelUri.equals(onnxPath) && activeLangCode.equals(targetLangCode)) {
             return "Success";
         }
@@ -174,7 +177,7 @@ public class KokoroEngine {
             if (tts == null) return "Error: Model load failed on all providers.";
 
             activeModelUri = onnxPath;
-            activeLangCode = targetLangCode;
+            activeLangCode = targetLangCode; 
             return "Success";
 
         } catch (Throwable t) {
@@ -187,14 +190,14 @@ public class KokoroEngine {
 
     // ── Generate audio PCM ───────────────────────────────────────────────────
     public byte[] generateAudioPCM(String inputText, float speedValue, float pitchValue) {
-        // 🚀 Cancel check — lock se pehle, instant return
+        // Immediate cancel check
         if (cancelRequested) return null;
         if (inputText == null || inputText.trim().isEmpty()) return null;
 
         OfflineTts localTts;
         synchronized (this) {
             if (tts == null) return null;
-            localTts = tts;
+            localTts = tts; 
         }
 
         try {
@@ -203,12 +206,12 @@ public class KokoroEngine {
             GeneratedAudio audio = localTts.generate(inputText.trim(), activeSpeakerId, speedValue);
 
             if (cancelRequested) return null;
-
             if (audio == null) return null;
 
             float[] audioFloats = audio.getSamples();
             if (audioFloats == null || audioFloats.length == 0) return null;
 
+            // Float to Short conversion with anti-clipping bounds
             short[] shortSamples = new short[audioFloats.length];
             for (int i = 0; i < audioFloats.length; i++) {
                 float f = audioFloats[i];
@@ -216,6 +219,8 @@ public class KokoroEngine {
                 if (f < -1.0f) f = -1.0f;
                 shortSamples[i] = (short) (f * 32767.0f);
             }
+
+            // Sonic pitch shifting
             if (pitchValue != 1.0f) {
                 if (cancelRequested) return null;
                 int sampleRate = localTts.sampleRate();
@@ -232,13 +237,14 @@ public class KokoroEngine {
                             shortSamples = outSamples;
                         }
                     } catch (Throwable ignored) {
+                        // Fallback to original samples if Sonic fails
                     }
                 }
             }
 
-            // Step 3: Short → Byte (Little Endian)
             if (cancelRequested) return null;
 
+            // Short to PCM byte array (Little Endian format required by AudioTrack)
             byte[] pcmData = new byte[shortSamples.length * 2];
             for (int i = 0; i < shortSamples.length; i++) {
                 pcmData[i * 2]     = (byte) (shortSamples[i] & 0xff);

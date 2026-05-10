@@ -122,6 +122,7 @@ public class VoiceEngine {
 
                 OfflineTts candidate = new OfflineTts(null, config);
 
+                // 🚀 FIX 1: "..." ki jagah "Hello" use kiya taaki engine safe state me initialize ho
                 GeneratedAudio test = candidate.generate("Hello", 0, 1.0f);
                 if (test != null && test.getSamples() != null && test.getSamples().length > 0) {
                     return candidate;
@@ -173,7 +174,6 @@ public class VoiceEngine {
 
     // ── Generate audio PCM ───────────────────────────────────────────────────
     public byte[] generateAudioPCM(String inputText, float speedValue, float pitchValue) {
-        
         if (cancelRequested) return null;
         if (inputText == null || inputText.trim().isEmpty()) return null;
 
@@ -194,8 +194,6 @@ public class VoiceEngine {
 
             float[] audioFloats = audio.getSamples();
             if (audioFloats == null || audioFloats.length == 0) return null;
-
-            // FIX 2: Float → Short (With Anti-Clipping Logic for safety)
             short[] shortSamples = new short[audioFloats.length];
             for (int i = 0; i < audioFloats.length; i++) {
                 float f = audioFloats[i];

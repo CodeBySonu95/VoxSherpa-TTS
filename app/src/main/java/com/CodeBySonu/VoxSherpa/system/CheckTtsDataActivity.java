@@ -6,8 +6,8 @@ import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.content.SharedPreferences;
 import java.util.ArrayList;
-import com.CodeBySonu.VoxSherpa.VoiceEngine;
-import com.CodeBySonu.VoxSherpa.KokoroEngine;
+import java.util.HashSet;
+import java.util.Set;
 import com.CodeBySonu.VoxSherpa.KokoroVoiceHelper;
 
 public class CheckTtsDataActivity extends Activity {
@@ -20,35 +20,46 @@ public class CheckTtsDataActivity extends Activity {
         ArrayList<String> unavailableVoices = new ArrayList<>();
 
         try {
-            // Retrieve the currently active language from SharedPreferences
             SharedPreferences sp = getSharedPreferences("sp1", MODE_PRIVATE);
-            String activeModelType = sp.getString("active_model_type", "");
-            String rawLanguage = ""; 
+            String allData = sp.getString("models_data", "[]");
+            java.util.ArrayList<java.util.HashMap<String, Object>> downloadedModels = 
+                new com.google.gson.Gson().fromJson(allData, new com.google.gson.reflect.TypeToken<java.util.ArrayList<java.util.HashMap<String, Object>>>(){}.getType());
 
-            // Read specific language based on the active model type
-            if ("kokoro".equals(activeModelType)) {
-                int speakerId = sp.getInt("active_kokoro_speaker", 31);
-                KokoroVoiceHelper.VoiceItem voice = KokoroVoiceHelper.getById(speakerId);
-                if (voice != null && voice.language != null && !voice.language.isEmpty()) {
-                    rawLanguage = voice.language; 
+            Set<String> uniqueLocales = new HashSet<>();
+
+            if (downloadedModels != null) {
+                boolean isKokoroDownloaded = false;
+                for (java.util.HashMap<String, Object> m : downloadedModels) {
+                    String onnxPath = m.containsKey("onnx_path") && m.get("onnx_path") != null ? m.get("onnx_path").toString() : "";
+                    if (!onnxPath.isEmpty()) {
+                        boolean isKokoroType = m.containsKey("type") && m.get("type").toString().contains("Kokoro");
+                        if (isKokoroType) {
+                            isKokoroDownloaded = true;
+                        } else {
+                            String rawLanguage = m.containsKey("language") ? m.get("language").toString() : "";
+                            if (!rawLanguage.isEmpty()) {
+                                String[] isoLang = TtsLocaleHelper.getTtsLanguageArray(rawLanguage);
+                                if (isoLang != null && isoLang[0] != null && !isoLang[0].isEmpty()) {
+                                    uniqueLocales.add(isoLang[0]); // ONLY LANGUAGE CODE
+                                }
+                            }
+                        }
+                    }
                 }
-            } else {
-                rawLanguage = sp.getString("active_language", "");
+
+                if (isKokoroDownloaded) {
+                    java.util.List<String> kokoroLangs = KokoroVoiceHelper.getAvailableLanguages();
+                    for (String lang : kokoroLangs) {
+                        String[] isoLang = TtsLocaleHelper.getTtsLanguageArray(lang);
+                        if (isoLang != null && isoLang[0] != null && !isoLang[0].isEmpty()) {
+                            uniqueLocales.add(isoLang[0]); // ONLY LANGUAGE CODE
+                        }
+                    }
+                }
             }
 
-            // Convert to ISO-3 format using the helper (e.g., "hin", "IND")
-            String[] isoLang = TtsLocaleHelper.getTtsLanguageArray(rawLanguage);
-            
-            // Format for Android System: "language-country" (e.g., "hin-IND" or "eng-USA")
-            if (isoLang != null && isoLang[0] != null && !isoLang[0].isEmpty()) {
-                String localeString = isoLang[0];
-                if (isoLang[1] != null && !isoLang[1].isEmpty()) {
-                    localeString += "-" + isoLang[1];
-                }
-                availableVoices.add(localeString);
-            }
+            availableVoices.addAll(uniqueLocales);
 
-            // Send data back to the Android Settings UI
             Intent returnData = new Intent();
             returnData.putStringArrayListExtra(TextToSpeech.Engine.EXTRA_AVAILABLE_VOICES, availableVoices);
             returnData.putStringArrayListExtra(TextToSpeech.Engine.EXTRA_UNAVAILABLE_VOICES, unavailableVoices);
@@ -56,7 +67,6 @@ public class CheckTtsDataActivity extends Activity {
             setResult(TextToSpeech.Engine.CHECK_VOICE_DATA_PASS, returnData);
 
         } catch (Throwable t) {
-            // Safe fallback in case of an unexpected error, returning empty lists to prevent settings crash
             Intent fallback = new Intent();
             fallback.putStringArrayListExtra(TextToSpeech.Engine.EXTRA_AVAILABLE_VOICES, availableVoices);
             fallback.putStringArrayListExtra(TextToSpeech.Engine.EXTRA_UNAVAILABLE_VOICES, unavailableVoices);

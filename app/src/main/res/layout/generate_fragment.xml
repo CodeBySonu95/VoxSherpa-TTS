@@ -131,7 +131,7 @@
 		android:textStyle="bold"
 		android:textColor="#566580" />
 	<com.google.android.material.card.MaterialCardView
-		android:id="@+id/cardview27"
+		android:id="@+id/voice_info_card"
 		android:layout_width="match_parent"
 		android:layout_height="50dp"
 		android:layout_marginTop="10dp"

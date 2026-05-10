@@ -19,23 +19,53 @@
 		android:id="@+id/tv_sort_title"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_marginBottom="12dp"
+		android:layout_marginBottom="16dp"
 		android:text="Filter &amp; Sort"
 		android:textSize="16sp"
 		android:textStyle="bold"
 		android:textColor="#FFFFFF"
 		android:focusable="false"
 		android:layout_marginStart="16dp" />
+	<com.google.android.material.textfield.TextInputLayout
+		android:id="@+id/textinputlayout2"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginBottom="12dp"
+		android:layout_marginStart="16dp"
+		android:layout_marginEnd="16dp"
+		style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+		app:boxStrokeColor="#1D61FF"
+		app:hintTextColor="#8E99AF">
+		<AutoCompleteTextView
+			android:id="@+id/dropdown_lang"
+			android:focusable="false"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:paddingTop="14dp"
+			android:paddingBottom="14dp"
+			android:textSize="14sp"
+			android:textColor="#FFFFFF"
+			android:hint="Select Language"
+			android:inputType="none" />
+	</com.google.android.material.textfield.TextInputLayout>
+	<View
+		android:id="@+id/view2"
+		android:layout_width="match_parent"
+		android:layout_height="1dp"
+		android:layout_marginBottom="8dp"
+		android:background="#2A344A"
+		android:layout_marginStart="16dp"
+		android:layout_marginEnd="16dp" />
 	<LinearLayout
 		android:id="@+id/layout_all_models"
 		android:layout_width="match_parent"
 		android:layout_height="48dp"
+		android:background="?attr/selectableItemBackground"
 		android:gravity="center_vertical"
 		android:orientation="horizontal"
 		android:focusable="true"
 		android:paddingStart="16dp"
-		android:paddingEnd="16dp"
-		android:background="?attr/selectableItemBackground">
+		android:paddingEnd="16dp">
 		<TextView
 			android:id="@+id/tv_all_models"
 			android:layout_width="0dp"
@@ -59,12 +89,12 @@
 		android:id="@+id/layout_download"
 		android:layout_width="match_parent"
 		android:layout_height="48dp"
+		android:background="?attr/selectableItemBackground"
 		android:gravity="center_vertical"
 		android:orientation="horizontal"
 		android:focusable="true"
 		android:paddingStart="16dp"
-		android:paddingEnd="16dp"
-		android:background="?attr/selectableItemBackground">
+		android:paddingEnd="16dp">
 		<TextView
 			android:id="@+id/tv_download"
 			android:layout_width="0dp"
@@ -88,12 +118,12 @@
 		android:id="@+id/layout_installed"
 		android:layout_width="match_parent"
 		android:layout_height="48dp"
+		android:background="?attr/selectableItemBackground"
 		android:gravity="center_vertical"
 		android:orientation="horizontal"
 		android:focusable="true"
 		android:paddingStart="16dp"
-		android:paddingEnd="16dp"
-		android:background="?attr/selectableItemBackground">
+		android:paddingEnd="16dp">
 		<TextView
 			android:id="@+id/tv_installed"
 			android:layout_width="0dp"
@@ -117,12 +147,12 @@
 		android:id="@+id/layout_newest"
 		android:layout_width="match_parent"
 		android:layout_height="48dp"
+		android:background="?attr/selectableItemBackground"
 		android:gravity="center_vertical"
 		android:orientation="horizontal"
 		android:focusable="true"
 		android:paddingStart="16dp"
-		android:paddingEnd="16dp"
-		android:background="?attr/selectableItemBackground">
+		android:paddingEnd="16dp">
 		<TextView
 			android:id="@+id/tv_newest"
 			android:layout_width="0dp"
@@ -146,12 +176,12 @@
 		android:id="@+id/layout_oldest"
 		android:layout_width="match_parent"
 		android:layout_height="48dp"
+		android:background="?attr/selectableItemBackground"
 		android:gravity="center_vertical"
 		android:orientation="horizontal"
 		android:focusable="true"
 		android:paddingStart="16dp"
-		android:paddingEnd="16dp"
-		android:background="?attr/selectableItemBackground">
+		android:paddingEnd="16dp">
 		<TextView
 			android:id="@+id/tv_oldest"
 			android:layout_width="0dp"

@@ -140,7 +140,7 @@
 			android:id="@+id/textview63"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:text="APP THEME"
+			android:text="SPEECH SETTINGS"
 			android:textSize="12sp"
 			android:textStyle="bold"
 			android:textColor="#1D61FF" />
@@ -297,8 +297,7 @@
 			app:cardCornerRadius="12dp"
 			app:strokeColor="#FF4B4B"
 			app:strokeWidth="1dp"
-			app:cardElevation="0dp"
-			android:background="?attr/selectableItemBackground">
+			app:cardElevation="0dp">
 			<LinearLayout
 				android:id="@+id/linear37"
 				android:layout_width="match_parent"
@@ -342,10 +341,10 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginTop="20dp"
+			android:background="?attr/selectableItemBackground"
 			android:gravity="center_vertical"
 			android:orientation="horizontal"
-			android:paddingVertical="8dp"
-			android:background="?attr/selectableItemBackground">
+			android:paddingVertical="8dp">
 			<ImageView
 				android:id="@+id/icon_info"
 				android:layout_width="24dp"
@@ -366,7 +365,7 @@
 				android:id="@+id/textview73"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:text="v2.4.0-stable"
+				android:text="v2.9-stable"
 				android:textSize="14sp"
 				android:textColor="#718096" />
 		</LinearLayout>
@@ -375,10 +374,10 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginTop="16dp"
+			android:background="?attr/selectableItemBackground"
 			android:gravity="center_vertical"
 			android:orientation="horizontal"
-			android:paddingVertical="8dp"
-			android:background="?attr/selectableItemBackground">
+			android:paddingVertical="8dp">
 			<ImageView
 				android:id="@+id/icon_license"
 				android:layout_width="24dp"
@@ -408,10 +407,10 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginTop="16dp"
+			android:background="?attr/selectableItemBackground"
 			android:gravity="center_vertical"
 			android:orientation="horizontal"
-			android:paddingVertical="8dp"
-			android:background="?attr/selectableItemBackground">
+			android:paddingVertical="8dp">
 			<ImageView
 				android:id="@+id/imageview3"
 				android:layout_width="24dp"
@@ -441,10 +440,10 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginTop="16dp"
+			android:background="?attr/selectableItemBackground"
 			android:gravity="center_vertical"
 			android:orientation="horizontal"
-			android:paddingVertical="8dp"
-			android:background="?attr/selectableItemBackground">
+			android:paddingVertical="8dp">
 			<ImageView
 				android:id="@+id/imageview7"
 				android:layout_width="24dp"
@@ -463,6 +462,72 @@
 				android:layout_marginStart="16dp" />
 			<ImageView
 				android:id="@+id/imageview8"
+				android:layout_width="20dp"
+				android:layout_height="20dp"
+				android:src="@drawable/icon_keyboard_arrow_right"
+				android:scaleType="fitXY"
+				app:tint="#718096" />
+		</LinearLayout>
+		<LinearLayout
+			android:id="@+id/linear12"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="16dp"
+			android:background="?attr/selectableItemBackground"
+			android:gravity="center_vertical"
+			android:orientation="horizontal"
+			android:paddingVertical="8dp">
+			<ImageView
+				android:id="@+id/imageview13"
+				android:layout_width="24dp"
+				android:layout_height="24dp"
+				android:src="@drawable/icon_settings_suggest"
+				android:scaleType="fitXY"
+				app:tint="#718096" />
+			<TextView
+				android:id="@+id/textview6"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:text="Setup System TTS"
+				android:textSize="16sp"
+				android:textColor="#FFFFFF"
+				android:layout_weight="1"
+				android:layout_marginStart="16dp" />
+			<ImageView
+				android:id="@+id/imageview14"
+				android:layout_width="20dp"
+				android:layout_height="20dp"
+				android:src="@drawable/icon_keyboard_arrow_right"
+				android:scaleType="fitXY"
+				app:tint="#718096" />
+		</LinearLayout>
+		<LinearLayout
+			android:id="@+id/linear3"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="16dp"
+			android:background="?attr/selectableItemBackground"
+			android:gravity="center_vertical"
+			android:orientation="horizontal"
+			android:paddingVertical="8dp">
+			<ImageView
+				android:id="@+id/imageview5"
+				android:layout_width="24dp"
+				android:layout_height="24dp"
+				android:src="@drawable/icon_system_update"
+				android:scaleType="fitXY"
+				app:tint="#718096" />
+			<TextView
+				android:id="@+id/textview3"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:text="Check Update"
+				android:textSize="16sp"
+				android:textColor="#FFFFFF"
+				android:layout_weight="1"
+				android:layout_marginStart="16dp" />
+			<ImageView
+				android:id="@+id/imageview6"
 				android:layout_width="20dp"
 				android:layout_height="20dp"
 				android:src="@drawable/icon_keyboard_arrow_right"

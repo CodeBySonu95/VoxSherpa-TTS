@@ -34,7 +34,6 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import com.CodeBySonu.VoxSherpa.databinding.*;
-import com.google.android.material.*;
 import com.google.firebase.FirebaseApp;
 import com.k2fsa.sherpa.onnx.*;
 import com.tom_roush.pdfbox.*;
@@ -506,18 +505,20 @@ public class GenerateFragmentActivity extends Fragment {
 			@Override
 			public void onTextChanged(CharSequence _param1, int _param2, int _param3, int _param4) {
 				final String _charSeq = _param1.toString();
-				int length = _charSeq.length();
 				
+				int length = _charSeq.length();
 				if (length > 25000) {
 					binding.etInput.setText(_charSeq.substring(0, 25000));
 					binding.etInput.setSelection(25000);
 				}
 				
+				// Reset state on text change
 				String currentText = binding.etInput.getText().toString().trim();
 				
 				if (!currentText.equals(lastGeneratedText) && !isGenerating) {
 					isAudioGeneratedForCurrentText = false;
 					
+					// UI STATE RESET
 					binding.layoutIdleState.setVisibility(android.view.View.VISIBLE);
 					binding.layoutGeneratedState.setVisibility(android.view.View.GONE);
 					binding.progressGenerating.setVisibility(android.view.View.GONE);
@@ -551,13 +552,13 @@ public class GenerateFragmentActivity extends Fragment {
 		binding.opneDropdown.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View _view) {
-				
-				
 				String activeName = sp1.getString("active_model_name", "");
 				boolean kokoroActive = activeName.toLowerCase().contains("kokoro");
 				String activePath = sp1.getString("active_model", "");
 				
-				if (activePath.isEmpty()) return;
+				if (activePath.isEmpty()) {
+					return;
+				}
 				
 				if (!kokoroActive) {
 					com.google.android.material.snackbar.Snackbar
@@ -586,6 +587,7 @@ public class GenerateFragmentActivity extends Fragment {
 						listPopupWindow.show();
 					}
 				}
+				
 			}
 		});
 		
@@ -598,239 +600,303 @@ public class GenerateFragmentActivity extends Fragment {
 	}
 	
 	private void initializeLogic() {
-		com.CodeBySonu.VoxSherpa.system.VoxMediaController.getInstance(getContext()).setGenerateListener(new com.CodeBySonu.VoxSherpa.system.VoxMediaController.MediaCommandListener() { 
-			android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper()); 
-			@Override 
-			public void onPlay() { 
-				mainHandler.post(() -> { try { _toggleGeneratePlayback(); } catch(Exception e) {} }); 
-			} 
-			@Override 
-			public void onPause() { 
-				mainHandler.post(() -> { try { _toggleGeneratePlayback(); } catch(Exception e) {} }); 
-			} 
-			@Override 
-			public void onStop() { 
-				mainHandler.post(() -> { try { _cancelGeneration(); } catch(Exception e) {} }); 
-			} 
-			@Override 
+		com.CodeBySonu.VoxSherpa.system.VoxMediaController.getInstance(getContext()).setGenerateListener(new com.CodeBySonu.VoxSherpa.system.VoxMediaController.MediaCommandListener() {
+			
+			android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+			
+			@Override
+			public void onPlay() {
+				mainHandler.post(() -> { try { _toggleGeneratePlayback(); } catch(Exception e) {} });
+			}
+			
+			@Override
+			public void onPause() {
+				mainHandler.post(() -> { try { _toggleGeneratePlayback(); } catch(Exception e) {} });
+			}
+			
+			@Override
+			public void onStop() {
+				mainHandler.post(() -> { try { _cancelGeneration(); } catch(Exception e) {} });
+			}
+			
+			@Override
 			public void onNext() {} 
-			@Override 
+			
+			@Override
 			public void onPrevious() {} 
-		}); 
-		audioManager = (android.media.AudioManager) getContext().getSystemService(android.content.Context.AUDIO_SERVICE); 
-		focusListener = focusChange -> { 
+		});
+		
+		// AUDIO FOCUS LOGIC
+		audioManager = (android.media.AudioManager) getContext().getSystemService(android.content.Context.AUDIO_SERVICE);
+		
+		focusListener = focusChange -> {
 			if (focusChange == android.media.AudioManager.AUDIOFOCUS_LOSS || 
-			focusChange == android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) { 
-				if (liveStreamTrack != null && liveStreamTrack.getPlayState() == android.media.AudioTrack.PLAYSTATE_PLAYING) { 
-					liveStreamTrack.pause(); 
-				} 
-				if (audioTrack != null && audioTrack.getPlayState() == android.media.AudioTrack.PLAYSTATE_PLAYING) { 
-					audioTrack.pause(); 
-					if (getActivity() != null) { 
-						getActivity().runOnUiThread(() -> { 
-							binding.imageview52.setImageResource(R.drawable.icon_play_circle); 
-							binding.textview92.setText("Play"); 
-							if (playheadAnimator != null) playheadAnimator.pause(); 
-							com.CodeBySonu.VoxSherpa.system.VoxMediaController.getInstance(getContext()).updatePlaybackState("VoxSherpa Audio", "Paused", com.CodeBySonu.VoxSherpa.system.VoxMediaController.STATE_PAUSED, false); 
-						}); 
-					} 
-				} 
-			} else if (focusChange == android.media.AudioManager.AUDIOFOCUS_GAIN) { 
-				if (liveStreamTrack != null) liveStreamTrack.play(); 
-			} 
-		}; 
-		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) { 
-			focusRequest = new android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN) 
-			.setOnAudioFocusChangeListener(focusListener) 
-			.build(); 
-		} 
-		String activeModel = sp1.getString("active_model", ""); 
-		String activeModelName = sp1.getString("active_model_name", ""); 
-		String activeModelType = sp1.getString("active_model_type", ""); 
-		boolean isKokoro = activeModelType.equals("kokoro") || activeModelName.toLowerCase().contains("kokoro"); 
-		if (activeModel.isEmpty()) { 
-			binding.voiceNameTv.setText("No Model Selected"); 
-			binding.voiceNameTv.setTextColor(android.graphics.Color.parseColor("#FF4B4B")); 
-		} else { 
-			if (isKokoro) { 
-				try { 
-					int savedSpeakerId = sp1.getInt("active_kokoro_speaker", 31); 
-					KokoroEngine.getInstance().setActiveSpeakerId(savedSpeakerId); 
-					String voiceName = KokoroEngine.getInstance().getActiveVoiceName(); 
-					binding.voiceNameTv.setText((voiceName != null && !voiceName.isEmpty()) ? voiceName : "Kokoro Voice"); 
-				} catch (Throwable t) { 
-					binding.voiceNameTv.setText("Kokoro Voice"); 
-				} 
-			} else { 
-				String piperLang = "Unknown"; 
-				String piperGender = "Unknown"; 
-				try { 
-					String modelsDataRaw = sp1.getString("models_data", "[]"); 
-					if (!modelsDataRaw.equals("[]")) { 
-						ArrayList<HashMap<String, Object>> mList = 
-						new Gson().fromJson(modelsDataRaw, 
-						new TypeToken<ArrayList<HashMap<String, Object>>>(){}.getType()); 
-						if (mList != null) { 
-							for (HashMap<String, Object> model : mList) { 
-								String onnxPath = model.containsKey("onnx_path") && model.get("onnx_path") != null ? model.get("onnx_path").toString() : ""; 
-								if (activeModel.equals(onnxPath)) { 
-									if (model.containsKey("language") && model.get("language") != null) { 
-										piperLang = model.get("language").toString().trim(); 
-									} 
-									if (model.containsKey("gender") && model.get("gender") != null) { 
-										piperGender = model.get("gender").toString().trim(); 
-									} 
+			focusChange == android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+				
+				if (liveStreamTrack != null && liveStreamTrack.getPlayState() == android.media.AudioTrack.PLAYSTATE_PLAYING) {
+					liveStreamTrack.pause();
+				}
+				
+				if (audioTrack != null && audioTrack.getPlayState() == android.media.AudioTrack.PLAYSTATE_PLAYING) {
+					audioTrack.pause();
+					if (getActivity() != null) {
+						getActivity().runOnUiThread(() -> {
+							binding.imageview52.setImageResource(R.drawable.icon_play_circle);
+							binding.textview92.setText("Play");
+							if (playheadAnimator != null) playheadAnimator.pause();
+							com.CodeBySonu.VoxSherpa.system.VoxMediaController.getInstance(getContext()).updatePlaybackState("VoxSherpa Audio", "Paused", com.CodeBySonu.VoxSherpa.system.VoxMediaController.STATE_PAUSED, false);
+						});
+					}
+				}
+			} else if (focusChange == android.media.AudioManager.AUDIOFOCUS_GAIN) {
+				if (liveStreamTrack != null) liveStreamTrack.play();
+			}
+		};
+		
+		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+			focusRequest = new android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN)
+			.setOnAudioFocusChangeListener(focusListener)
+			.build();
+		}
+		
+		// On Create Logic
+		
+		String activeModel = sp1.getString("active_model", "");
+		String activeModelName = sp1.getString("active_model_name", "");
+		String activeModelType = sp1.getString("active_model_type", "");
+		
+		// Safety check for Kokoro
+		boolean isKokoro = activeModelType.equals("kokoro") || activeModelName.toLowerCase().contains("kokoro");
+		
+		if (activeModel.isEmpty()) {
+			binding.voiceNameTv.setText("No Model Selected");
+			binding.voiceNameTv.setTextColor(android.graphics.Color.parseColor("#FF4B4B"));
+			// Hide the dropdown arrow when no model is selected
+			binding.opneDropdown.setVisibility(android.view.View.GONE);
+		} else {
+			// Show the dropdown arrow when a model is selected
+			binding.opneDropdown.setVisibility(android.view.View.VISIBLE);
+			
+			if (isKokoro) {
+				// Kokoro logic
+				try {
+					int savedSpeakerId = sp1.getInt("active_kokoro_speaker", 31);
+					com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().setActiveSpeakerId(savedSpeakerId);
+					String voiceName = com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().getActiveVoiceName();
+					binding.voiceNameTv.setText((voiceName != null && !voiceName.isEmpty()) ? voiceName : "Kokoro Voice");
+				} catch (Throwable t) {
+					binding.voiceNameTv.setText("Kokoro Voice");
+				}
+			} else {
+				// PIPER FIX
+				String piperLang = "Unknown";
+				String piperGender = "Unknown";
+				
+				try {
+					String modelsDataRaw = sp1.getString("models_data", "[]");
+					if (!modelsDataRaw.equals("[]")) {
+						java.util.ArrayList<java.util.HashMap<String, Object>> mList = 
+						new com.google.gson.Gson().fromJson(modelsDataRaw, 
+						new com.google.gson.reflect.TypeToken<java.util.ArrayList<java.util.HashMap<String, Object>>>(){}.getType());
+						
+						if (mList != null) {
+							for (java.util.HashMap<String, Object> model : mList) {
+								String onnxPath = model.containsKey("onnx_path") && model.get("onnx_path") != null ? model.get("onnx_path").toString() : "";
+								
+								if (activeModel.equals(onnxPath)) {
+									if (model.containsKey("language") && model.get("language") != null) {
+										piperLang = model.get("language").toString().trim();
+									}
+									if (model.containsKey("gender") && model.get("gender") != null) {
+										piperGender = model.get("gender").toString().trim();
+									}
 									break; 
-								} 
-							} 
-						} 
-					} 
+								}
+							}
+						}
+					}
 				} catch (Exception e) {} 
-				if (!piperLang.equals("Unknown") && piperLang.length() > 0) { 
-					piperLang = piperLang.substring(0, 1).toUpperCase() + piperLang.substring(1).toLowerCase(); 
-				} 
-				if (!piperGender.equals("Unknown") && piperGender.length() > 0) { 
-					piperGender = piperGender.substring(0, 1).toUpperCase() + piperGender.substring(1).toLowerCase(); 
-				} 
-				binding.voiceNameTv.setText("Piper • " + piperGender + " • " + piperLang); 
-			} 
-			binding.voiceNameTv.setTextColor(android.graphics.Color.WHITE); 
-		} 
-		listPopupWindow = new androidx.appcompat.widget.ListPopupWindow(getContext()); 
-		listPopupWindow.setAnchorView(binding.voiceNameTv); 
-		listPopupWindow.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.parseColor("#131B2D"))); 
-		List<KokoroVoiceHelper.VoiceItem> allVoices = KokoroVoiceHelper.getAllVoices(); 
-		List<String> voiceNames = new ArrayList<>(); 
-		for (KokoroVoiceHelper.VoiceItem vItem : allVoices) { 
-			try { 
-				String label = vItem.getFullLabel(); 
-				voiceNames.add((label != null && !label.isEmpty()) ? label : "Unknown Voice"); 
-			} catch (Throwable t) { 
-				voiceNames.add("Unknown Voice"); 
-			} 
-		} 
-		voiceAdapter = new android.widget.ArrayAdapter<>(getContext(), R.layout.dropdown_item, R.id.text1, voiceNames); 
-		listPopupWindow.setAdapter(voiceAdapter); 
-		listPopupWindow.setOnItemClickListener((parent, view, position, id) -> { 
-			try { 
-				String selectedLabel = voiceAdapter.getItem(position); 
-				if (selectedLabel == null) return; 
-				binding.voiceNameTv.setText(selectedLabel); 
-				for (KokoroVoiceHelper.VoiceItem vItem : KokoroVoiceHelper.getAllVoices()) { 
-					try { 
-						if (selectedLabel.equals(vItem.getFullLabel())) { 
-							KokoroEngine.getInstance().setActiveSpeakerId(vItem.speakerId); 
-							sp1.edit().putInt("active_kokoro_speaker", vItem.speakerId).apply(); 
-							try { com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().cancel(); } catch (Throwable ignored) {} 
-							try { KokoroEngine.getInstance().cancel(); } catch (Throwable ignored) {} 
-							currentGenerationId++; 
+				
+				if (!piperLang.equals("Unknown") && piperLang.length() > 0) {
+					piperLang = piperLang.substring(0, 1).toUpperCase() + piperLang.substring(1).toLowerCase();
+				}
+				if (!piperGender.equals("Unknown") && piperGender.length() > 0) {
+					piperGender = piperGender.substring(0, 1).toUpperCase() + piperGender.substring(1).toLowerCase();
+				}
+				
+				binding.voiceNameTv.setText("Piper • " + piperGender + " • " + piperLang);
+			}
+			binding.voiceNameTv.setTextColor(android.graphics.Color.WHITE);
+		}
+		
+		// Dropdown Logic (Always initialized, click listener handles the rest)
+		listPopupWindow = new androidx.appcompat.widget.ListPopupWindow(getContext());
+		listPopupWindow.setAnchorView(binding.voiceNameTv);
+		listPopupWindow.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.parseColor("#131B2D")));
+		
+		java.util.List<com.CodeBySonu.VoxSherpa.KokoroVoiceHelper.VoiceItem> allVoices = com.CodeBySonu.VoxSherpa.KokoroVoiceHelper.getAllVoices();
+		java.util.List<String> voiceNames = new java.util.ArrayList<>();
+		for (com.CodeBySonu.VoxSherpa.KokoroVoiceHelper.VoiceItem vItem : allVoices) {
+			try {
+				String label = vItem.getFullLabel();
+				voiceNames.add((label != null && !label.isEmpty()) ? label : "Unknown Voice");
+			} catch (Throwable t) {
+				voiceNames.add("Unknown Voice");
+			}
+		}
+		
+		voiceAdapter = new android.widget.ArrayAdapter<>(getContext(), R.layout.dropdown_item, R.id.text1, voiceNames);
+		listPopupWindow.setAdapter(voiceAdapter);
+		
+		listPopupWindow.setOnItemClickListener((parent, view, position, id) -> {
+			try {
+				String selectedLabel = voiceAdapter.getItem(position);
+				if (selectedLabel == null) return;
+				binding.voiceNameTv.setText(selectedLabel);
+				
+				for (com.CodeBySonu.VoxSherpa.KokoroVoiceHelper.VoiceItem vItem : com.CodeBySonu.VoxSherpa.KokoroVoiceHelper.getAllVoices()) {
+					try {
+						if (selectedLabel.equals(vItem.getFullLabel())) {
+							com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().setActiveSpeakerId(vItem.speakerId);
+							sp1.edit().putInt("active_kokoro_speaker", vItem.speakerId).apply();
+							
+							// THE BULLETPROOF RESET LOGIC
+							
+							// Cancel native engines to immediately stop background generation
+							try { com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().cancel(); } catch (Throwable ignored) {}
+							try { com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().cancel(); } catch (Throwable ignored) {}
+							
+							currentGenerationId++;
 							isCancelled = true; 
 							isGenerating = false; 
-							isAudioGeneratedForCurrentText = false; 
-							try { 
-								if (audioTrack != null) { 
-									audioTrack.stop(); 
-									audioTrack.flush(); 
-									audioTrack.release(); 
-									audioTrack = null; 
-								} 
-							} catch (Exception ignored) {} 
-							try { 
-								if (liveStreamTrack != null) { 
-									liveStreamTrack.stop(); 
-									liveStreamTrack.release(); 
-									liveStreamTrack = null; 
-								} 
-							} catch (Exception ignored) {} 
-							lastGeneratedPcmData = null; 
-							lastParams = null; 
-							if (playheadAnimator != null) playheadAnimator.cancel(); 
-							binding.playheadLine.setTranslationX(0f); 
-							binding.btnGenerate.setAlpha(1.0f); 
-							binding.btnGenerate.setEnabled(true); 
-							binding.layoutGeneratedState.setVisibility(android.view.View.GONE); 
-							binding.layoutIdleState.setVisibility(android.view.View.VISIBLE); 
-							binding.progressGenerating.setVisibility(android.view.View.GONE); 
-							binding.imageview65.setVisibility(android.view.View.VISIBLE); 
-							binding.textview69.setText("READY TO GENERATE"); 
-							binding.textview69.setTextColor(android.graphics.Color.parseColor("#718096")); 
-							binding.textview92.setText("Generate"); 
-							binding.imageview52.setImageResource(R.drawable.icon_play_circle); 
-							break; 
-						} 
-					} catch (Throwable t) {} 
-				} 
-			} catch (Throwable t) {} 
-			listPopupWindow.dismiss(); 
-		}); 
-		binding.imgWaveform.setOnTouchListener((v, motionEvent) -> { 
-			if (lastGeneratedPcmData == null || audioTrack == null) return false; 
-			int w = binding.imgWaveform.getWidth(); 
-			if (w <= 0) return false; 
-			int totalFrames = lastGeneratedPcmData.length / 2; 
-			double totalSeconds = (double) totalFrames / lastGeneratedSampleRate; 
-			int totalMin = (int)(totalSeconds / 60); 
-			int totalSec = (int)(totalSeconds % 60); 
-			float touchX = Math.max(0f, Math.min(motionEvent.getX(), (float) w)); 
-			float fraction = touchX / w; 
-			int targetFrame = (int)(fraction * totalFrames); 
-			if (motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN) { 
-				if (playheadAnimator != null) playheadAnimator.pause(); 
-				try { audioTrack.pause(); } catch (Exception ignored) {} 
-			} 
-			if (motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN 
-			|| motionEvent.getAction() == android.view.MotionEvent.ACTION_MOVE) { 
-				binding.playheadLine.setTranslationX(touchX); 
-				double seekSec = fraction * totalSeconds; 
-				binding.tvDuration.setText(String.format(java.util.Locale.US, "%d:%02d / %d:%02d", 
-				(int)(seekSec / 60), (int)(seekSec % 60), totalMin, totalSec)); 
-			} 
-			if (motionEvent.getAction() == android.view.MotionEvent.ACTION_UP 
-			|| motionEvent.getAction() == android.view.MotionEvent.ACTION_CANCEL) { 
-				try { 
-					audioTrack.stop(); 
-					audioTrack.reloadStaticData(); 
-					audioTrack.setPlaybackHeadPosition(targetFrame); 
-					_requestAudioFocus(); 
-					audioTrack.play(); 
-				} catch (Exception ignored) {} 
-				float remainingSec = (float)(totalFrames - targetFrame) / lastGeneratedSampleRate; 
-				if (remainingSec < 0) remainingSec = 0f; 
-				if (playheadAnimator != null) playheadAnimator.cancel(); 
-				playheadAnimator = android.animation.ValueAnimator.ofFloat(touchX, (float) w); 
-				playheadAnimator.setDuration((long)(remainingSec * 1000)); 
-				playheadAnimator.setInterpolator(new android.view.animation.LinearInterpolator()); 
-				playheadAnimator.addUpdateListener(anim -> { 
-					float tx = (float) anim.getAnimatedValue(); 
-					binding.playheadLine.setTranslationX(tx); 
-					double elapsed = (tx / w) * totalSeconds; 
-					binding.tvDuration.setText(String.format(java.util.Locale.US, "%d:%02d / %d:%02d", 
-					(int)(elapsed / 60), (int)(elapsed % 60), totalMin, totalSec)); 
-				}); 
-				playheadAnimator.addListener(new android.animation.AnimatorListenerAdapter() { 
-					@Override 
-					public void onAnimationEnd(android.animation.Animator animation) { 
-						if (binding.playheadLine.getTranslationX() >= w - 10) { 
-							binding.imageview52.setImageResource(R.drawable.icon_play_circle); 
-							binding.textview92.setText("Play"); 
-							binding.playheadLine.setTranslationX(0f); 
-							binding.tvDuration.setText(String.format(java.util.Locale.US, 
-							"0:00 / %d:%02d", totalMin, totalSec)); 
-							try { 
-								if (audioTrack != null) { 
-									audioTrack.stop(); 
-									audioTrack.reloadStaticData(); 
-								} 
-							} catch (Exception ignored) {} 
-						} 
-					} 
-				}); 
-				playheadAnimator.start(); 
-				binding.imageview52.setImageResource(R.drawable.icon_pause_circle); 
-				binding.textview92.setText("Pause"); 
-			} 
-			return true; 
-		}); 
+							isAudioGeneratedForCurrentText = false;
+							
+							try {
+								if (audioTrack != null) {
+									audioTrack.stop();
+									audioTrack.flush();
+									audioTrack.release();
+									audioTrack = null;
+								}
+							} catch (Exception ignored) {}
+							
+							// Prevent memory leak from background generation track
+							try {
+								if (liveStreamTrack != null) {
+									liveStreamTrack.stop();
+									liveStreamTrack.release();
+									liveStreamTrack = null;
+								}
+							} catch (Exception ignored) {}
+							
+							lastGeneratedPcmData = null;
+							lastParams = null;
+							
+							if (playheadAnimator != null) playheadAnimator.cancel();
+							binding.playheadLine.setTranslationX(0f);
+							
+							binding.btnGenerate.setAlpha(1.0f);
+							binding.btnGenerate.setEnabled(true);
+							
+							binding.layoutGeneratedState.setVisibility(android.view.View.GONE);
+							binding.layoutIdleState.setVisibility(android.view.View.VISIBLE);
+							
+							binding.progressGenerating.setVisibility(android.view.View.GONE);
+							binding.imageview65.setVisibility(android.view.View.VISIBLE);
+							binding.textview69.setText("READY TO GENERATE");
+							binding.textview69.setTextColor(android.graphics.Color.parseColor("#718096"));
+							
+							binding.textview92.setText("Generate");
+							binding.imageview52.setImageResource(R.drawable.icon_play_circle);
+							
+							break;
+						}
+					} catch (Throwable t) {}
+				}
+			} catch (Throwable t) {}
+			listPopupWindow.dismiss();
+		});
+		
+		binding.imgWaveform.setOnTouchListener((v, motionEvent) -> {
+			if (lastGeneratedPcmData == null || audioTrack == null) return false;
+			
+			int w = binding.imgWaveform.getWidth();
+			if (w <= 0) return false;
+			
+			int totalFrames = lastGeneratedPcmData.length / 2;
+			double totalSeconds = (double) totalFrames / lastGeneratedSampleRate;
+			int totalMin = (int)(totalSeconds / 60);
+			int totalSec = (int)(totalSeconds % 60);
+			
+			float touchX = Math.max(0f, Math.min(motionEvent.getX(), (float) w));
+			float fraction = touchX / w;
+			int targetFrame = (int)(fraction * totalFrames);
+			
+			if (motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+				if (playheadAnimator != null) playheadAnimator.pause();
+				try { audioTrack.pause(); } catch (Exception ignored) {}
+			}
+			
+			if (motionEvent.getAction() == android.view.MotionEvent.ACTION_DOWN
+			|| motionEvent.getAction() == android.view.MotionEvent.ACTION_MOVE) {
+				binding.playheadLine.setTranslationX(touchX);
+				double seekSec = fraction * totalSeconds;
+				binding.tvDuration.setText(String.format(java.util.Locale.US, "%d:%02d / %d:%02d",
+				(int)(seekSec / 60), (int)(seekSec % 60), totalMin, totalSec));
+			}
+			
+			if (motionEvent.getAction() == android.view.MotionEvent.ACTION_UP
+			|| motionEvent.getAction() == android.view.MotionEvent.ACTION_CANCEL) {
+				try {
+					audioTrack.stop();
+					audioTrack.reloadStaticData();
+					audioTrack.setPlaybackHeadPosition(targetFrame);
+					_requestAudioFocus();
+					
+					audioTrack.play();
+				} catch (Exception ignored) {}
+				
+				float remainingSec = (float)(totalFrames - targetFrame) / lastGeneratedSampleRate;
+				if (remainingSec < 0) remainingSec = 0f;
+				
+				if (playheadAnimator != null) playheadAnimator.cancel();
+				playheadAnimator = android.animation.ValueAnimator.ofFloat(touchX, (float) w);
+				playheadAnimator.setDuration((long)(remainingSec * 1000));
+				playheadAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
+				playheadAnimator.addUpdateListener(anim -> {
+					float tx = (float) anim.getAnimatedValue();
+					binding.playheadLine.setTranslationX(tx);
+					// tvDuration live update during playback after seek
+					double elapsed = (tx / w) * totalSeconds;
+					binding.tvDuration.setText(String.format(java.util.Locale.US, "%d:%02d / %d:%02d",
+					(int)(elapsed / 60), (int)(elapsed % 60), totalMin, totalSec));
+				});
+				playheadAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+					@Override
+					public void onAnimationEnd(android.animation.Animator animation) {
+						if (binding.playheadLine.getTranslationX() >= w - 10) {
+							binding.imageview52.setImageResource(R.drawable.icon_play_circle);
+							binding.textview92.setText("Play");
+							binding.playheadLine.setTranslationX(0f);
+							binding.tvDuration.setText(String.format(java.util.Locale.US,
+							"0:00 / %d:%02d", totalMin, totalSec));
+							try {
+								if (audioTrack != null) {
+									audioTrack.stop();
+									audioTrack.reloadStaticData();
+								}
+							} catch (Exception ignored) {}
+						}
+					}
+				});
+				playheadAnimator.start();
+				
+				binding.imageview52.setImageResource(R.drawable.icon_pause_circle);
+				binding.textview92.setText("Pause");
+			}
+			
+			return true;
+		});
 		
 	}
 	
@@ -902,73 +968,98 @@ public class GenerateFragmentActivity extends Fragment {
 	@Override
 	public void onResume() {
 		super.onResume();
-		String activeModel = sp1.getString("active_model", ""); 
-		String activeModelType = sp1.getString("active_model_type", ""); 
-		String activeModelName = sp1.getString("active_model_name", ""); 
-		boolean isKokoro = activeModelType.equals("kokoro") || activeModelName.toLowerCase().contains("kokoro"); 
-		if (activeModel.isEmpty()) { 
-			binding.voiceNameTv.setText("No Model Selected"); 
-			binding.voiceNameTv.setTextColor(android.graphics.Color.parseColor("#FF4B4B")); 
-		} else { 
-			if (isKokoro) { 
-				try { 
-					int savedSpeakerId = sp1.getInt("active_kokoro_speaker", 31); 
-					com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().setActiveSpeakerId(savedSpeakerId); 
-					String voiceName = com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().getActiveVoiceName(); 
-					binding.voiceNameTv.setText((voiceName != null && !voiceName.isEmpty()) ? voiceName : "Kokoro Voice"); 
-				} catch (Throwable t) { 
-					binding.voiceNameTv.setText("Kokoro Voice"); 
-				} 
-			} else { 
-				String piperLang = "Unknown"; 
-				String piperGender = "Unknown"; 
-				try { 
-					String modelsDataRaw = sp1.getString("models_data", "[]"); 
-					if (!modelsDataRaw.equals("[]")) { 
-						java.util.ArrayList<java.util.HashMap<String, Object>> mList = 
-						new com.google.gson.Gson().fromJson(modelsDataRaw, 
-						new com.google.gson.reflect.TypeToken<java.util.ArrayList<java.util.HashMap<String, Object>>>(){}.getType()); 
-						if (mList != null) { 
-							for (java.util.HashMap<String, Object> model : mList) { 
-								String onnxPath = model.containsKey("onnx_path") && model.get("onnx_path") != null ? model.get("onnx_path").toString() : ""; 
-								if (activeModel.equals(onnxPath)) { 
-									if (model.containsKey("language") && model.get("language") != null) { 
-										piperLang = model.get("language").toString().trim(); 
-									} 
-									if (model.containsKey("gender") && model.get("gender") != null) { 
-										piperGender = model.get("gender").toString().trim(); 
-									} 
-									break; 
-								} 
-							} 
-						} 
-					} 
-				} catch (Exception e) {} 
-				if (!piperLang.equals("Unknown") && piperLang.length() > 0) { 
-					piperLang = piperLang.substring(0, 1).toUpperCase() + piperLang.substring(1).toLowerCase(); 
-				} 
-				if (!piperGender.equals("Unknown") && piperGender.length() > 0) { 
-					piperGender = piperGender.substring(0, 1).toUpperCase() + piperGender.substring(1).toLowerCase(); 
-				} 
-				binding.voiceNameTv.setText("Piper • " + piperGender + " • " + piperLang); 
-			} 
-			binding.voiceNameTv.setTextColor(android.graphics.Color.WHITE); 
-		} 
-		String currentSettingsState = sp3.getFloat("voice_speed", 1.0f) + "_" + 
-		sp3.getFloat("voice_pitch", 1.0f) + "_" + 
-		sp3.getBoolean("smart_punct", false) + "_" + 
-		sp3.getBoolean("emotion_tags", false); 
-		boolean isSettingChanged = !lastSettingsState.isEmpty() && !currentSettingsState.equals(lastSettingsState); 
-		boolean isModelChanged = !currentUiModelPath.isEmpty() && !activeModel.equals(currentUiModelPath); 
-		if (isModelChanged || isSettingChanged) { 
-			_forceResetToIdle(); 
-		} 
-		currentUiModelPath = activeModel; 
-		lastSettingsState = currentSettingsState; 
+		String activeModel = sp1.getString("active_model", "");
+		String activeModelType = sp1.getString("active_model_type", "");
+		String activeModelName = sp1.getString("active_model_name", "");
+		boolean isKokoro = activeModelType.equals("kokoro") || activeModelName.toLowerCase().contains("kokoro");
+		if (activeModel.isEmpty()) {
+			binding.voiceNameTv.setText("No Model Selected");
+			binding.voiceNameTv.setTextColor(android.graphics.Color.parseColor("#FF4B4B"));
+			binding.opneDropdown.setVisibility(android.view.View.GONE);
+		} else {
+			binding.opneDropdown.setVisibility(android.view.View.VISIBLE);
+			if (isKokoro) {
+				try {
+					int savedSpeakerId = sp1.getInt("active_kokoro_speaker", 31);
+					com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().setActiveSpeakerId(savedSpeakerId);
+					String voiceName = com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().getActiveVoiceName();
+					binding.voiceNameTv.setText((voiceName != null && !voiceName.isEmpty()) ? voiceName : "Kokoro Voice");
+				} catch (Throwable t) {
+					binding.voiceNameTv.setText("Kokoro Voice");
+				}
+			} else {
+				String piperLang = "Unknown";
+				String piperGender = "Unknown";
+				try {
+					String modelsDataRaw = sp1.getString("models_data", "[]");
+					if (!modelsDataRaw.equals("[]")) {
+						java.util.ArrayList<java.util.HashMap<String, Object>> mList =
+						new com.google.gson.Gson().fromJson(modelsDataRaw,
+						new com.google.gson.reflect.TypeToken<java.util.ArrayList<java.util.HashMap<String, Object>>>(){}.getType());
+						if (mList != null) {
+							for (java.util.HashMap<String, Object> model : mList) {
+								String onnxPath = model.containsKey("onnx_path") && model.get("onnx_path") != null ? model.get("onnx_path").toString() : "";
+								if (activeModel.equals(onnxPath)) {
+									if (model.containsKey("language") && model.get("language") != null) {
+										piperLang = model.get("language").toString().trim();
+									}
+									if (model.containsKey("gender") && model.get("gender") != null) {
+										piperGender = model.get("gender").toString().trim();
+									}
+									break;
+								}
+							}
+						}
+					}
+				} catch (Exception e) {}
+				if (!piperLang.equals("Unknown") && piperLang.length() > 0) {
+					piperLang = piperLang.substring(0, 1).toUpperCase() + piperLang.substring(1).toLowerCase();
+				}
+				if (!piperGender.equals("Unknown") && piperGender.length() > 0) {
+					piperGender = piperGender.substring(0, 1).toUpperCase() + piperGender.substring(1).toLowerCase();
+				}
+				binding.voiceNameTv.setText("Piper • " + piperGender + " • " + piperLang);
+			}
+			binding.voiceNameTv.setTextColor(android.graphics.Color.WHITE);
+		}
+		String currentSettingsState = sp3.getFloat("voice_speed", 1.0f) + "_" +
+		sp3.getFloat("voice_pitch", 1.0f) + "_" +
+		sp3.getBoolean("smart_punct", false) + "_" +
+		sp3.getBoolean("emotion_tags", false);
+		boolean isSettingChanged = !lastSettingsState.isEmpty() && !currentSettingsState.equals(lastSettingsState);
+		boolean isModelChanged = !currentUiModelPath.isEmpty() && !activeModel.equals(currentUiModelPath);
+		if (isModelChanged || isSettingChanged) {
+			_forceResetToIdle();
+		}
+		currentUiModelPath = activeModel;
+		lastSettingsState = currentSettingsState;
+	}
+	
+	
+	@Override
+	public void onStart() {
+		super.onStart();
+		try {
+			// Check if Activity is not null and is an instance of MainActivity
+			if (getActivity() != null && getActivity() instanceof MainActivity) {
+				MainActivity mainActivity = (MainActivity) getActivity();
+				
+				// Check if there is text waiting to be processed
+				if (mainActivity.sharedProcessText != null && !mainActivity.sharedProcessText.isEmpty()) {
+					
+					binding.etInput.setText(mainActivity.sharedProcessText);
+					
+					binding.etInput.setSelection(mainActivity.sharedProcessText.length());
+					mainActivity.sharedProcessText = ""; 
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 	}
-	
 	public void _saveAudioAction() {
+		// ─── SAVE BUTTON LOGIC ──────────────────────────────────────────────────────
 		
 		if (!isAudioGeneratedForCurrentText || lastGeneratedPcmData == null) {
 			if (getView() != null) {
@@ -998,6 +1089,8 @@ public class GenerateFragmentActivity extends Fragment {
 				
 				java.util.HashMap<String, Object> newItem = new java.util.HashMap<>();
 				newItem.put("title", cleanFileName);
+				
+				// Extract the first sentence from the generated text for a clean title
 				String rawText = (lastParams != null && lastParams.text != null) ? lastParams.text : lastGeneratedText;
 				if (rawText == null || rawText.trim().isEmpty()) {
 					rawText = binding.etInput.getText().toString().trim();
@@ -1030,6 +1123,7 @@ public class GenerateFragmentActivity extends Fragment {
 				newItem.put("full_text", rawText); 
 				newItem.put("path", savedPath);
 				
+				// Exact duration calculation to prevent UI formatting bugs
 				double totalSeconds = (lastGeneratedPcmData.length / 2.0) / sampleRateToSave;
 				int min = (int) (totalSeconds / 60);
 				int sec = (int) (totalSeconds % 60);
@@ -1070,13 +1164,13 @@ public class GenerateFragmentActivity extends Fragment {
 	
 	
 	public void _forceResetToIdle() {
-		
+		// CRITICAL SIGSEGV FIX: Cancel native engines to stop C++ background generation immediately
 		try {
 			com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().cancel();
 			com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().cancel();
 		} catch (Throwable ignored) {}
 		
-		currentGenerationId++;
+		currentGenerationId++; // Zombie threads kill
 		isCancelled = true;
 		isGenerating = false;
 		isAudioGeneratedForCurrentText = false;
@@ -1099,14 +1193,13 @@ public class GenerateFragmentActivity extends Fragment {
 		} catch (Exception ignored) {}
 		
 		if (playheadAnimator != null) playheadAnimator.cancel();
-		
 		binding.playheadLine.setTranslationX(0f);
 		binding.layoutGeneratedState.setVisibility(android.view.View.GONE);
 		binding.layoutIdleState.setVisibility(android.view.View.VISIBLE);
 		binding.progressGenerating.setVisibility(android.view.View.GONE);
 		binding.imageview65.setVisibility(android.view.View.VISIBLE);
 		
-		binding.textview92.setText("Generate");
+		binding.textview92.setText("Generate"); // No confusion
 		binding.imageview52.setImageResource(R.drawable.icon_play_circle);
 		binding.textview69.setText("READY TO SYNTHESIZE");
 		binding.textview69.setTextColor(android.graphics.Color.parseColor("#718096"));
@@ -1146,6 +1239,7 @@ public class GenerateFragmentActivity extends Fragment {
 			final int _totalSec = (int)(totalSeconds % 60);
 			final int w = binding.imgWaveform.getWidth() > 0 ? binding.imgWaveform.getWidth() : 800;
 			
+			// 🚀 FIX: Removed 'flush()' which was causing Silent Play. Added proper reset loop.
 			if (currentHead >= totalFrames - 4000 || playState == android.media.AudioTrack.PLAYSTATE_STOPPED) {
 				try {
 					audioTrack.stop();
@@ -1211,12 +1305,13 @@ public class GenerateFragmentActivity extends Fragment {
 	public void _cancelGeneration() {
 		if (isGenerating && !isCancelled) {
 			isCancelled = true;
-			isGenerating = false;
+			isGenerating = false; // ✅ Safety check (prevents re-triggering
 			new Thread(() -> {
 				try { com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().cancel(); } catch (Exception ignored) {}
 				try { com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().cancel(); } catch (Exception ignored) {}
 			}).start();
 			
+			// LiveStream track (Instant Silence)
 			try {
 				if (liveStreamTrack != null) {
 					liveStreamTrack.pause();
@@ -1224,7 +1319,6 @@ public class GenerateFragmentActivity extends Fragment {
 					liveStreamTrack.stop();
 				}
 			} catch (Exception ignored) {}
-			
 			if (binding != null) {
 				try {
 					binding.textview92.setText("Canceling...");
@@ -1233,6 +1327,7 @@ public class GenerateFragmentActivity extends Fragment {
 				} catch (Exception ignored) {}
 			}
 			
+			// Notification hide (Purane stable behavior ke hisaab se)
 			try {
 				com.CodeBySonu.VoxSherpa.system.VoxMediaController.getInstance(getContext()).hideNotification();
 			} catch (Exception ignored) {}

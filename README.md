@@ -1,11 +1,17 @@
-<div align="center">
+    <div align="center">
 
 <img src="https://raw.githubusercontent.com/CodeBySonu95/VoxSherpa-TTS/main/fastlane/metadata/android/en-US/images/featureGraphic.png" width="100%" alt="VoxSherpa TTS Banner"/>
 
 <br/>
 <br/>
 
-[![Join Beta](https://img.shields.io/badge/Join-Beta%20v2.1-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://docs.google.com/forms/d/e/1FAIpQLSd-_VgF3DlbiG2eU00Dw_cZECMinUIuSx_Nr6NJt1DeUcIwTQ/viewform?usp=publish-editor)
+<a href="https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa">
+  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="90"/>
+</a>
+
+<br/>
+<br/>
+
 [![Support](https://img.shields.io/badge/💙_Support-This%20Project-FF5E5B?style=for-the-badge)](https://codebysonu95.github.io/VoxSherpa-TTS/assets/support.html)
 [![Android](https://img.shields.io/badge/Android-11%2B-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://android.com)
 [![License](https://img.shields.io/badge/License-GPL%20v3.0-blue?style=for-the-badge)](LICENSE)
@@ -58,7 +64,7 @@ It runs two professional-grade neural engines entirely on your device:
 ## Features
 
 ### 🎙️ Dual Neural Engine
-- **Kokoro-82M** — 82 million parameter neural model. Multilingual support including Hindi, English, British English, French, Spanish, Chinese, Japanese and 50+ more languages. Same architecture used by top-tier commercial TTS services.
+- **Kokoro-82M** — 82 million parameter neural model. Multilingual support including Hindi, English, British English, French, Spanish, Chinese, Japanese and 50+ languages. Same architecture used by top-tier commercial TTS services.
 - **Piper / VITS** — Fast, lightweight, natural. Generates speech in seconds on any Android device.
 
 ### 🔒 100% Offline & Private
@@ -66,6 +72,11 @@ It runs two professional-grade neural engines entirely on your device:
 - No internet required after model download
 - No account, no telemetry, no data collection
 - Your text never leaves your phone
+
+### 📄 Document to Audio
+- PDF to Audio — listen to any document hands-free
+- TXT to Audio — convert plain text files instantly
+- System-wide TTS engine — use VoxSherpa in Chrome, WhatsApp, any app
 
 ### 📦 Model Management
 - Download models directly from the app
@@ -76,7 +87,8 @@ It runs two professional-grade neural engines entirely on your device:
 ### 🎧 Audio Controls
 - Real-time waveform visualization
 - Adjustable speed and pitch
-- Play, pause, and replay generated audio
+- Interactive audio seeking with mini player controls
+- MediaStyle notification with full playback controls
 - Export as WAV with correct sample rate per model
 
 ### 📚 Speech Library
@@ -84,11 +96,13 @@ It runs two professional-grade neural engines entirely on your device:
 - Favorites system for quick access
 - View generation history with timestamps
 - Voice model attribution per recording
+- Regenerate audio on voice change
 
 ### ⚙️ Smart Settings
 - **Smart Punctuation** — natural pauses after sentence breaks
 - **Emotion Tags** — `[whisper]`, `[angry]`, `[happy]` support
 - Per-model voice selection (Kokoro supports 100+ speakers)
+- System-wide TTS engine with pitch & speed control
 - Theme-aware UI
 
 ---
@@ -131,25 +145,17 @@ Generation speed depends entirely on your device's processor:
 
 ## Installation
 
-### 🧪 Help Me Reach Google Play — Join the Beta!
+<div align="center">
 
-I've submitted **VoxSherpa TTS V2.1** to Google Play, but according to Play Store rules, I need at least **12 testers for 14 days** before I can publish to production.
+<a href="https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa">
+  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="80"/>
+</a>
 
-If you find this project useful and want early access to V2.1 — I'd really appreciate your help. All you need to do is install the app and keep it for 14 days. You don't have to do anything else.
+</div>
 
-**What's new in V2.4:**
-- 🔊 System-wide TTS engine — use VoxSherpa in any app (Chrome, WhatsApp, etc.)
-- 📄 PDF to Audio
-- 📑 TXT to Audio
+**Requirements:** Android 11+ · ARM64 · ~500 MB free storage recommended (for models)
 
-**How to join:**
-1. Fill out the form below with your Gmail
-2. I'll add you manually to the closed test
-3. You'll receive a Play Store opt-in link
-
-[![Join Beta](https://img.shields.io/badge/Join-Beta%20v2.1-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://docs.google.com/forms/d/e/1FAIpQLSd-_VgF3DlbiG2eU00Dw_cZECMinUIuSx_Nr6NJt1DeUcIwTQ/viewform?usp=publish-editor)
-
-> Source code for V2.0 and V2.1 will be pushed to GitHub after beta testing is complete.
+---
 
 ## Model Import (Technical Users)
 

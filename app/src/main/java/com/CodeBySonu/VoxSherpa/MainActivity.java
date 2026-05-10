@@ -23,7 +23,6 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import com.CodeBySonu.VoxSherpa.databinding.*;
-import com.google.android.material.*;
 import com.google.firebase.FirebaseApp;
 import com.k2fsa.sherpa.onnx.*;
 import com.tom_roush.pdfbox.*;
@@ -46,13 +45,12 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.graphics.Insets;
 
 import androidx.viewpager2.widget.ViewPager2;
-import androidx.viewpager2.adapter.FragmentStateAdapter;
-
-import androidx.fragment.app.Fragment;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 public class MainActivity extends AppCompatActivity {
 	
 	private MainBinding binding;
+	public String sharedProcessText = "";
 	
 	@Override
 	protected void onCreate(Bundle _savedInstanceState) {
@@ -71,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
 		
 		com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(getApplicationContext());
 		
-		
+		com.CodeBySonu.VoxSherpa.system.TtsDefaultHelper.syncDefaultVoices(this);
 		
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 		
@@ -86,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
 			}
 		});
 		
+		// 1. SETUP VIEWPAGER2 ADAPTER (Inline)
 		binding.viewpager.setAdapter(new FragmentStateAdapter(this) {
 			@NonNull
 			@Override
@@ -101,13 +100,13 @@ public class MainActivity extends AppCompatActivity {
 			
 			@Override
 			public int getItemCount() {
-				return 4;
+				return 4; // Total 4 Tabs
 			}
 		});
 		
 		binding.viewpager.setOffscreenPageLimit(3); 
 		
-		// 1. SYNC UI WITH SWIPES & CLICKS
+		// 3. SYNC UI WITH SWIPES & CLICKS
 		binding.viewpager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
 			@Override
 			public void onPageSelected(int position) {
@@ -151,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
 			}
 		});
 		
-		// 2. BOTTOM NAV CLICK LISTENERS (Instant Switch Trick)
+		// 4. BOTTOM NAV CLICK LISTENERS (Instant Switch Trick)
 		binding.navGenerate.setOnClickListener(v -> {
 			binding.viewpager.setCurrentItem(0, false); 
 		});
@@ -170,4 +169,38 @@ public class MainActivity extends AppCompatActivity {
 		
 	}
 	
+	
+	@Override
+	public void onStart() {
+		super.onStart();
+		android.content.Intent currentIntent = getIntent();
+		if (currentIntent != null) {
+			String action = currentIntent.getAction();
+			String type = currentIntent.getType();
+			
+			// 1. Text Selection (Process Text) logic
+			if (android.content.Intent.ACTION_PROCESS_TEXT.equals(action)) {
+				CharSequence incomingText = currentIntent.getCharSequenceExtra(android.content.Intent.EXTRA_PROCESS_TEXT);
+				if (incomingText != null) {
+					sharedProcessText = incomingText.toString();
+				}
+			} 
+			// 2. Share Menu (Action Send) logic
+			else if (android.content.Intent.ACTION_SEND.equals(action) && type != null) {
+				if ("text/plain".equals(type)) {
+					// Check if it's actual text and NOT a file stream
+					if (currentIntent.hasExtra(android.content.Intent.EXTRA_TEXT) && !currentIntent.hasExtra(android.content.Intent.EXTRA_STREAM)) {
+						String sharedText = currentIntent.getStringExtra(android.content.Intent.EXTRA_TEXT);
+						if (sharedText != null) {
+							sharedProcessText = sharedText;
+						}
+					}
+				}
+			}
+			
+			// Intent clear karna taaki screen rotation par text dobara paste na ho
+			currentIntent.setAction(null);
+			setIntent(currentIntent);
+		}
+	}
 }

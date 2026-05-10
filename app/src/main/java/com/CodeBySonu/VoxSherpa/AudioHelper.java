@@ -17,7 +17,7 @@ public class AudioHelper {
             try (FileOutputStream fos = new FileOutputStream(wavFile)) {
                 long totalAudioLen = pcmData.length;
                 long totalDataLen  = totalAudioLen + 36;
-                long longSampleRate = sampleRate;
+                long longSampleRate = sampleRate; //
                 int  channels      = 1;
                 long byteRate      = 16L * longSampleRate * channels / 8;
 
