@@ -1,0 +1,99 @@
+// Engine-only Android Library that re-exposes a subset of the existing
+// `app/src/main/java/com/CodeBySonu/VoxSherpa/` files as a reusable AAR for
+// downstream Android consumers.
+//
+// The classes themselves live in `:app` as before — this module never moves
+// or duplicates source. We just point Gradle's java.srcDirs at the existing
+// path and whitelist the engine classes via `include`. Edits to those files
+// land in `:app/src/main/java/...` as usual, and this library picks up the
+// changes automatically on the next build.
+//
+// JitPack tags this module's AAR per release. Downstream apps depend on it
+// via (multi-module convention, owner = repo owner at JitPack-build time):
+//   implementation("com.github.<owner>.VoxSherpa-TTS:engine-lib:vX.Y.Z")
+
+plugins {
+    id 'com.android.library'
+    id 'maven-publish'
+}
+
+repositories {
+    google()
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+android {
+    namespace 'com.CodeBySonu.VoxSherpa.engine'
+    compileSdk 34
+
+    useLibrary 'org.apache.http.legacy'
+
+    defaultConfig {
+        minSdkVersion 26
+        targetSdkVersion 36
+        ndk { abiFilters 'arm64-v8a', 'x86_64' }
+
+        consumerProguardFiles 'consumer-rules.pro'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    sourceSets {
+        main {
+            // Source files live in :app's tree — never duplicated. This
+            // module is purely a build-system re-projection.
+            java.srcDirs = ['../app/src/main/java']
+            java.includes = [
+                'com/CodeBySonu/VoxSherpa/KokoroEngine.java',
+                'com/CodeBySonu/VoxSherpa/VoiceEngine.java',
+                'com/CodeBySonu/VoxSherpa/Sonic.java',
+                'com/CodeBySonu/VoxSherpa/AudioEmotionHelper.java',
+                'com/CodeBySonu/VoxSherpa/KokoroVoiceHelper.java',
+                'com/CodeBySonu/VoxSherpa/GenerationParams.java',
+            ]
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging true
+        }
+        pickFirst '**/*.so'
+    }
+
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.github.k2-fsa:sherpa-onnx:1.12.26'
+}
+
+// JitPack publishing — invokes `publishToMavenLocal` on a tagged build and
+// pushes the resulting AAR to its public Maven cache so consumers can
+// reference it under the multi-module convention
+// `com.github.<owner>.VoxSherpa-TTS:engine-lib:vX.Y.Z`. The `GROUP` system
+// property is injected by JitPack at build time and resolves to the owner
+// of the tagged repo automatically; the fallback covers local builds and
+// manual `publishToMavenLocal` invocations.
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                groupId = (project.findProperty('GROUP')
+                          ?: 'com.github.CodeBySonu95.VoxSherpa-TTS').toString()
+                artifactId = 'engine-lib'
+                version = (project.findProperty('version') ?: 'unspecified').toString()
+            }
+        }
+    }
+}

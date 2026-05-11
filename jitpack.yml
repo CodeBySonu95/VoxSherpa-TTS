@@ -1,0 +1,7 @@
+# JitPack build config: only build the engine-lib module (the :app target
+# pulls in Firebase and pdfbox-android which JitPack's sandbox can't
+# resolve cleanly, and there's no consumer for the app artifact anyway).
+jdk:
+  - openjdk17
+install:
+  - ./gradlew :engine-lib:publishToMavenLocal

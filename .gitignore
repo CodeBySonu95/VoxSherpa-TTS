@@ -1,0 +1,14 @@
+# Build artifacts
+**/build/
+.gradle/
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+captures/
+*.hprof
+
+# Native CMake build cache (generated; the .so libs themselves come from
+# the sherpa-onnx Maven dependency and shouldn't be in-tree either).
+.cxx/
