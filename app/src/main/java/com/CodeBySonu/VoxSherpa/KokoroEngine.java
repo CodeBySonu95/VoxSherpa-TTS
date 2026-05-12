@@ -46,7 +46,25 @@ public class KokoroEngine {
     public static final float DEFAULT_SILENCE_SCALE = 0.2f;
     private volatile float silenceScale = DEFAULT_SILENCE_SCALE;
 
-    private KokoroEngine() {}
+    /**
+     * Public constructor — added 2026-05-09 (jphein fork) to enable
+     * multi-instance parallelism, mirroring [VoiceEngine]'s public
+     * constructor in v2.7.8. Each instance owns its own onnxruntime
+     * session via the [tts] field; calls into [generateAudioPCM] are
+     * serialized per-instance via the synchronized monitor on `this`.
+     * Two instances loaded against the same model files → two
+     * independent OrtSessions, generate runs in parallel.
+     *
+     * Memory cost: each loaded Kokoro session is ~325 MB resident
+     * (the multi-speaker 53-voice model). Multi-instance use should
+     * verify the device has enough RAM; 8 instances on an 8 GB phone
+     * fits but stresses the LMK headroom.
+     *
+     * Existing callers continue to use [getInstance] for the singleton
+     * path; storyvox's parallel-synth slider (#88) constructs
+     * additional instances as `new KokoroEngine()`.
+     */
+    public KokoroEngine() {}
 
     // ── Singleton — thread-safe double-checked locking ───────────────────────
     public static KokoroEngine getInstance() {

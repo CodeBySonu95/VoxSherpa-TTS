@@ -38,7 +38,25 @@ public class VoiceEngine {
     private volatile float noiseScale = DEFAULT_NOISE_SCALE;
     private volatile float noiseScaleW = DEFAULT_NOISE_SCALE_W;
 
-    private VoiceEngine() {}
+    /**
+     * Public constructor — added 2026-05-09 (jphein fork) to enable
+     * multi-instance parallelism. Each instance owns its own
+     * onnxruntime session via the [tts] field; calls into
+     * [generateAudioPCM] are serialized per-instance via the
+     * synchronized monitor on `this`. Two instances loaded against
+     * the same model file → two independent OrtSessions, generate
+     * runs in parallel.
+     *
+     * Memory cost: each loaded Piper-high session is ~150 MB resident
+     * (1.5–2× the on-disk model size). Multi-instance use should
+     * verify the device has enough RAM; on a 3 GB Helio P22T two
+     * instances fit but three may LMK-kill.
+     *
+     * Existing callers continue to use [getInstance] for the singleton
+     * path; the storyvox Tier 3 (parallel synth) path constructs
+     * additional instances as `new VoiceEngine()`.
+     */
+    public VoiceEngine() {}
 
     // ── Singleton — thread-safe double-checked locking ───────────────────────
     public static VoiceEngine getInstance() {
