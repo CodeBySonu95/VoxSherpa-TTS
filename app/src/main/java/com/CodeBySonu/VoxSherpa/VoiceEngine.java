@@ -107,6 +107,18 @@ public class VoiceEngine {
         espeakDataPath = destDir.getAbsolutePath();
     }
 
+    /**
+     * Override for [getOptimalThreadCount]'s default. 0 (or negative)
+     * means "use the auto heuristic"; a positive value forces that
+     * exact numThreads count for sherpa-onnx's internal threading.
+     * Set via [loadModel]'s numThreads-overload.
+     */
+    private int explicitNumThreads = 0;
+
+    private int effectiveNumThreads() {
+        return explicitNumThreads > 0 ? explicitNumThreads : getOptimalThreadCount();
+    }
+
     // ── Provider fallback: XNNPACK → CPU ────────────────────────────────────
     private OfflineTts _createTtsWithFallback(String modelPath, String tokensPath) {
         String[] providers = {"xnnpack", "cpu"};
@@ -123,7 +135,7 @@ public class VoiceEngine {
 
                 OfflineTtsModelConfig modelConfig = new OfflineTtsModelConfig();
                 modelConfig.setVits(vits);
-                modelConfig.setNumThreads(getOptimalThreadCount());
+                modelConfig.setNumThreads(effectiveNumThreads());
                 modelConfig.setProvider(provider);
                 modelConfig.setDebug(false);
 
@@ -148,6 +160,19 @@ public class VoiceEngine {
     }
 
     // ── Load model ───────────────────────────────────────────────────────────
+    /**
+     * Overload that lets the caller override the numThreads passed to
+     * sherpa-onnx. Pass [numThreads] = 0 for the auto heuristic (identical
+     * behavior to the base [loadModel]); pass a positive value to force
+     * that exact thread count — useful on thermally-constrained devices
+     * where the auto value sustains too much load.
+     */
+    public synchronized String loadModel(
+            Context context, String modelPath, String tokensPath, int numThreads) {
+        this.explicitNumThreads = numThreads;
+        return loadModel(context, modelPath, tokensPath);
+    }
+
     public synchronized String loadModel(Context context, String modelPath, String tokensPath) {
         cancelRequested = false; // Reset on new load
         if (tts != null && activeModelUri.equals(modelPath)) return "Success";

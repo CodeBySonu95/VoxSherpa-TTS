@@ -66,6 +66,15 @@ public class KokoroEngine {
     }
 
     // ── Smart thread count ───────────────────────────────────────────────────
+    // [explicitNumThreads] overrides the auto heuristic when set to a positive
+    // value via [loadModel]'s 5-arg overload. Defaults to 0 (use auto) so the
+    // existing 4-arg [loadModel] callers see no behavior change.
+    private int explicitNumThreads = 0;
+
+    private int effectiveNumThreads() {
+        return explicitNumThreads > 0 ? explicitNumThreads : getOptimalThreadCount();
+    }
+
     private int getOptimalThreadCount() {
         int cores = Runtime.getRuntime().availableProcessors();
         if (cores >= 8) return 4;
@@ -131,7 +140,7 @@ public class KokoroEngine {
 
                 OfflineTtsModelConfig modelConfig = new OfflineTtsModelConfig();
                 modelConfig.setKokoro(kokoroConfig);
-                modelConfig.setNumThreads(getOptimalThreadCount());
+                modelConfig.setNumThreads(effectiveNumThreads());
                 modelConfig.setProvider(provider);
                 modelConfig.setDebug(false);
 
@@ -161,8 +170,22 @@ public class KokoroEngine {
     }
 
     // ── Load model ───────────────────────────────────────────────────────────
+    /**
+     * Overload that lets the caller override the numThreads passed to
+     * sherpa-onnx. Pass [numThreads] = 0 for the auto heuristic (identical
+     * behavior to the 4-arg [loadModel]); pass a positive value to override
+     * the [getOptimalThreadCount] table — useful on thermally-constrained
+     * devices where the auto value sustains too much load.
+     */
+    public synchronized String loadModel(Context context, String onnxPath,
+                                          String tokensPath, String voicesBinPath,
+                                          int numThreads) {
+        this.explicitNumThreads = numThreads;
+        return loadModel(context, onnxPath, tokensPath, voicesBinPath);
+    }
+
     public synchronized String loadModel(Context context, String onnxPath, String tokensPath, String voicesBinPath) {
-        cancelRequested = false; 
+        cancelRequested = false;
 
         KokoroVoiceHelper.VoiceItem currentVoice = KokoroVoiceHelper.getById(activeSpeakerId);
         String targetLangCode = (currentVoice != null) ? currentVoice.languageCode : "en";
