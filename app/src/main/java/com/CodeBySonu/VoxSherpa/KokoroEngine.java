@@ -24,25 +24,15 @@ public class KokoroEngine {
     private static volatile KokoroEngine instance;
     private OfflineTts tts;
     private String activeModelUri = "";
-    // Tracks the current language context to prevent unnecessary reloads
-    // Plus tokens/voices-bin paths and context so [setSilenceScale] can
-    // rebuild the OfflineTts mid-session against the same model files.
     private String activeTokensUri = "";
     private String activeVoicesBinUri = "";
     private Context activeContext = null;
     private String activeLangCode = "";
     private String espeakDataPath = "";
+    private String ttsFrontendDataPath = "";
     private int activeSpeakerId = 31;
     private volatile boolean cancelRequested = false;
 
-    /** Within-sentence silence scale — controls the engine-level pause
-     *  applied around commas and mid-phrase punctuation. Default 0.2f
-     *  matches the previously-hardcoded behavior; consumers can drive
-     *  it from a UI slider (e.g. storyvox's punctuation-cadence
-     *  control) via [setSilenceScale]. Setting it on a loaded engine
-     *  rebuilds the OfflineTts so the change takes effect mid-session
-     *  on the next generated sentence — mirrors VoiceEngine's
-     *  [VoiceEngine.setNoiseScale] pattern. */
     public static final float DEFAULT_SILENCE_SCALE = 0.2f;
     private volatile float silenceScale = DEFAULT_SILENCE_SCALE;
 
@@ -109,8 +99,41 @@ public class KokoroEngine {
                 ? nestedDir.getAbsolutePath()
                 : destDir.getAbsolutePath();
     }
+    
+        // ── tts_frontend extract (For Chinese lexicon and Jieba dictionaries) ────
+    private synchronized void extractTtsFrontendData(Context context) {
+        if (context == null) return;
+        File destDir = new File(context.getFilesDir(), "tts_frontend_data");
+        String[] existing = destDir.list();
 
-    // ── Provider fallback: XNNPACK → CPU ────────────────────────────────────
+        if (!destDir.exists() || existing == null || existing.length == 0) {
+            destDir.mkdirs();
+            try (InputStream is = context.getAssets().open("tts_frontend.zip");
+                 ZipInputStream zis = new ZipInputStream(is)) {
+
+                ZipEntry ze;
+                byte[] buffer = new byte[32768];
+                while ((ze = zis.getNextEntry()) != null) {
+                    File newFile = new File(destDir, ze.getName());
+                    if (ze.isDirectory()) {
+                        newFile.mkdirs();
+                    } else {
+                        File parent = newFile.getParentFile();
+                        if (parent != null && !parent.exists()) parent.mkdirs();
+                        try (FileOutputStream fos = new FileOutputStream(newFile)) {
+                            int len;
+                            while ((len = zis.read(buffer)) > 0) fos.write(buffer, 0, len);
+                        }
+                    }
+                    zis.closeEntry();
+                }
+            } catch (Exception ignored) {}
+        }
+        ttsFrontendDataPath = destDir.getAbsolutePath();
+    }
+    
+
+                    // ── Provider fallback: XNNPACK → CPU ────────────────────────────────────
     private OfflineTts createTtsWithFallback(String onnxPath, String tokensPath, String voicesBinPath) {
         String[] providers = {"xnnpack", "cpu"};
 
@@ -127,7 +150,40 @@ public class KokoroEngine {
                 kokoroConfig.setTokens(tokensPath);
                 kokoroConfig.setVoices(voicesBinPath);
                 kokoroConfig.setDataDir(espeakDataPath);
-                kokoroConfig.setLang(langCode);
+
+                // Set language dynamically based on speaker to preserve multi-lingual capability.
+                // Prevent eSpeak crash for Chinese (zh) by falling back to "en-us" for OOV words.
+                // For other languages (hi, fr, etc.), pass their native langCode so eSpeak-ng
+                // can load their respective dictionaries from the espeak-ng-data directory.
+                if ("zh".equalsIgnoreCase(langCode)) {
+                    kokoroConfig.setLang("en-us");
+                } else {
+                    kokoroConfig.setLang(langCode);
+                }
+
+                OfflineTtsConfig config = new OfflineTtsConfig();
+
+                // Setup multi-lingual lexicons, Jieba dictionaries, and FST rules for Kokoro
+                if (ttsFrontendDataPath != null && !ttsFrontendDataPath.isEmpty()) {
+                    String lexiconEn = new File(ttsFrontendDataPath, "lexicon-us-en.txt").getAbsolutePath();
+                    String lexiconZh = new File(ttsFrontendDataPath, "lexicon-zh.txt").getAbsolutePath();
+                    
+                    // Always set both lexicons for multi-language support
+                    kokoroConfig.setLexicon(lexiconEn + "," + lexiconZh);
+                    
+                    // Set Jieba dictionary directory for Chinese word segmentation
+                    File dictFolder = new File(ttsFrontendDataPath, "dict");
+                    if (dictFolder.exists()) {
+                        kokoroConfig.setDictDir(dictFolder.getAbsolutePath());
+                    }
+                    
+                    // Set FST rules for Chinese parsing
+                    String phoneZh = new File(ttsFrontendDataPath, "phone-zh.fst").getAbsolutePath();
+                    String dateZh = new File(ttsFrontendDataPath, "date-zh.fst").getAbsolutePath();
+                    String numberZh = new File(ttsFrontendDataPath, "number-zh.fst").getAbsolutePath();
+                    
+                    config.setRuleFsts(phoneZh + "," + dateZh + "," + numberZh);
+                }
 
                 OfflineTtsModelConfig modelConfig = new OfflineTtsModelConfig();
                 modelConfig.setKokoro(kokoroConfig);
@@ -135,7 +191,6 @@ public class KokoroEngine {
                 modelConfig.setProvider(provider);
                 modelConfig.setDebug(false);
 
-                OfflineTtsConfig config = new OfflineTtsConfig();
                 config.setModel(modelConfig);
                 // Keep upstream's maxNumSentences=1 (System TTS prefers
                 // per-sentence inference for snappy progress callbacks).
@@ -159,8 +214,9 @@ public class KokoroEngine {
 
         return null;
     }
-
-    // ── Load model ───────────────────────────────────────────────────────────
+    
+    
+        // ── Load model ───────────────────────────────────────────────────────────
     public synchronized String loadModel(Context context, String onnxPath, String tokensPath, String voicesBinPath) {
         cancelRequested = false; 
 
@@ -187,6 +243,7 @@ public class KokoroEngine {
         try {
             destroy();
             extractEspeakData(context);
+            extractTtsFrontendData(context); // Extract Chinese lexicon and dictionaries
 
             if (espeakDataPath == null || espeakDataPath.isEmpty())
                 return "Error: espeak-ng-data extraction failed.";
@@ -209,6 +266,7 @@ public class KokoroEngine {
             return "Error: " + (t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
         }
     }
+    
 
     // ── Generate audio PCM ───────────────────────────────────────────────────
     public byte[] generateAudioPCM(String inputText, float speedValue, float pitchValue) {
@@ -316,18 +374,6 @@ public class KokoroEngine {
         }
     }
 
-    // ── Silence scale (within-sentence pauses) ──────────────────────────────
-    // The OfflineTtsConfig.silenceScale parameter controls the engine's
-    // pause around commas and mid-phrase punctuation. Surfacing it as a
-    // public knob lets consumers (e.g. storyvox's punctuation-cadence
-    // slider) drive the cadence without forking the engine.
-    //
-    // Setting it on a loaded engine triggers an immediate rebuild of
-    // the OfflineTts so the next [generateAudioPCM] call honors the new
-    // scale — mirrors VoiceEngine's setNoiseScale + _reloadIfActive
-    // pattern. The no-op fast-path skips both the assignment and the
-    // reload when the value matches the active scale, so settings UIs
-    // can call freely on every recomposition.
     public synchronized void setSilenceScale(float scale) {
         if (this.silenceScale == scale) return;
         this.silenceScale = scale;
@@ -338,10 +384,6 @@ public class KokoroEngine {
         return silenceScale;
     }
 
-    // Internal: rebuild OfflineTts with the current (model, tokens,
-    // voicesBin, silenceScale) values. Caller must hold the monitor on
-    // `this`. No-op if no model is loaded. Mirrors the same pattern
-    // VoiceEngine uses for its noise-scale setters.
     private void _reloadIfActive() {
         if (tts == null
                 || activeModelUri.isEmpty()
@@ -358,10 +400,6 @@ public class KokoroEngine {
             tts = replacement;
             try { old.release(); } catch (Throwable ignored) {}
         }
-        // If replacement fails, we keep the old engine — better to
-        // play with the previous silence scale than to drop into a
-        // null state mid-session. cancelRequested gets reset on the
-        // next loadModel call.
     }
 
     // ── State ────────────────────────────────────────────────────────────────
