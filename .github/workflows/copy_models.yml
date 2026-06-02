@@ -1,0 +1,45 @@
+name: Copy Models Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_tag:
+        description: 'Source release tag to download from'
+        required: true
+        default: 'voices-v2'
+      new_release_tag:
+        description: 'New release tag name for your repository'
+        required: true
+        default: 'piper-models-v1'
+
+permissions:
+  contents: write
+
+jobs:
+  copy-release-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Assets from Source Repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p downloaded_models
+          cd downloaded_models
+          
+          echo "Fetching assets from the source repository..."
+          gh release download ${{ github.event.inputs.source_tag }} --repo techempower-org/VoxSherpa-TTS
+          
+      - name: Create Release and Upload Assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd downloaded_models
+          
+          echo "Creating new release and uploading assets..."
+          gh release create ${{ github.event.inputs.new_release_tag }} * \
+            --title "Piper ONNX Models Pack (${{ github.event.inputs.new_release_tag }})" \
+            --notes "Pre-compiled Piper voice models optimized for Sherpa-ONNX text-to-speech engine. Special thanks to the contributors for compiling these assets." \
+            --repo CodeBySonu95/VoxSherpa-TTS
