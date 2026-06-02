@@ -37,7 +37,7 @@ jobs:
           # Base URL for official k2-fsa GitHub releases
           GH_BASE="https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models"
           
-          # Helper function to download, extract, and clean up
+          # Helper function to download, extract, and clean up safely using wildcards
           download_and_extract() {
             local model_dir="$1"
             local new_prefix="$2"
@@ -49,8 +49,15 @@ jobs:
             tar -xf "${model_dir}.tar.bz2"
             
             echo "Moving and renaming essential files..."
-            mv "${model_dir}/${model_dir}.onnx" "${new_prefix}.onnx"
-            mv "${model_dir}/tokens.txt" "${new_prefix}.tokens.txt"
+            # Using wildcard *.onnx to automatically catch the model regardless of its internal name
+            mv "${model_dir}"/*.onnx "${new_prefix}.onnx"
+            
+            # Some models use tokens.txt, others might use {name}.tokens.txt
+            if [ -f "${model_dir}/tokens.txt" ]; then
+              mv "${model_dir}/tokens.txt" "${new_prefix}.tokens.txt"
+            else
+              mv "${model_dir}"/*.txt "${new_prefix}.tokens.txt"
+            fi
             
             echo "Cleaning up temporary files..."
             rm -rf "${model_dir}" "${model_dir}.tar.bz2"
