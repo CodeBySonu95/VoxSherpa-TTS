@@ -1,0 +1,152 @@
+name: Generate Language-Specific Piper Releases
+
+on:
+  workflow_dispatch:
+    inputs:
+      language:
+        description: 'Select the language release to generate'
+        required: true
+        type: choice
+        options:
+          - 'Germany (German)'
+          - 'Brazil (Portuguese)'
+          - 'France (French)'
+          - 'Spain (Spanish)'
+          - 'Italy (Italian)'
+          - 'Japan (Japanese)'
+          - 'Russia (Russian)'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Create Workspace
+        run: mkdir -p target_voice_pack
+
+      - name: Fetch Assets and Configure Variables
+        run: |
+          cd target_voice_pack
+          echo "Processing selection: ${{ github.event.inputs.language }}"
+          
+          # Base URL for Hugging Face Sherpa-ONNX weights
+          HF_BASE="https://huggingface.co/csukuangfj/sherpa-onnx-tts-models/resolve/main"
+          
+          case "${{ github.event.inputs.language }}" in
+            "Germany (German)")
+              echo "TAG_NAME=piper-de-fp32" >> $GITHUB_ENV
+              echo "RELEASE_TITLE=Piper German ONNX Models Pack (de-fp32)" >> $GITHUB_ENV
+              echo "LANG_NAME=German" >> $GITHUB_ENV
+              curl -sSL -O "${HF_BASE}/piper-vits-de_DE-thorsten-medium/vits-piper-de_DE-thorsten-medium.onnx"
+              curl -sSL -O "${HF_BASE}/piper-vits-de_DE-thorsten-medium/tokens.txt"
+              mv vits-piper-de_DE-thorsten-medium.onnx de_DE-thorsten-medium.onnx
+              mv tokens.txt de_DE-thorsten-medium.tokens.txt
+              ;;
+              
+            "Brazil (Portuguese)")
+              echo "TAG_NAME=piper-pt-fp32" >> $GITHUB_ENV
+              echo "RELEASE_TITLE=Piper Portuguese ONNX Models Pack (pt-fp32)" >> $GITHUB_ENV
+              echo "LANG_NAME=Portuguese" >> $GITHUB_ENV
+              curl -sSL -O "${HF_BASE}/piper-vits-pt_BR-faber-medium/vits-piper-pt_BR-faber-medium.onnx"
+              curl -sSL -O "${HF_BASE}/piper-vits-pt_BR-faber-medium/tokens.txt"
+              mv vits-piper-pt_BR-faber-medium.onnx pt_BR-faber-medium.onnx
+              mv tokens.txt pt_BR-faber-medium.tokens.txt
+              ;;
+              
+            "France (French)")
+              echo "TAG_NAME=piper-fr-fp32" >> $GITHUB_ENV
+              echo "RELEASE_TITLE=Piper French ONNX Models Pack (fr-fp32)" >> $GITHUB_ENV
+              echo "LANG_NAME=French" >> $GITHUB_ENV
+              curl -sSL -O "${HF_BASE}/piper-vits-fr_FR-siwis-medium/vits-piper-fr_FR-siwis-medium.onnx"
+              curl -sSL -O "${HF_BASE}/piper-vits-fr_FR-siwis-medium/tokens.txt"
+              mv vits-piper-fr_FR-siwis-medium.onnx fr_FR-siwis-medium.onnx
+              mv tokens.txt fr_FR-siwis-medium.tokens.txt
+              ;;
+              
+            "Spain (Spanish)")
+              echo "TAG_NAME=piper-es-fp32" >> $GITHUB_ENV
+              echo "RELEASE_TITLE=Piper Spanish ONNX Models Pack (es-fp32)" >> $GITHUB_ENV
+              echo "LANG_NAME=Spanish" >> $GITHUB_ENV
+              curl -sSL -O "${HF_BASE}/piper-vits-es_ES-sharvard-medium/vits-piper-es_ES-sharvard-medium.onnx"
+              curl -sSL -O "${HF_BASE}/piper-vits-es_ES-sharvard-medium/tokens.txt"
+              mv vits-piper-es_ES-sharvard-medium.onnx es_ES-sharvard-medium.onnx
+              mv tokens.txt es_ES-sharvard-medium.tokens.txt
+              ;;
+              
+            "Italy (Italian)")
+              echo "TAG_NAME=piper-it-fp32" >> $GITHUB_ENV
+              echo "RELEASE_TITLE=Piper Italian ONNX Models Pack (it-fp32)" >> $GITHUB_ENV
+              echo "LANG_NAME=Italian" >> $GITHUB_ENV
+              curl -sSL -O "${HF_BASE}/piper-vits-it_IT-ricco-medium/vits-piper-it_IT-ricco-medium.onnx"
+              curl -sSL -O "${HF_BASE}/piper-vits-it_IT-ricco-medium/tokens.txt"
+              mv vits-piper-it_IT-ricco-medium.onnx it_IT-ricco-medium.onnx
+              mv tokens.txt it_IT-ricco-medium.tokens.txt
+              ;;
+              
+            "Japan (Japanese)")
+              echo "TAG_NAME=piper-ja-fp32" >> $GITHUB_ENV
+              echo "RELEASE_TITLE=Piper Japanese ONNX Models Pack (ja-fp32)" >> $GITHUB_ENV
+              echo "LANG_NAME=Japanese" >> $GITHUB_ENV
+              curl -sSL -O "${HF_BASE}/piper-vits-ja_JP-hina-medium/vits-piper-ja_JP-hina-medium.onnx"
+              curl -sSL -O "${HF_BASE}/piper-vits-ja_JP-hina-medium/tokens.txt"
+              mv vits-piper-ja_JP-hina-medium.onnx ja_JP-hina-medium.onnx
+              mv tokens.txt ja_JP-hina-medium.tokens.txt
+              ;;
+              
+            "Russia (Russian)")
+              echo "TAG_NAME=piper-ru-fp32" >> $GITHUB_ENV
+              echo "RELEASE_TITLE=Piper Russian ONNX Models Pack (ru-fp32)" >> $GITHUB_ENV
+              echo "LANG_NAME=Russian" >> $GITHUB_ENV
+              curl -sSL -O "${HF_BASE}/piper-vits-ru_RU-dmitry-medium/vits-piper-ru_RU-dmitry-medium.onnx"
+              curl -sSL -O "${HF_BASE}/piper-vits-ru_RU-dmitry-medium/tokens.txt"
+              mv vits-piper-ru_RU-dmitry-medium.onnx ru_RU-dmitry-medium.onnx
+              mv tokens.txt ru_RU-dmitry-medium.tokens.txt
+              ;;
+          esac
+
+      - name: Generate Release Notes Markdown
+        run: |
+          cd target_voice_pack
+          
+          # Create a perfectly formatted markdown file for the release notes
+          cat << EOF > release_notes.md
+          # Piper ${{ env.LANG_NAME }} ONNX Models Pack (Full-Precision fp32)
+          
+          This release provides high-quality, pre-compiled **${{ env.LANG_NAME }} Piper voice models** optimized for the Sherpa-ONNX text-to-speech engine.
+          
+          ## What's New & Improved
+          
+          * **Full-Precision (fp32) Weights:** Upgraded from INT8-quantized models. Previous INT8 versions occasionally produced audible quantization fuzz/noise on certain Android devices. These fp32 models ensure crystal-clear audio output and resolve those audio artifact issues.
+          * **Streamlined Single-File Structure:** Models have been extracted from upstream tarballs and re-hosted for direct, easy integration. Each voice is neatly packaged with just its essential files:
+            * \`[model-name].onnx\`
+            * \`[model-name].tokens.txt\`
+          * **Strict Naming Convention:** Resolved latent naming collisions where distinct languages shared the same voice name. Files are now strictly prefixed with their respective language codes.
+            * **Format:** \`{lang}-{voice}-{quality}.onnx\`
+          
+          ## Contents
+          
+          This release exclusively contains **Piper** models and their respective token text files.
+          
+          ## Credits & Upstream Source
+          
+          These weights are pulled directly from the upstream Sherpa-ONNX repository.
+          * **Upstream Source:** [k2-fsa/sherpa-onnx TTS Models](https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models)
+          EOF
+
+      - name: Publish Isolated Language Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd target_voice_pack
+          echo "Publishing standalone release for ${{ env.LANG_NAME }}..."
+          
+          # Remove the markdown file from the upload list so it doesn't get uploaded as an asset
+          gh release create ${{ env.TAG_NAME }} *.onnx *.txt \
+            --title "${{ env.RELEASE_TITLE }}" \
+            --notes-file release_notes.md \
+            --repo CodeBySonu95/VoxSherpa-TTS
