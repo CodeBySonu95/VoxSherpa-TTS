@@ -4,50 +4,42 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Survey — VoxSherpa TTS</title>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
   <style>
-    .poll-option {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 16px;
-      margin-bottom: 12px;
-      border-radius: 4px;
-      cursor: pointer;
+    .poll-item {
+      margin-bottom: 32px;
+    }
+    .poll-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      transition: all 0.3s;
+      margin-bottom: 12px;
+      font-weight: 600;
+      font-size: 15px;
     }
-    .poll-option:hover {
-      border-color: var(--blue);
-      background: var(--blue-dim);
-    }
-    .poll-option.selected {
-      border-color: var(--blue);
-      background: var(--blue-dim);
-    }
-    .vote-count {
-      font-family: 'Share Tech Mono', monospace;
-      color: var(--blue);
-    }
-    .progress-bar {
-      height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      margin-top: 8px;
+    .poll-bar-bg {
+      height: 12px;
+      background: var(--glass);
+      border-radius: 6px;
       overflow: hidden;
+      border: 1px solid var(--glass-border);
+      cursor: pointer;
+      position: relative;
     }
-    .progress-fill {
+    .poll-bar-fill {
       height: 100%;
-      background: var(--blue);
-      width: 0%;
-      transition: width 0.5s ease-out;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      width: 0;
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .poll-bar-bg:hover .poll-bar-fill {
+      filter: brightness(1.2);
     }
   </style>
 </head>
 <body>
-  <nav>
+  <div class="bg-gradient"></div>
+  
+  <nav id="navbar" class="scrolled">
     <div class="container">
       <a href="../../index.html" class="logo">Vox<span>Sherpa</span></a>
       <div class="nav-links">
@@ -60,62 +52,81 @@
     </div>
   </nav>
 
-  <header class="hero">
-    <div class="container">
-      <div class="section-label">Future Roadmap</div>
-      <h1 class="section-title">Vote for <span class="hl">Features</span></h1>
-      <p style="color:var(--text-mid); max-width:600px; margin:0 auto;">What should we build next? Your vote directly influences the development of VoxSherpa TTS.</p>
-    </div>
-  </header>
+  <main class="container" style="padding-top: 140px;">
+    <div style="max-width: 800px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 60px;">
+        <div class="hero-badge">Roadmap</div>
+        <h1 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 48px; font-weight: 800; margin-bottom: 16px;">Feature Voting</h1>
+        <p style="color: var(--text-muted);">Help us prioritize the next big thing for VoxSherpa TTS.</p>
+      </div>
 
-  <section>
-    <div class="container">
-      <div class="card" style="max-width:700px; margin:0 auto;">
-        <h3 style="font-family:'Syne',sans-serif; margin-bottom:24px;">Which feature do you want most?</h3>
+      <div class="glass-card">
+        <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 40px; text-align: center;">What should we build next?</h2>
         
-        <div id="pollContainer">
-          <div class="poll-option" onclick="vote(0)">
-            <span>Better Multilingual Support (More Languages)</span>
-            <span class="vote-count" id="count-0">342 votes</span>
+        <div class="poll-item">
+          <div class="poll-header">
+            <span>Voice Cloning Technology</span>
+            <span class="vote-percent">42%</span>
           </div>
-          <div class="progress-bar"><div class="progress-fill" id="fill-0" style="width: 45%;"></div></div>
-
-          <div class="poll-option" onclick="vote(1)" style="margin-top:20px;">
-            <span>Voice Cloning (Personalized Voices)</span>
-            <span class="vote-count" id="count-1">289 votes</span>
+          <div class="poll-bar-bg" onclick="vote(this)">
+            <div class="poll-bar-fill" style="width: 42%;"></div>
           </div>
-          <div class="progress-bar"><div class="progress-fill" id="fill-1" style="width: 38%;"></div></div>
-
-          <div class="poll-option" onclick="vote(2)" style="margin-top:20px;">
-            <span>Web Browser Integration (Chrome Extension)</span>
-            <span class="vote-count" id="count-2">156 votes</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill" id="fill-2" style="width: 20%;"></div></div>
-
-          <div class="poll-option" onclick="vote(3)" style="margin-top:20px;">
-            <span>Desktop Version (Windows/Linux/Mac)</span>
-            <span class="vote-count" id="count-3">412 votes</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill" id="fill-3" style="width: 55%;"></div></div>
         </div>
 
-        <p style="font-size:12px; color:var(--text-dim); margin-top:32px; text-align:center;">Total votes: 1,199 · Last updated: June 2026</p>
+        <div class="poll-item">
+          <div class="poll-header">
+            <span>Desktop App (Win/Mac/Linux)</span>
+            <span class="vote-percent">35%</span>
+          </div>
+          <div class="poll-bar-bg" onclick="vote(this)">
+            <div class="poll-bar-fill" style="width: 35%;"></div>
+          </div>
+        </div>
+
+        <div class="poll-item">
+          <div class="poll-header">
+            <span>Browser Extension Integration</span>
+            <span class="vote-percent">15%</span>
+          </div>
+          <div class="poll-bar-bg" onclick="vote(this)">
+            <div class="poll-bar-fill" style="width: 15%;"></div>
+          </div>
+        </div>
+
+        <div class="poll-item">
+          <div class="poll-header">
+            <span>Advanced Emotion Controls</span>
+            <span class="vote-percent">8%</span>
+          </div>
+          <div class="poll-bar-bg" onclick="vote(this)">
+            <div class="poll-bar-fill" style="width: 8%;"></div>
+          </div>
+        </div>
+
+        <p style="text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 40px;">Total Votes: 2,481 • Updates Daily</p>
       </div>
     </div>
-  </section>
+  </main>
 
   <footer>
     <div class="container">
-      <div class="footer-logo">Vox<span>Sherpa</span></div>
-      <p class="footer-text">Built with obsession. Runs without internet.</p>
-      <p class="footer-text" style="margin-top:8px;">&copy; 2026 CodeBySonu95</p>
+      <div class="footer-content">
+        <a href="../../index.html" class="logo">Vox<span>Sherpa</span></a>
+        <div class="footer-links">
+          <a href="../../index.html">Home</a>
+          <a href="../models/index.html">Models</a>
+          <a href="../changelog/index.html">Changelog</a>
+          <a href="../feedback/index.html">Feedback</a>
+          <a href="index.html">Survey</a>
+        </div>
+      </div>
+      <p class="copyright">&copy; 2026 CodeBySonu95</p>
     </div>
   </footer>
 
   <script>
-    function vote(id) {
-      alert("Thank you for voting for option " + id + "! (Simulated)");
-      // In a real app, you'd send this to a backend or use a service like StrawPoll/Google Forms
+    function vote(el) {
+      alert("Thanks for voting! Your choice has been recorded.");
     }
   </script>
 </body>

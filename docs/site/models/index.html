@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Piper Models — VoxSherpa TTS</title>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+  <title>Models — VoxSherpa TTS</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-  <nav>
+  <div class="bg-gradient"></div>
+  
+  <nav id="navbar" class="scrolled">
     <div class="container">
       <a href="../../index.html" class="logo">Vox<span>Sherpa</span></a>
       <div class="nav-links">
@@ -21,84 +22,78 @@
     </div>
   </nav>
 
-  <header class="hero">
-    <div class="container">
-      <div class="section-label">Download Center</div>
-      <h1 class="section-title">Piper <span class="hl">Voice Models</span></h1>
-      <p style="color:var(--text-mid); max-width:600px; margin:0 auto;">Download high-quality Piper TTS models for offline use. Each model includes the <code>.onnx</code> file and its configuration.</p>
+  <main class="container" style="padding-top: 140px;">
+    <div style="text-align: center; margin-bottom: 60px;">
+      <div class="hero-badge">Download Center</div>
+      <h1 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 48px; font-weight: 800; margin-bottom: 16px;">Voice Models</h1>
+      <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto;">High-fidelity Piper models for every language. Optimized for offline performance.</p>
     </div>
-  </header>
 
-  <section>
-    <div class="container">
-      <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-          <h2 style="font-family:'Syne',sans-serif;">Available Models</h2>
-          <input type="text" id="modelSearch" placeholder="Search language or model..." style="width:250px; padding:8px;">
-        </div>
-        <div style="overflow-x:auto;">
-          <table id="modelsTable">
-            <thead>
-              <tr>
-                <th>Language</th>
-                <th>Model Name</th>
-                <th>Quality</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="modelsBody">
-              <!-- Models will be populated by JS -->
-            </tbody>
-          </table>
-        </div>
+    <div class="glass-card" style="padding: 0; overflow: hidden;">
+      <div style="padding: 24px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+        <h2 style="font-size: 20px; font-weight: 700;">Available Library</h2>
+        <input type="text" id="modelSearch" placeholder="Search language or voice..." style="max-width: 300px;">
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Language</th>
+              <th>Model Identity</th>
+              <th>Quality</th>
+              <th>Download</th>
+            </tr>
+          </thead>
+          <tbody id="modelsBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
       </div>
     </div>
-  </section>
+  </main>
 
   <footer>
     <div class="container">
-      <div class="footer-logo">Vox<span>Sherpa</span></div>
-      <p class="footer-text">Built with obsession. Runs without internet.</p>
-      <p class="footer-text" style="margin-top:8px;">&copy; 2026 CodeBySonu95</p>
+      <div class="footer-content">
+        <a href="../../index.html" class="logo">Vox<span>Sherpa</span></a>
+        <div class="footer-links">
+          <a href="../../index.html">Home</a>
+          <a href="index.html">Models</a>
+          <a href="../changelog/index.html">Changelog</a>
+          <a href="../feedback/index.html">Feedback</a>
+          <a href="../survey/index.html">Survey</a>
+        </div>
+      </div>
+      <p class="copyright">&copy; 2026 CodeBySonu95</p>
     </div>
   </footer>
 
   <script>
     const models = [
-      { lang: "English (US)", name: "en_US-amy-low", quality: "Low", url: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/amy/low/en_US-amy-low.onnx" },
-      { lang: "English (US)", name: "en_US-amy-medium", quality: "Medium", url: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/amy/medium/en_US-amy-medium.onnx" },
-      { lang: "English (GB)", name: "en_GB-alan-low", quality: "Low", url: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/alan/low/en_GB-alan-low.onnx" },
-      { lang: "Hindi", name: "hi_IN-hindi-medium", quality: "Medium", url: "https://huggingface.co/rhasspy/piper-voices/resolve/main/hi/hi_IN/hindi/medium/hi_IN-hindi-medium.onnx" },
-      { lang: "Japanese", name: "ja_JP-nanami-medium", quality: "Medium", url: "https://huggingface.co/rhasspy/piper-voices/resolve/main/ja/ja_JP/nanami/medium/ja_JP-nanami-medium.onnx" },
-      { lang: "Chinese", name: "zh_CN-huayan-medium", quality: "Medium", url: "https://huggingface.co/rhasspy/piper-voices/resolve/main/zh/zh_CN/huayan/medium/zh_CN-huayan-medium.onnx" },
-      { lang: "French", name: "fr_FR-siwis-medium", quality: "Medium", url: "https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx" },
-      { lang: "Spanish", name: "es_ES-carlota-medium", quality: "Medium", url: "https://huggingface.co/rhasspy/piper-voices/resolve/main/es/es_ES/carlota/medium/es_ES-carlota-medium.onnx" }
+      { lang: "English (US)", name: "en_US-amy-medium", quality: "High", url: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/amy/medium/en_US-amy-medium.onnx" },
+      { lang: "Hindi (IN)", name: "hi_IN-hindi-medium", quality: "High", url: "https://huggingface.co/rhasspy/piper-voices/resolve/main/hi/hi_IN/hindi/medium/hi_IN-hindi-medium.onnx" },
+      { lang: "English (GB)", name: "en_GB-alan-low", quality: "Standard", url: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/alan/low/en_GB-alan-low.onnx" },
+      { lang: "Japanese (JP)", name: "ja_JP-nanami-medium", quality: "High", url: "https://huggingface.co/rhasspy/piper-voices/resolve/main/ja/ja_JP/nanami/medium/ja_JP-nanami-medium.onnx" },
+      { lang: "French (FR)", name: "fr_FR-siwis-medium", quality: "High", url: "https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx" }
     ];
 
     function renderModels(filter = "") {
       const body = document.getElementById('modelsBody');
       body.innerHTML = "";
-      const filtered = models.filter(m => 
-        m.lang.toLowerCase().includes(filter.toLowerCase()) || 
-        m.name.toLowerCase().includes(filter.toLowerCase())
-      );
-
+      const filtered = models.filter(m => m.lang.toLowerCase().includes(filter.toLowerCase()) || m.name.toLowerCase().includes(filter.toLowerCase()));
       filtered.forEach(m => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${m.lang}</td>
-          <td><code>${m.name}</code></td>
-          <td><span style="color:${m.quality === 'High' ? 'var(--green)' : m.quality === 'Medium' ? 'var(--amber)' : 'var(--text-mid)'}">${m.quality}</span></td>
-          <td><a href="${m.url}" class="btn btn-primary" style="padding:4px 12px; font-size:11px;">Download</a></td>
+          <td style="font-weight: 600;">${m.lang}</td>
+          <td><span class="chip">${m.name}</span></td>
+          <td><span style="color: ${m.quality === 'High' ? 'var(--success)' : 'var(--text-muted)'}">${m.quality}</span></td>
+          <td><a href="${m.url}" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;">Get Model</a></td>
         `;
         body.appendChild(tr);
       });
     }
 
-    document.getElementById('modelSearch').addEventListener('input', (e) => {
-      renderModels(e.target.value);
-    });
-
+    document.getElementById('modelSearch').addEventListener('input', (e) => renderModels(e.target.value));
     renderModels();
   </script>
 </body>

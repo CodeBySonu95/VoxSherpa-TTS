@@ -3,349 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VoxSherpa TTS — Studio Quality Offline Neural TTS for Android</title>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #0B1220;
-      --bg2: #131B2D;
-      --surface: #1A2235;
-      --border: #1E293B;
-      --blue: #1D61FF;
-      --blue-dim: rgba(29, 97, 255, 0.15);
-      --blue-glow: 0 0 24px rgba(29, 97, 255, 0.4);
-      --text: #FFFFFF;
-      --text-mid: #94A3B8;
-      --text-dim: #566580;
-      --text-dark: #2D3A4F;
-      --green: #10b981;
-      --amber: #f59e0b;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'JetBrains Mono', monospace;
-      overflow-x: hidden;
-      line-height: 1.6;
-    }
-
-    /* GRID BG */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: linear-gradient(rgba(29, 97, 255, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(29, 97, 255, 0.04) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 24px;
-      position: relative;
-      z-index: 2;
-    }
-
-    /* NAVBAR */
-    nav {
-      padding: 20px 0;
-      border-bottom: 1px solid var(--border);
-      background: rgba(11, 18, 32, 0.8);
-      backdrop-filter: blur(10px);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    nav .container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .logo {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 24px;
-      text-decoration: none;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .logo img {
-      width: 32px;
-      height: 32px;
-    }
-
-    .logo span {
-      color: var(--blue);
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 32px;
-    }
-
-    .nav-links a {
-      text-decoration: none;
-      color: var(--text-mid);
-      font-size: 13px;
-      font-family: 'Share Tech Mono', monospace;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      transition: color 0.3s;
-    }
-
-    .nav-links a:hover {
-      color: var(--blue);
-    }
-
-    /* HERO SECTION */
-    .hero {
-      min-height: 80vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 100px 0;
-    }
-
-    .hero-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(29, 97, 255, 0.1);
-      border: 1px solid rgba(29, 97, 255, 0.3);
-      color: var(--blue);
-      padding: 6px 16px;
-      border-radius: 100px;
-      font-size: 11px;
-      font-family: 'Share Tech Mono', monospace;
-      margin-bottom: 32px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .hero-title {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(40px, 8vw, 72px);
-      font-weight: 800;
-      letter-spacing: -2px;
-      line-height: 1;
-      margin-bottom: 24px;
-    }
-
-    .hero-title span {
-      color: var(--blue);
-    }
-
-    .hero-desc {
-      max-width: 650px;
-      font-size: 18px;
-      color: var(--text-mid);
-      margin-bottom: 48px;
-    }
-
-    .hero-btns {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      padding: 16px 32px;
-      border-radius: 4px;
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      text-decoration: none;
-      font-size: 16px;
-      transition: all 0.3s;
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .btn-primary {
-      background: var(--blue);
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: #1450e0;
-      box-shadow: var(--blue-glow);
-      transform: translateY(-2px);
-    }
-
-    .btn-outline {
-      border: 1px solid var(--border);
-      color: var(--text);
-      background: var(--bg2);
-    }
-
-    .btn-outline:hover {
-      border-color: var(--blue);
-      color: var(--blue);
-      transform: translateY(-2px);
-    }
-
-    /* FEATURES GRID */
-    .section-label {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 12px;
-      color: var(--blue);
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-      text-align: center;
-    }
-
-    .section-title {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(32px, 5vw, 48px);
-      font-weight: 800;
-      text-align: center;
-      margin-bottom: 64px;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
-      margin-bottom: 100px;
-    }
-
-    .feature-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      padding: 40px;
-      border-radius: 8px;
-      transition: all 0.3s;
-    }
-
-    .feature-card:hover {
-      border-color: var(--blue);
-      transform: translateY(-8px);
-      background: var(--surface);
-    }
-
-    .feature-icon {
-      font-size: 32px;
-      margin-bottom: 24px;
-    }
-
-    .feature-card h3 {
-      font-family: 'Syne', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      margin-bottom: 16px;
-    }
-
-    .feature-card p {
-      color: var(--text-mid);
-      font-size: 14px;
-      line-height: 1.8;
-    }
-
-    /* SCREENSHOTS */
-    .screenshots {
-      padding: 100px 0;
-      background: rgba(29, 97, 255, 0.02);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .screenshots-scroll {
-      display: flex;
-      gap: 24px;
-      overflow-x: auto;
-      padding: 20px 0;
-      scrollbar-width: none;
-    }
-
-    .screenshots-scroll::-webkit-scrollbar { display: none; }
-
-    .screenshot-item {
-      flex: 0 0 280px;
-      border-radius: 20px;
-      overflow: hidden;
-      border: 4px solid var(--border);
-      transition: transform 0.3s;
-    }
-
-    .screenshot-item:hover {
-      transform: scale(1.05);
-      border-color: var(--blue);
-    }
-
-    .screenshot-item img {
-      width: 100%;
-      display: block;
-    }
-
-    /* FOOTER */
-    footer {
-      padding: 80px 0 40px;
-      text-align: center;
-      border-top: 1px solid var(--border);
-    }
-
-    .footer-logo {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 28px;
-      margin-bottom: 24px;
-    }
-
-    .footer-links {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      margin-bottom: 40px;
-    }
-
-    .footer-links a {
-      color: var(--text-mid);
-      text-decoration: none;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 14px;
-      text-transform: uppercase;
-    }
-
-    .footer-links a:hover { color: var(--blue); }
-
-    .copyright {
-      color: var(--text-dim);
-      font-size: 12px;
-    }
-
-    /* ANIMATIONS */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .reveal {
-      animation: fadeIn 0.8s ease forwards;
-    }
-  </style>
+  <title>VoxSherpa TTS — Premium Offline Neural TTS for Android</title>
+  <link rel="stylesheet" href="docs/site/css/style.css">
 </head>
 <body>
-
-  <nav>
+  <div class="bg-gradient"></div>
+  
+  <nav id="navbar">
     <div class="container">
       <a href="index.html" class="logo">
-        <img src="docs/site/assets/images/icon.png" alt="VoxSherpa Icon">
+        <img src="docs/site/assets/images/icon.png" alt="VoxSherpa" style="width: 32px; height: 32px;">
         Vox<span>Sherpa</span>
       </a>
       <div class="nav-links">
@@ -359,66 +26,61 @@
 
   <main>
     <section class="hero container">
-      <div class="hero-pill">Now Live on Google Play · V2.9</div>
-      <h1 class="hero-title">Studio Quality <span>Offline</span> Neural TTS</h1>
-      <p class="hero-desc">The most powerful offline text-to-speech engine for Android. No cloud, no internet, no compromise on quality. Hindi, English, and 50+ languages.</p>
-      <div class="hero-btns">
-        <a href="https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa" class="btn btn-primary">
-          Get it on Play Store
-        </a>
-        <a href="docs/site/models/index.html" class="btn btn-outline">
-          Download Models
-        </a>
+      <div class="hero-badge">✨ Version 2.9 Now Live</div>
+      <h1><span>The Future of TTS</span><br>is Offline.</h1>
+      <p>Studio-quality neural text-to-speech that lives entirely on your device. No cloud. No limits. Just pure performance.</p>
+      <div class="btn-group">
+        <a href="https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa" class="btn btn-primary">Download App</a>
+        <a href="docs/site/models/index.html" class="btn btn-secondary">Browse Models</a>
       </div>
     </section>
 
-    <section class="container">
-      <div class="section-label">Features</div>
-      <h2 class="section-title">Why choose VoxSherpa?</h2>
+    <section class="container" style="padding-bottom: 100px;">
+      <div style="text-align: center; margin-bottom: 60px;">
+        <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 36px; font-weight: 800;">Experience Excellence</h2>
+      </div>
       
       <div class="features-grid">
-        <div class="feature-card">
+        <div class="glass-card feature-card">
           <div class="feature-icon">🔒</div>
-          <h3>100% Private</h3>
-          <p>Your text never leaves your device. All processing happens locally, ensuring total privacy and security.</p>
+          <h3>Absolute Privacy</h3>
+          <p>Your data stays yours. No telemetry, no cloud processing, no tracking. Ever.</p>
         </div>
-        <div class="feature-card">
+        <div class="glass-card feature-card">
           <div class="feature-icon">🧠</div>
-          <h3>Kokoro Engine</h3>
-          <p>Experience studio-grade voices that rival ElevenLabs, running fully offline on your mobile hardware.</p>
+          <h3>Neural Engines</h3>
+          <p>Dual engines including Kokoro-82M and Piper for the perfect balance of quality and speed.</p>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">⚡</div>
-          <h3>Piper & VITS</h3>
-          <p>Lightning-fast generation for daily use. Natural, clear speech even on budget Android devices.</p>
-        </div>
-        <div class="feature-card">
+        <div class="glass-card feature-card">
           <div class="feature-icon">🌐</div>
-          <h3>Multilingual</h3>
-          <p>Serious support for Hindi, English, Japanese, Chinese, and over 50 other languages offline.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">📄</div>
-          <h3>Doc to Audio</h3>
-          <p>Convert PDFs and TXT files to high-quality audio instantly. Listen to your documents on the go.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">⚙️</div>
-          <h3>System TTS</h3>
-          <p>Set VoxSherpa as your default Android TTS engine and use professional voices in any app.</p>
+          <h3>Global Reach</h3>
+          <p>Serious support for Hindi, English, and 50+ languages with high-fidelity offline models.</p>
         </div>
       </div>
     </section>
 
-    <section class="screenshots">
+    <section style="background: rgba(255,255,255,0.02); padding: 100px 0;">
       <div class="container">
-        <div class="section-label">Gallery</div>
-        <h2 class="section-title">App Interface</h2>
-        <div class="screenshots-scroll">
-          <div class="screenshot-item"><img src="docs/site/assets/images/1.jpg" alt="Screen 1"></div>
-          <div class="screenshot-item"><img src="docs/site/assets/images/2.jpg" alt="Screen 2"></div>
-          <div class="screenshot-item"><img src="docs/site/assets/images/3.jpg" alt="Screen 3"></div>
-          <div class="screenshot-item"><img src="docs/site/assets/images/4.jpg" alt="Screen 4"></div>
+        <div style="display: flex; align-items: center; gap: 60px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 300px;">
+            <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 42px; font-weight: 800; line-height: 1.2; margin-bottom: 24px;">Designed for<br>Modern Android</h2>
+            <p style="color: var(--text-muted); font-size: 18px; margin-bottom: 32px;">A beautiful, intuitive interface that makes managing models and generating speech a breeze.</p>
+            <ul style="list-style: none; display: grid; gap: 16px;">
+              <li style="display: flex; align-items: center; gap: 12px; color: var(--text-muted);">
+                <span style="color: var(--primary);">✓</span> System-wide TTS Integration
+              </li>
+              <li style="display: flex; align-items: center; gap: 12px; color: var(--text-muted);">
+                <span style="color: var(--primary);">✓</span> Document to Audio Conversion
+              </li>
+              <li style="display: flex; align-items: center; gap: 12px; color: var(--text-muted);">
+                <span style="color: var(--primary);">✓</span> Real-time Waveform Preview
+              </li>
+            </ul>
+          </div>
+          <div style="flex: 1; min-width: 300px; display: flex; gap: 20px; justify-content: center;">
+            <img src="docs/site/assets/images/1.jpg" alt="App Screen" style="width: 220px; border-radius: 24px; border: 4px solid var(--glass-border); transform: rotate(-5deg);">
+            <img src="docs/site/assets/images/2.jpg" alt="App Screen" style="width: 220px; border-radius: 24px; border: 4px solid var(--glass-border); transform: rotate(5deg); margin-top: 40px;">
+          </div>
         </div>
       </div>
     </section>
@@ -426,17 +88,28 @@
 
   <footer>
     <div class="container">
-      <div class="footer-logo">Vox<span>Sherpa</span></div>
-      <div class="footer-links">
-        <a href="docs/site/models/index.html">Models</a>
-        <a href="docs/site/changelog/index.html">Changelog</a>
-        <a href="docs/site/feedback/index.html">Feedback</a>
-        <a href="docs/site/survey/index.html">Survey</a>
-        <a href="https://github.com/CodeBySonu95/VoxSherpa-TTS">GitHub</a>
+      <div class="footer-content">
+        <a href="index.html" class="logo">Vox<span>Sherpa</span></a>
+        <div class="footer-links">
+          <a href="docs/site/models/index.html">Models</a>
+          <a href="docs/site/changelog/index.html">Changelog</a>
+          <a href="docs/site/feedback/index.html">Feedback</a>
+          <a href="docs/site/survey/index.html">Survey</a>
+        </div>
       </div>
       <p class="copyright">"Built with obsession. Runs without internet."<br>&copy; 2026 CodeBySonu95</p>
     </div>
   </footer>
 
+  <script>
+    window.addEventListener('scroll', () => {
+      const nav = document.getElementById('navbar');
+      if (window.scrollY > 50) {
+        nav.classList.add('scrolled');
+      } else {
+        nav.classList.remove('scrolled');
+      }
+    });
+  </script>
 </body>
 </html>
