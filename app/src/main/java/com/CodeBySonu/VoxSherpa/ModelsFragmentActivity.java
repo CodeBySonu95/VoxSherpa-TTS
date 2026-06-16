@@ -280,7 +280,7 @@ public class ModelsFragmentActivity extends Fragment {
 		
 		
 		_setupDataAndStorage();
-		_mergeMmsCatalog();
+		_syncMmsCatalog();
 		_fetchFirebaseModels();
 		_setupRecyclerViewAdapter();
 		
@@ -1165,31 +1165,51 @@ public class ModelsFragmentActivity extends Fragment {
 	}
 	
 	
-	public void _mergeMmsCatalog() {
-		java.util.List<HashMap<String, Object>> catalog = com.CodeBySonu.VoxSherpa.MmsCatalog.loadModelEntries(getContext());
-		if (catalog == null || catalog.isEmpty()) return;
+	public void _syncMmsCatalog() {
+		SharedPreferences sp3 = getContext().getSharedPreferences("sp3", android.content.Context.MODE_PRIVATE);
+		boolean mmsEnabled = sp3.getBoolean("mms_models_enabled", false);
 
 		String savedData = sp1.getString("models_data", "[]");
 		java.util.ArrayList<HashMap<String, Object>> masterList = GSON.fromJson(savedData, new TypeToken<ArrayList<HashMap<String, Object>>>(){}.getType());
 		if (masterList == null) masterList = new java.util.ArrayList<>();
 
-		java.util.HashSet<String> existingUrls = new java.util.HashSet<>();
-		for (HashMap<String, Object> m : masterList) {
-			if (m.containsKey("model_url")) existingUrls.add(m.get("model_url").toString());
-		}
+		if (mmsEnabled) {
+			java.util.List<HashMap<String, Object>> catalog = com.CodeBySonu.VoxSherpa.MmsCatalog.loadModelEntries(getContext());
+			if (catalog == null || catalog.isEmpty()) return;
 
-		boolean changed = false;
-		for (HashMap<String, Object> entry : catalog) {
-			String url = entry.containsKey("model_url") ? entry.get("model_url").toString() : "";
-			if (!url.isEmpty() && !existingUrls.contains(url)) {
-				masterList.add(entry);
-				existingUrls.add(url);
-				changed = true;
+			java.util.HashSet<String> existingUrls = new java.util.HashSet<>();
+			for (HashMap<String, Object> m : masterList) {
+				if (m.containsKey("model_url")) existingUrls.add(m.get("model_url").toString());
 			}
-		}
 
-		if (changed) {
-			sp1.edit().putString("models_data", GSON.toJson(masterList)).apply();
+			boolean changed = false;
+			for (HashMap<String, Object> entry : catalog) {
+				String url = entry.containsKey("model_url") ? entry.get("model_url").toString() : "";
+				if (!url.isEmpty() && !existingUrls.contains(url)) {
+					masterList.add(entry);
+					existingUrls.add(url);
+					changed = true;
+				}
+			}
+
+			if (changed) {
+				sp1.edit().putString("models_data", GSON.toJson(masterList)).apply();
+			}
+		} else {
+			boolean changed = false;
+			java.util.Iterator<HashMap<String, Object>> it = masterList.iterator();
+			while (it.hasNext()) {
+				HashMap<String, Object> m = it.next();
+				boolean isMms = m.containsKey("type") && m.get("type").toString().contains("MMS");
+				String onnxPath = m.containsKey("onnx_path") && m.get("onnx_path") != null ? m.get("onnx_path").toString() : "";
+				if (isMms && onnxPath.isEmpty()) {
+					it.remove();
+					changed = true;
+				}
+			}
+			if (changed) {
+				sp1.edit().putString("models_data", GSON.toJson(masterList)).apply();
+			}
 		}
 	}
 
