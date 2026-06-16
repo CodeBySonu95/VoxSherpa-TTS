@@ -107,16 +107,37 @@ public class VoiceEngine {
         espeakDataPath = destDir.getAbsolutePath();
     }
 
-    // ── Provider fallback: XNNPACK → CPU ────────────────────────────────────
+    // ── Detect MMS models by token count ─────────────────────────────────────
+    // MMS models use character-based tokenization (< 200 tokens in tokens.txt).
+    // Piper/espeak models use phoneme-based tokenization (200+ tokens).
+    // This lets the engine auto-detect whether espeak-ng-data is needed,
+    // so callers don't need to specify a model type.
+    private boolean isLikelyMmsModel(String tokensPath) {
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(
+                    new java.io.FileInputStream(tokensPath), java.nio.charset.StandardCharsets.UTF_8))) {
+            int lineCount = 0;
+            while (reader.readLine() != null) {
+                lineCount++;
+                if (lineCount >= 200) return false;
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // ── Provider fallback: XNNPACK → CPU, with MMS auto-detection ───────────
     private OfflineTts _createTtsWithFallback(String modelPath, String tokensPath) {
         String[] providers = {"xnnpack", "cpu"};
+        boolean isMms = isLikelyMmsModel(tokensPath);
 
         for (String provider : providers) {
             try {
                 OfflineTtsVitsModelConfig vits = new OfflineTtsVitsModelConfig();
                 vits.setModel(modelPath);
                 vits.setTokens(tokensPath);
-                vits.setDataDir(espeakDataPath);
+                vits.setDataDir(isMms ? "" : espeakDataPath);
                 vits.setNoiseScale(noiseScale);
                 vits.setNoiseScaleW(noiseScaleW);
                 vits.setLengthScale(1.0f);
@@ -133,7 +154,10 @@ public class VoiceEngine {
 
                 OfflineTts candidate = new OfflineTts(null, config);
 
-                // 🚀 FIX 1: "..." ki jagah "Hello" use kiya taaki engine safe state me initialize ho
+                if (isMms) {
+                    return candidate;
+                }
+
                 GeneratedAudio test = candidate.generate("Hello", 0, 1.0f);
                 if (test != null && test.getSamples() != null && test.getSamples().length > 0) {
                     return candidate;
@@ -164,10 +188,6 @@ public class VoiceEngine {
         try {
             destroy();
             extractEspeakData(context);
-
-            if (espeakDataPath == null || espeakDataPath.isEmpty()) {
-                return "Error: espeak-ng-data extraction failed.";
-            }
 
             tts = _createTtsWithFallback(modelPath, tokensPath);
 

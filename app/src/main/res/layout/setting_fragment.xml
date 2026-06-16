@@ -223,12 +223,54 @@
 					android:textSize="12sp"
 					android:textColor="#718096" />
 			</LinearLayout>
-			<Switch
-				android:id="@+id/switch_emotion"
+		<Switch
+			android:id="@+id/switch_emotion"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="12sp" />
+	</LinearLayout>
+	<LinearLayout
+		android:id="@+id/mms_models_rl"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="16dp"
+		android:gravity="center_vertical"
+		android:orientation="horizontal">
+		<ImageView
+			android:id="@+id/icon_mms"
+			android:layout_width="24dp"
+			android:layout_height="24dp"
+			android:src="@drawable/icon_translate"
+			android:scaleType="fitXY"
+			app:tint="#718096" />
+		<LinearLayout
+			android:id="@+id/linear_mms"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:orientation="vertical"
+			android:layout_weight="1"
+			android:layout_marginStart="16dp">
+			<TextView
+				android:id="@+id/tv_mms_title"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:textSize="12sp" />
+				android:text="MMS Community Models"
+				android:textSize="16sp"
+				android:textColor="#FFFFFF" />
+			<TextView
+				android:id="@+id/tv_mms_desc"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Show 1100+ low-resource language models"
+				android:textSize="12sp"
+				android:textColor="#718096" />
 		</LinearLayout>
+		<Switch
+			android:id="@+id/switch_mms"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="12sp" />
+	</LinearLayout>
 		<View
 			android:id="@+id/view35"
 			android:layout_width="match_parent"

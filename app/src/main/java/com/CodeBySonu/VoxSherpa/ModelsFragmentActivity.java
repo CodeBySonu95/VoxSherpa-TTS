@@ -269,7 +269,14 @@ public class ModelsFragmentActivity extends Fragment {
 		};
 		fb.addChildEventListener(_fb_child_listener);
 	}
-	
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		_syncMmsCatalog();
+		_applyFilterAndSort();
+	}
+
 	private void initializeLogic() {
 		String initialSort = sp1.getString("sort_preference", "all_models");
 		if (initialSort.equals("download")) binding.sortTv.setText("Download");
@@ -279,6 +286,7 @@ public class ModelsFragmentActivity extends Fragment {
 		else binding.sortTv.setText("All Models");
 		
 		
+		_syncMmsCatalog();
 		_setupDataAndStorage();
 		_fetchFirebaseModels();
 		_setupRecyclerViewAdapter();
@@ -481,11 +489,16 @@ public class ModelsFragmentActivity extends Fragment {
 				} else if (item.containsKey("is_buffering") && item.get("is_buffering").equals("true")) {
 					imgPreview.setVisibility(View.GONE);
 					if (progressBuffering != null) progressBuffering.setVisibility(View.VISIBLE);
+			} else {
+				if (audioUrlToPlay.isEmpty()) {
+					boxPreviewStatus.setVisibility(View.GONE);
 				} else {
+					boxPreviewStatus.setVisibility(View.VISIBLE);
 					imgPreview.setVisibility(View.VISIBLE);
 					imgPreview.setImageResource(R.drawable.icon_play_circle);
-					if (progressBuffering != null) progressBuffering.setVisibility(View.GONE);
 				}
+				if (progressBuffering != null) progressBuffering.setVisibility(View.GONE);
+			}
 				boxPreviewStatus.setOnClickListener(view -> {
 					if (audioUrlToPlay.isEmpty()) {
 						com.google.android.material.snackbar.Snackbar.make(v, "Sample audio not available.", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
@@ -1164,6 +1177,55 @@ public class ModelsFragmentActivity extends Fragment {
 	}
 	
 	
+	public void _syncMmsCatalog() {
+		SharedPreferences sp3 = getContext().getSharedPreferences("sp3", android.content.Context.MODE_PRIVATE);
+		boolean mmsEnabled = sp3.getBoolean("mms_models_enabled", false);
+
+		String savedData = sp1.getString("models_data", "[]");
+		java.util.ArrayList<HashMap<String, Object>> masterList = GSON.fromJson(savedData, new TypeToken<ArrayList<HashMap<String, Object>>>(){}.getType());
+		if (masterList == null) masterList = new java.util.ArrayList<>();
+
+		if (mmsEnabled) {
+			java.util.List<HashMap<String, Object>> catalog = com.CodeBySonu.VoxSherpa.MmsCatalog.loadModelEntries(getContext());
+			if (catalog == null || catalog.isEmpty()) return;
+
+			java.util.HashSet<String> existingUrls = new java.util.HashSet<>();
+			for (HashMap<String, Object> m : masterList) {
+				if (m.containsKey("model_url")) existingUrls.add(m.get("model_url").toString());
+			}
+
+			boolean changed = false;
+			for (HashMap<String, Object> entry : catalog) {
+				String url = entry.containsKey("model_url") ? entry.get("model_url").toString() : "";
+				if (!url.isEmpty() && !existingUrls.contains(url)) {
+					masterList.add(entry);
+					existingUrls.add(url);
+					changed = true;
+				}
+			}
+
+			if (changed) {
+				sp1.edit().putString("models_data", GSON.toJson(masterList)).apply();
+			}
+		} else {
+			boolean changed = false;
+			java.util.Iterator<HashMap<String, Object>> it = masterList.iterator();
+			while (it.hasNext()) {
+				HashMap<String, Object> m = it.next();
+				boolean isMms = m.containsKey("type") && m.get("type").toString().contains("MMS");
+				String onnxPath = m.containsKey("onnx_path") && m.get("onnx_path") != null ? m.get("onnx_path").toString() : "";
+				if (isMms && onnxPath.isEmpty()) {
+					it.remove();
+					changed = true;
+				}
+			}
+			if (changed) {
+				sp1.edit().putString("models_data", GSON.toJson(masterList)).apply();
+			}
+		}
+	}
+
+
 	public void _fetchFirebaseModels() {
 		fb.addListenerForSingleValueEvent(new ValueEventListener() {
 			@Override
@@ -1212,7 +1274,7 @@ public class ModelsFragmentActivity extends Fragment {
 						HashMap<String, Object> localModel = modelList.get(i);
 						if (localModel.containsKey("model_url")) {
 							String localUrl = localModel.get("model_url").toString();
-							if (!onlineUrls.contains(localUrl)) {
+							if (!onlineUrls.contains(localUrl) && !localUrl.contains("mms-tts-multilingual-models-onnx")) {
 								String onnxPath = localModel.containsKey("onnx_path") ? localModel.get("onnx_path").toString() : "";
 								String tokensPath = localModel.containsKey("tokens_path") ? localModel.get("tokens_path").toString() : "";
 								String voicesPath = localModel.containsKey("voices_bin_path") ? localModel.get("voices_bin_path").toString() : "";
