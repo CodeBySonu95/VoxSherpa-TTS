@@ -269,7 +269,14 @@ public class ModelsFragmentActivity extends Fragment {
 		};
 		fb.addChildEventListener(_fb_child_listener);
 	}
-	
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		_syncMmsCatalog();
+		_applyFilterAndSort();
+	}
+
 	private void initializeLogic() {
 		String initialSort = sp1.getString("sort_preference", "all_models");
 		if (initialSort.equals("download")) binding.sortTv.setText("Download");
