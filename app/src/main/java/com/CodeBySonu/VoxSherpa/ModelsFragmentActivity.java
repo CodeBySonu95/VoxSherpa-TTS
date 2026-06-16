@@ -279,8 +279,8 @@ public class ModelsFragmentActivity extends Fragment {
 		else binding.sortTv.setText("All Models");
 		
 		
-		_setupDataAndStorage();
 		_syncMmsCatalog();
+		_setupDataAndStorage();
 		_fetchFirebaseModels();
 		_setupRecyclerViewAdapter();
 		
@@ -482,11 +482,16 @@ public class ModelsFragmentActivity extends Fragment {
 				} else if (item.containsKey("is_buffering") && item.get("is_buffering").equals("true")) {
 					imgPreview.setVisibility(View.GONE);
 					if (progressBuffering != null) progressBuffering.setVisibility(View.VISIBLE);
+			} else {
+				if (audioUrlToPlay.isEmpty()) {
+					boxPreviewStatus.setVisibility(View.GONE);
 				} else {
+					boxPreviewStatus.setVisibility(View.VISIBLE);
 					imgPreview.setVisibility(View.VISIBLE);
 					imgPreview.setImageResource(R.drawable.icon_play_circle);
-					if (progressBuffering != null) progressBuffering.setVisibility(View.GONE);
 				}
+				if (progressBuffering != null) progressBuffering.setVisibility(View.GONE);
+			}
 				boxPreviewStatus.setOnClickListener(view -> {
 					if (audioUrlToPlay.isEmpty()) {
 						com.google.android.material.snackbar.Snackbar.make(v, "Sample audio not available.", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
