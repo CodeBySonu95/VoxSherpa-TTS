@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Models Library — VoxSherpa TTS</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .release-group { margin-bottom: 40px; }
+    .release-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--glass-border); }
+    .release-tag { background: var(--primary); color: white; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+    .asset-card { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 16px 24px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; margin-bottom: 12px; transition: all 0.3s ease; }
+    .asset-card:hover { background: var(--glass-hover); border-color: var(--primary); }
+    .asset-info h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .asset-info p { font-size: 12px; color: var(--text-muted); }
+    .loading-spinner { text-align: center; padding: 60px 0; }
+    .spinner { width: 40px; height: 40px; border: 4px solid var(--glass); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="bg-gradient"></div>
+  
+  <nav id="navbar" class="scrolled">
+    <div class="container">
+      <a href="../../../index.html" class="logo">Vox<span>Sherpa</span></a>
+      <div class="nav-links">
+        <a href="../../../index.html">Home</a>
+        <a href="index.html" class="active">Models</a>
+        <a href="../docs/index.html">Documentation</a>
+        <a href="../changelog/index.html">Changelog</a>
+        <a href="../credits/index.html">Credits</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" style="padding-top: 140px;">
+    <div style="text-align: center; margin-bottom: 60px;">
+      <div class="hero-badge">GitHub Releases Integration</div>
+      <h1 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 48px; font-weight: 800; margin-bottom: 16px;">Model Repository</h1>
+      <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto;">Fetching the latest neural models from <strong>sonusingh9572/VoxSherpa-TTS</strong>.</p>
+    </div>
+
+    <div id="modelsContainer">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Fetching releases from GitHub...</p>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <a href="../../../index.html" class="logo">Vox<span>Sherpa</span></a>
+        <div class="footer-links">
+          <a href="../../../index.html">Home</a>
+          <a href="index.html">Models</a>
+          <a href="../docs/index.html">Docs</a>
+          <a href="../changelog/index.html">Changelog</a>
+          <a href="../credits/index.html">Credits</a>
+        </div>
+      </div>
+      <p class="copyright">&copy; 2026 CodeBySonu95</p>
+    </div>
+  </footer>
+
+  <script>
+    const REPO = "sonusingh9572/VoxSherpa-TTS";
+    const container = document.getElementById('modelsContainer');
+
+    async function fetchReleases() {
+      try {
+        const response = await fetch(`https://api.github.com/repos/${REPO}/releases`);
+        const releases = await response.json();
+        
+        if (!Array.isArray(releases) || releases.length === 0) {
+          container.innerHTML = "<p style='text-align:center;'>No releases found in this repository yet.</p>";
+          return;
+        }
+
+        container.innerHTML = "";
+        releases.forEach(release => {
+          const group = document.createElement('div');
+          group.className = "release-group";
+          
+          let assetsHtml = "";
+          release.assets.forEach(asset => {
+            const isModel = asset.name.endsWith('.onnx');
+            const isToken = asset.name.endsWith('.txt');
+            const typeLabel = isModel ? "Neural Model" : isToken ? "Tokens File" : "Asset";
+            const icon = isModel ? "🧠" : isToken ? "📄" : "📦";
+
+            assetsHtml += `
+              <div class="asset-card">
+                <div class="asset-info">
+                  <h4>${icon} ${asset.name}</h4>
+                  <p>${typeLabel} • ${(asset.size / (1024 * 1024)).toFixed(2)} MB</p>
+                </div>
+                <a href="${asset.browser_download_url}" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;">Download</a>
+              </div>
+            `;
+          });
+
+          group.innerHTML = `
+            <div class="release-header">
+              <span class="release-tag">${release.tag_name}</span>
+              <h3 style="font-size: 20px; font-weight: 700;">${release.name || release.tag_name}</h3>
+            </div>
+            <div style="margin-bottom: 20px; font-size: 14px; color: var(--text-muted);">
+              ${release.body ? release.body.replace(/\n/g, '<br>') : 'Voice models for this region.'}
+            </div>
+            ${assetsHtml}
+          `;
+          container.appendChild(group);
+        });
+      } catch (error) {
+        container.innerHTML = "<p style='text-align:center; color:var(--primary);'>Error fetching data from GitHub. Please check if the repository exists and has releases.</p>";
+        console.error(error);
+      }
+    }
+
+    fetchReleases();
+  </script>
+</body>
+</html>

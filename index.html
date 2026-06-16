@@ -1,779 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VoxSherpa TTS — Best Offline Neural TTS for Android</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg:         #0B1220;
-    --bg2:        #131B2D;
-    --surface:    #1A2235;
-    --border:     #1E293B;
-    --blue:       #1D61FF;
-    --blue-dim:   rgba(29,97,255,0.15);
-    --blue-glow:  0 0 24px rgba(29,97,255,0.4);
-    --text:       #FFFFFF;
-    --text-mid:   #94A3B8;
-    --text-dim:   #566580;
-    --text-dark:  #2D3A4F;
-    --green:      #10b981;
-    --amber:      #f59e0b;
-  }
-
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html { scroll-behavior:smooth; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    overflow-x: hidden;
-    cursor: none;
-  }
-
-  /* CURSOR */
-  .cursor {
-    width:10px; height:10px;
-    background: var(--blue);
-    border-radius:50%;
-    position:fixed; pointer-events:none; z-index:9999;
-    transition:transform 0.1s;
-    box-shadow: var(--blue-glow);
-  }
-  .cursor-ring {
-    width:32px; height:32px;
-    border:1px solid rgba(29,97,255,0.4);
-    border-radius:50%;
-    position:fixed; pointer-events:none; z-index:9998;
-    transition:all 0.15s ease;
-  }
-
-  /* GRID BG */
-  body::before {
-    content:'';
-    position:fixed; inset:0;
-    background-image:
-      linear-gradient(rgba(29,97,255,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(29,97,255,0.04) 1px, transparent 1px);
-    background-size:40px 40px;
-    pointer-events:none; z-index:0;
-  }
-
-  /* SCANLINES */
-  body::after {
-    content:'';
-    position:fixed; inset:0;
-    background: repeating-linear-gradient(
-      0deg, transparent, transparent 2px,
-      rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px
-    );
-    pointer-events:none; z-index:1;
-  }
-
-  .container { max-width:900px; margin:0 auto; padding:0 24px; position:relative; z-index:2; }
-
-  /* CORNERS */
-  .corner { position:fixed; width:50px; height:50px; pointer-events:none; z-index:3; }
-  .corner-tl { top:16px; left:16px;  border-top:1px solid rgba(29,97,255,0.3); border-left:1px solid rgba(29,97,255,0.3); }
-  .corner-tr { top:16px; right:16px; border-top:1px solid rgba(29,97,255,0.3); border-right:1px solid rgba(29,97,255,0.3); }
-  .corner-bl { bottom:16px; left:16px;  border-bottom:1px solid rgba(29,97,255,0.3); border-left:1px solid rgba(29,97,255,0.3); }
-  .corner-br { bottom:16px; right:16px; border-bottom:1px solid rgba(29,97,255,0.3); border-right:1px solid rgba(29,97,255,0.3); }
-
-  /* HERO */
-  .hero {
-    min-height:100vh;
-    display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
-    text-align:center; padding:60px 24px;
-    position:relative; z-index:2;
-  }
-  .hero-glow {
-    position:absolute;
-    width:600px; height:600px;
-    background:radial-gradient(circle, rgba(29,97,255,0.08) 0%, transparent 70%);
-    top:50%; left:50%; transform:translate(-50%,-50%);
-    pointer-events:none;
-    animation:glowpulse 4s ease-in-out infinite;
-  }
-  @keyframes glowpulse {
-    0%,100% { opacity:0.5; transform:translate(-50%,-50%) scale(1); }
-    50%      { opacity:1;   transform:translate(-50%,-50%) scale(1.15); }
-  }
-
-  .ascii-art {
-    font-family:'Share Tech Mono', monospace;
-    font-size:clamp(5px, 1.1vw, 10px);
-    color: var(--blue);
-    line-height:1.2;
-    text-shadow:0 0 12px rgba(29,97,255,0.6);
-    white-space:pre;
-    margin-bottom:28px;
-    animation:flicker 9s ease-in-out infinite;
-  }
-  @keyframes flicker {
-    0%,94%,100% { opacity:1; }
-    95% { opacity:0.3; }
-    96% { opacity:1; }
-    97% { opacity:0.5; }
-    98% { opacity:1; }
-  }
-
-  /* PLAY STORE LIVE PILL */
-  .live-pill {
-    display:inline-flex; align-items:center; gap:8px;
-    background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3);
-    color:var(--green); padding:6px 16px; border-radius:100px;
-    font-size:11px; letter-spacing:2px; text-transform:uppercase;
-    font-family:'Share Tech Mono',monospace;
-    margin-bottom:28px;
-  }
-  .live-dot {
-    width:6px; height:6px; border-radius:50%; background:var(--green);
-    animation: livepulse 1.5s ease-in-out infinite;
-  }
-  @keyframes livepulse {
-    0%,100% { opacity:1; transform:scale(1); box-shadow:0 0 0 0 rgba(16,185,129,0.4); }
-    50%      { opacity:0.8; transform:scale(1.2); box-shadow:0 0 0 4px rgba(16,185,129,0); }
-  }
-
-  .tagline {
-    font-family:'Syne', sans-serif;
-    font-size:clamp(12px, 2.2vw, 16px);
-    font-weight:400; color:var(--text-dim);
-    letter-spacing:5px; text-transform:uppercase;
-    margin-bottom:40px;
-  }
-  .tagline span { color:var(--blue); font-weight:700; }
-
-  .badges { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:44px; }
-  .badge {
-    padding:7px 14px;
-    border:1px solid var(--blue);
-    color:var(--blue);
-    font-family:'Share Tech Mono', monospace;
-    font-size:11px; letter-spacing:1px; text-transform:uppercase;
-    transition:all 0.3s; position:relative; overflow:hidden; background:transparent;
-    text-decoration:none; display:inline-block;
-  }
-  .badge::before { content:''; position:absolute; inset:0; background:var(--blue); opacity:0; transition:opacity 0.3s; }
-  .badge:hover::before { opacity:0.12; }
-  .badge:hover { transform:translateY(-2px); box-shadow:var(--blue-glow); }
-  .badge-primary {
-    background:var(--blue); color:#fff; border-color:var(--blue);
-    font-weight:700;
-  }
-  .badge-primary:hover { background:#1450e0; box-shadow:var(--blue-glow); }
-  .badge-dim { border-color:var(--text-dark); color:var(--text-dark); }
-  .badge-dim:hover { border-color:var(--blue); color:var(--blue); }
-  .badge span { position:relative; z-index:1; }
-
-  .hero-desc {
-    max-width:580px; font-size:14px; line-height:1.9;
-    color:var(--text-mid);
-    border-left:2px solid var(--blue);
-    padding-left:20px; text-align:left;
-  }
-  .hero-desc strong { color:var(--blue); }
-
-  .scroll-hint {
-    position:absolute; bottom:28px; left:50%; transform:translateX(-50%);
-    display:flex; flex-direction:column; align-items:center; gap:6px;
-    color:var(--text-dark); font-size:10px; letter-spacing:2px;
-    animation:bounce 2s ease-in-out infinite;
-  }
-  @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
-  .scroll-line { width:1px; height:40px; background:linear-gradient(to bottom, var(--blue), transparent); }
-
-  /* SECTIONS */
-  section { padding:80px 0; }
-  .section-label {
-    font-family:'Share Tech Mono', monospace;
-    font-size:11px; color:var(--blue);
-    letter-spacing:3px; text-transform:uppercase;
-    margin-bottom:16px;
-  }
-  .section-title {
-    font-family:'Syne', sans-serif;
-    font-size:clamp(28px, 5vw, 48px);
-    font-weight:800; letter-spacing:-1.5px;
-    line-height:1.1; margin-bottom:40px;
-  }
-  .hl { color:var(--blue); }
-
-  /* VS BANNER */
-  .vs-banner {
-    background: linear-gradient(135deg, rgba(29,97,255,0.08), rgba(29,97,255,0.02));
-    border:1px solid rgba(29,97,255,0.25); border-radius:4px;
-    padding:28px 32px; margin-bottom:40px;
-    display:flex; align-items:center; gap:24px;
-    flex-wrap:wrap;
-  }
-  .vs-label { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
-  .vs-val { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:var(--text); }
-  .vs-val span { color:var(--blue); }
-  .vs-divider { width:1px; height:48px; background:var(--border); flex-shrink:0; }
-  @media(max-width:600px){ .vs-divider{display:none;} .vs-banner{gap:16px;} }
-
-  /* FEATURES */
-  .features-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; }
-  .feature-card {
-    background:var(--bg2); border:1px solid var(--border);
-    border-radius:4px; padding:28px;
-    transition:border-color 0.3s, transform 0.3s;
-    position:relative; overflow:hidden;
-  }
-  .feature-card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:2px;
-    background:linear-gradient(90deg, transparent, var(--blue), transparent);
-    opacity:0; transition:opacity 0.3s;
-  }
-  .feature-card:hover { border-color:rgba(29,97,255,0.5); transform:translateY(-4px); }
-  .feature-card:hover::before { opacity:1; }
-  .feature-icon { font-size:24px; margin-bottom:14px; }
-  .feature-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:800; margin-bottom:10px; color:var(--text); }
-  .feature-desc { font-size:12px; color:var(--text-mid); line-height:1.8; }
-  .feature-new {
-    display:inline-block; font-size:9px; font-weight:700; letter-spacing:1px;
-    text-transform:uppercase; background:rgba(29,97,255,0.2); color:var(--blue);
-    border:1px solid rgba(29,97,255,0.3); padding:2px 8px; border-radius:2px;
-    margin-bottom:10px; font-family:'Share Tech Mono',monospace;
-  }
-
-  /* SCREENSHOTS */
-  .screenshots-grid {
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:12px;
-    margin-top:8px;
-  }
-  @media(max-width:640px){ .screenshots-grid { grid-template-columns:repeat(2,1fr); } }
-  .screenshot-frame {
-    background:var(--bg2); border:1px solid var(--border);
-    border-radius:16px; overflow:hidden;
-    transition:transform 0.3s, border-color 0.3s, box-shadow 0.3s;
-  }
-  .screenshot-frame:hover {
-    transform:translateY(-6px) scale(1.02);
-    border-color:rgba(29,97,255,0.5);
-    box-shadow:0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(29,97,255,0.15);
-  }
-  .screenshot-frame img { width:100%; display:block; }
-  .screenshot-label {
-    text-align:center; padding:10px 6px 12px;
-    font-size:10px; color:var(--text-dim);
-    font-family:'Share Tech Mono',monospace;
-    letter-spacing:1px; text-transform:uppercase;
-  }
-
-  /* TERMINAL */
-  .terminal {
-    background:var(--bg2); border:1px solid var(--border);
-    border-radius:4px; overflow:hidden;
-    font-family:'JetBrains Mono', monospace; font-size:13px;
-  }
-  .terminal-header {
-    background:var(--surface); padding:12px 16px;
-    display:flex; align-items:center; gap:8px;
-    border-bottom:1px solid var(--border);
-  }
-  .dot { width:12px; height:12px; border-radius:50%; }
-  .dot-r { background:#FF5F57; }
-  .dot-y { background:#FEBC2E; }
-  .dot-g { background:#28C840; }
-  .terminal-title { margin-left:8px; font-size:12px; color:var(--text-dim); }
-  .terminal-body { padding:20px; line-height:2; }
-  .t-prompt { color:var(--blue); }
-  .t-cmd    { color:var(--text); }
-  .t-key    { color:#7DD3FC; }
-  .t-val    { color:#86EFAC; }
-  .t-dim    { color:var(--text-dim); }
-  .type-cursor { display:inline-block; width:8px; height:14px; background:var(--blue); animation:blink 1s step-end infinite; vertical-align:middle; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-
-  /* ENGINES */
-  .engines { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-  @media(max-width:640px){ .engines { grid-template-columns:1fr; } }
-  .engine-card {
-    background:var(--bg2); border:1px solid var(--border);
-    border-radius:4px; padding:32px;
-  }
-  .engine-card.featured { border-color:rgba(29,97,255,0.4); background:linear-gradient(135deg, var(--bg2), rgba(29,97,255,0.06)); }
-  .engine-tag {
-    display:inline-block; font-size:10px; font-weight:700;
-    letter-spacing:0.1em; text-transform:uppercase;
-    padding:4px 12px; border-radius:2px; margin-bottom:16px;
-    font-family:'Share Tech Mono',monospace;
-  }
-  .engine-tag.premium { background:var(--blue-dim); color:var(--blue); border:1px solid rgba(29,97,255,0.3); }
-  .engine-tag.fast    { background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.3); }
-  .engine-card h3 { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; margin-bottom:10px; }
-  .engine-card p  { font-size:13px; color:var(--text-mid); line-height:1.8; margin-bottom:20px; }
-  .engine-meta { display:flex; flex-direction:column; gap:8px; }
-  .engine-stat { display:flex; align-items:center; gap:10px; font-size:12px; color:var(--text-mid); }
-  .engine-stat-dot { width:5px; height:5px; border-radius:50%; background:var(--blue); flex-shrink:0; }
-
-  /* LANGUAGES */
-  .lang-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
-  .lang-chip {
-    background:var(--bg2); border:1px solid var(--border);
-    padding:7px 14px; font-size:12px; font-weight:600;
-    font-family:'Share Tech Mono',monospace;
-    transition:border-color 0.2s, background 0.2s;
-  }
-  .lang-chip:hover { border-color:rgba(29,97,255,0.4); background:var(--blue-dim); }
-  .lang-chip.hi { border-color:rgba(29,97,255,0.4); color:var(--blue); background:var(--blue-dim); }
-
-  /* PERF TABLE */
-  .perf-wrap { background:var(--bg2); border:1px solid var(--border); border-radius:4px; overflow:hidden; }
-  .perf-table { width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; }
-  .perf-table th { text-align:left; padding:12px 20px; font-size:11px; color:var(--text-dim); font-weight:600; letter-spacing:0.08em; text-transform:uppercase; border-bottom:1px solid var(--border); }
-  .perf-table td { padding:16px 20px; font-size:12px; border-bottom:1px solid rgba(30,41,59,0.5); }
-  .perf-table tr:last-child td { border-bottom:none; }
-  .perf-table tbody tr:hover { background:rgba(29,97,255,0.04); }
-  .tier { display:flex; align-items:center; gap:10px; font-weight:600; }
-  .td-g { color:#10b981; } .td-y { color:#f59e0b; } .td-r { color:#FF4B4B; }
-
-  /* PLAY STORE CTA */
-  .play-cta {
-    background:linear-gradient(135deg, rgba(29,97,255,0.1), rgba(29,97,255,0.04));
-    border:1px solid rgba(29,97,255,0.3); border-radius:4px;
-    padding:48px 40px; text-align:center; position:relative; overflow:hidden;
-  }
-  .play-cta::before {
-    content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%;
-    background:radial-gradient(circle at center, rgba(29,97,255,0.06) 0%, transparent 60%);
-    pointer-events:none;
-  }
-  .play-cta h3 { font-family:'Syne',sans-serif; font-size:32px; font-weight:800; margin-bottom:12px; position:relative; }
-  .play-cta p { color:var(--text-mid); font-size:13px; margin-bottom:28px; line-height:1.8; position:relative; }
-  .play-btn {
-    display:inline-flex; align-items:center; gap:12px;
-    background:var(--blue); color:#fff;
-    padding:14px 32px; font-family:'Syne',sans-serif; font-size:15px; font-weight:800;
-    letter-spacing:0.5px; border:none; cursor:pointer;
-    transition:all 0.3s; text-decoration:none; position:relative;
-    border-radius:2px;
-  }
-  .play-btn:hover { background:#1450e0; transform:translateY(-3px); box-shadow:0 12px 40px rgba(29,97,255,0.4); text-decoration:none; color:#fff; }
-  .play-btn-icon { font-size:20px; }
-  .play-note { margin-top:16px; font-size:11px; color:var(--text-dark); position:relative; }
-
-  /* STEPS */
-  .steps { display:flex; flex-direction:column; gap:0; }
-  .step {
-    display:flex; gap:24px; align-items:flex-start;
-    padding:24px 0; border-bottom:1px solid var(--border);
-  }
-  .step:last-child { border-bottom:none; }
-  .step-num {
-    font-family:'Syne',sans-serif; font-size:36px; font-weight:800;
-    color:var(--blue); opacity:0.3; flex-shrink:0; width:56px; line-height:1;
-    transition:opacity 0.3s;
-  }
-  .step:hover .step-num { opacity:1; }
-  .step-content h3 { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; margin-bottom:8px; }
-  .step-content p  { font-size:13px; color:var(--text-mid); line-height:1.8; }
-  .step-content code { color:var(--blue); background:var(--blue-dim); padding:2px 6px; border-radius:2px; }
-
-  /* CONTRIB */
-  .contrib-block {
-    background:var(--bg2); border:1px solid var(--border);
-    border-radius:4px; padding:24px;
-    font-size:13px; line-height:2.2; color:var(--text-mid);
-  }
-  .c-num { color:var(--blue); margin-right:12px; }
-  .c-cmd { color:#7DD3FC; }
-  .c-str { color:#86EFAC; }
-
-  /* LICENSE */
-  .license-block {
-    background:var(--bg2); border:1px solid var(--border); border-radius:4px;
-    padding:24px; font-size:12px; line-height:1.9; color:var(--text-mid);
-  }
-  .license-block a { color:var(--blue); }
-
-  /* REVEAL */
-  .reveal { opacity:0; transform:translateY(28px); transition:opacity 0.7s ease, transform 0.7s ease; }
-  .reveal.visible { opacity:1; transform:translateY(0); }
-
-  /* FOOTER */
-  footer { padding:48px 0 32px; border-top:1px solid var(--border); text-align:center; position:relative; z-index:2; }
-  .footer-name { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; margin-bottom:8px; }
-  .footer-name span { color:var(--blue); }
-  .footer-quote { font-size:13px; color:var(--text-dim); margin-bottom:16px; font-style:italic; }
-  .footer-link { color:var(--text-dim); text-decoration:none; font-size:12px; letter-spacing:1px; transition:color 0.2s; }
-  .footer-link:hover { color:var(--blue); }
-
-  a { color:var(--blue); text-decoration:none; }
-  a:hover { text-decoration:underline; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoxSherpa TTS — Premium Offline Neural TTS for Android</title>
+  <link rel="stylesheet" href="docs/site/css/style.css">
 </head>
 <body>
-
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
-<div class="corner corner-tl"></div>
-<div class="corner corner-tr"></div>
-<div class="corner corner-bl"></div>
-<div class="corner corner-br"></div>
-
-<!-- HERO -->
-<div class="hero">
-  <div class="hero-glow"></div>
-
-  <div class="live-pill">
-    <div class="live-dot"></div>
-    Now Live on Google Play · V2.6
-  </div>
-
-  <pre class="ascii-art">
- ___      ___  ________     ___    ___ ________  ___  ___  _______   ________  ________  ________     
-|\  \    /  /||\   __  \   |\  \  /  /|\   ____\|\  \|\  \|\  ___ \ |\   __  \|\   __  \|\   __  \    
-\ \  \  /  / /\ \  \|\  \  \ \  \/  / | \  \___|\ \  \\\  \ \   __/|\ \  \|\  \ \  \|\  \ \  \|\  \   
- \ \  \/  / /  \ \  \\\  \  \ \    / / \ \_____  \ \   __  \ \  \_|/_\ \   _  _\ \   ____\ \   __  \  
-  \ \    / /    \ \  \\\  \  /     \/   \|____|\  \ \  \ \  \ \  \_|\ \ \  \\  \\ \  \___|\ \  \ \  \ 
-   \ \__/ /      \ \_______\/  /\   \     ____\_\  \ \__\ \__\ \_______\ \__\\ _\\ \__\    \ \__\ \__\
-    \|__|/        \|_______/__/ /\ __\   |\_________\|__|\|__|\|_______|\|__|\|__|\|__|     \|__|\|__|
-                           |__|/ \|__|   \|_________|                                                   
-  </pre>
-
-  <p class="tagline">Offline Neural TTS · <span>Android</span> · No Cloud · No Limits</p>
-
-  <div class="badges">
-    <a href="https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa" class="badge badge-primary"><span>↓ Get it on Google Play</span></a>
-    <a href="https://github.com/CodeBySonu95/VoxSherpa-TTS" class="badge badge-dim"><span>★ GitHub</span></a>
-    <span class="badge badge-dim"><span>GPL v3.0</span></span>
-    <span class="badge badge-dim"><span>Android 11+</span></span>
-    <span class="badge badge-dim"><span>ARM64</span></span>
-  </div>
-
-  <p class="hero-desc">
-    <strong>VoxSherpa TTS</strong> runs studio-quality neural text-to-speech entirely on your Android device.<br><br>
-    Powered by <strong>Sherpa-ONNX</strong> — supports <strong>Kokoro-82M</strong>, Piper, and VITS engines.<br>
-    Hindi, English, Japanese, Chinese and <strong>50+ languages</strong> — zero internet required after model download.
-  </p>
-
-  <div class="scroll-hint">
-    <div class="scroll-line"></div>
-    SCROLL
-  </div>
-</div>
-
-<!-- SCREENSHOTS -->
-<section>
-  <div class="container">
-    <div class="section-label reveal">01 // SCREENSHOTS</div>
-    <h2 class="section-title reveal">See it in <span class="hl">action</span></h2>
-    <div class="screenshots-grid reveal">
-      <div class="screenshot-frame">
-        <img src="https://raw.githubusercontent.com/CodeBySonu95/VoxSherpa-TTS/main/fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" alt="Generate">
-        <div class="screenshot-label">Generate</div>
-      </div>
-      <div class="screenshot-frame">
-        <img src="https://raw.githubusercontent.com/CodeBySonu95/VoxSherpa-TTS/main/fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" alt="Models">
-        <div class="screenshot-label">Models</div>
-      </div>
-      <div class="screenshot-frame">
-        <img src="https://raw.githubusercontent.com/CodeBySonu95/VoxSherpa-TTS/main/fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpg" alt="Library">
-        <div class="screenshot-label">Library</div>
-      </div>
-      <div class="screenshot-frame">
-        <img src="https://raw.githubusercontent.com/CodeBySonu95/VoxSherpa-TTS/main/fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpg" alt="Settings">
-        <div class="screenshot-label">Settings</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- WHY VOXSHERPA -->
-<section>
-  <div class="container">
-    <div class="section-label reveal">02 // WHY VOXSHERPA</div>
-    <h2 class="section-title reveal">ElevenLabs quality.<br/><span class="hl">No internet required. No subscription.</span></h2>
-
-    <div class="vs-banner reveal">
-      <div>
-        <div class="vs-label">Others</div>
-        <div class="vs-val">Cloud · <span style="color:#FF4B4B">Sends your text to servers</span> · Charges per character</div>
-      </div>
-      <div class="vs-divider"></div>
-      <div>
-        <div class="vs-label">VoxSherpa</div>
-        <div class="vs-val">On-device · <span>All processing happens on your device — no cloud required</span> · use offline models</div>
-      </div>
-    </div>
-
-    <div class="features-grid">
-
-      <div class="feature-card reveal">
-        <div class="feature-icon">🔒</div>
-        <div class="feature-title">Offline & Private</div>
-        <div class="feature-desc">All inference on your device. No internet after model download. No account, no telemetry, no data collection. Ever.</div>
-      </div>
-
-      <div class="feature-card reveal">
-        <div class="feature-icon">🌐</div>
-        <div class="feature-title">50+ Languages</div>
-        <div class="feature-desc">Hindi, English, British, Japanese, Chinese, French, Spanish and more. Serious Hindi support — offline, no compromise.</div>
-      </div>
-
-      <div class="feature-card reveal">
-        <div class="feature-icon">📄</div>
-        <div class="feature-title">Document to Audio</div>
-        <div class="feature-desc">PDF to Audio and TXT to Audio built-in. Listen to any document hands-free. No cloud processing involved.</div>
-      </div>
-
-      <div class="feature-card reveal">
-        <div class="feature-icon">🔔</div>
-        <div class="feature-title">System-Wide TTS</div>
-        <div class="feature-new">V2.6</div>
-        <div class="feature-desc">Set VoxSherpa as your Android TTS engine. Use it in Chrome, WhatsApp, any app — with pitch and speed controls.</div>
-      </div>
-
-      <div class="feature-card reveal">
-        <div class="feature-icon">🎵</div>
-        <div class="feature-title">Media Notification</div>
-        <div class="feature-new">V2.6</div>
-        <div class="feature-desc">Full MediaStyle playback controls from the notification shade and lock screen. Pause, resume, seek — without opening the app.</div>
-      </div>
-
-      <div class="feature-card reveal">
-        <div class="feature-icon">🎧</div>
-        <div class="feature-title">Pro Audio Controls</div>
-        <div class="feature-desc">Real-time waveform visualization, interactive seeking, chunk-based playback, adjustable speed & pitch. Export as WAV.</div>
-      </div>
-
-      <div class="feature-card reveal">
-        <div class="feature-icon">📦</div>
-        <div class="feature-title">Flexible Model Import</div>
-        <div class="feature-desc">Download models inside the app or import your own .onnx files from local storage. Multiple models installed simultaneously.</div>
-      </div>
-
-      <div class="feature-card reveal">
-        <div class="feature-icon">📚</div>
-        <div class="feature-title">Speech Library</div>
-        <div class="feature-desc">Every generation saved locally. Favorites, timestamps, voice attribution per recording. Regenerate on voice change.</div>
-      </div>
-
-      <div class="feature-card reveal">
-        <div class="feature-icon">⚙️</div>
-        <div class="feature-title">Emotion Tags</div>
-        <div class="feature-desc">Smart Punctuation for natural pauses. Express mood inline: <code style="color:var(--blue)">[whisper]</code> <code style="color:var(--blue)">[angry]</code> <code style="color:var(--blue)">[happy]</code>. 100+ Kokoro voices.</div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- ENGINES -->
-<section>
-  <div class="container">
-    <div class="section-label reveal">03 // ENGINES</div>
-    <h2 class="section-title reveal">Two engines.<br/><span class="hl">One app.</span></h2>
-    <div class="engines reveal">
-      <div class="engine-card featured">
-        <div class="engine-tag premium">⭐ Studio Quality</div>
-        <h3>Kokoro-82M</h3>
-        <p>82 million parameter neural model. Same architecture powering top commercial TTS services — running fully offline on your phone.</p>
-        <div class="engine-meta">
-          <div class="engine-stat"><div class="engine-stat-dot"></div>Rivals ElevenLabs quality</div>
-          <div class="engine-stat"><div class="engine-stat-dot"></div>100+ speaker voices</div>
-          <div class="engine-stat"><div class="engine-stat-dot"></div>Best for audiobooks & voiceovers</div>
-          <div class="engine-stat"><div class="engine-stat-dot"></div>82M params · FP32 · Sherpa-ONNX</div>
-        </div>
-      </div>
-      <div class="engine-card">
-        <div class="engine-tag fast">⚡ Fast</div>
-        <h3>Piper / VITS</h3>
-        <p>Lightweight and fast. Generates natural speech in seconds on any Android device — perfect for daily use.</p>
-        <div class="engine-meta">
-          <div class="engine-stat"><div class="engine-stat-dot"></div>Fast on budget hardware</div>
-          <div class="engine-stat"><div class="engine-stat-dot"></div>Natural, clear output</div>
-          <div class="engine-stat"><div class="engine-stat-dot"></div>Best for quick synthesis</div>
-          <div class="engine-stat"><div class="engine-stat-dot"></div>Low memory footprint</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- LANGUAGES -->
-<section>
-  <div class="container">
-    <div class="section-label reveal">04 // LANGUAGES</div>
-    <h2 class="section-title reveal">Speak <span class="hl">every language</span><br/>offline.</h2>
-    <div class="lang-grid reveal">
-      <span class="lang-chip hi">🇮🇳 Hindi</span>
-      <span class="lang-chip hi">🇺🇸 English</span>
-      <span class="lang-chip hi">🇬🇧 British English</span>
-      <span class="lang-chip hi">🇯🇵 Japanese</span>
-      <span class="lang-chip hi">🇨🇳 Chinese</span>
-      <span class="lang-chip">🇫🇷 French</span>
-      <span class="lang-chip">🇪🇸 Spanish</span>
-      <span class="lang-chip">🇩🇪 German</span>
-      <span class="lang-chip">🇵🇹 Portuguese</span>
-      <span class="lang-chip">🇮🇹 Italian</span>
-      <span class="lang-chip">🇰🇷 Korean</span>
-      <span class="lang-chip">🇷🇺 Russian</span>
-      <span class="lang-chip">🇵🇱 Polish</span>
-      <span class="lang-chip">+ 37 more</span>
-    </div>
-  </div>
-</section>
-
-<!-- TECH STACK -->
-<section>
-  <div class="container">
-    <div class="section-label reveal">05 // TECH STACK</div>
-    <h2 class="section-title reveal">What's inside <span class="hl">the build?</span></h2>
-    <div class="terminal reveal">
-      <div class="terminal-header">
-        <div class="dot dot-r"></div>
-        <div class="dot dot-y"></div>
-        <div class="dot dot-g"></div>
-        <span class="terminal-title">tech-stack.json</span>
-      </div>
-      <div class="terminal-body">
-        <div><span class="t-prompt">[$] </span><span class="t-cmd">cat tech-stack.json</span></div>
-        <div>&nbsp;</div>
-        <div><span class="t-dim">{</span></div>
-        <div>&nbsp;&nbsp;<span class="t-key">"language"</span><span class="t-dim">      →  </span><span class="t-val">"Java"</span></div>
-        <div>&nbsp;&nbsp;<span class="t-key">"platform"</span><span class="t-dim">      →  </span><span class="t-val">"Android 11+  ·  ARM64"</span></div>
-        <div>&nbsp;&nbsp;<span class="t-key">"built_with"</span><span class="t-dim">    →  </span><span class="t-val">"Sketchware Pro"</span></div>
-        <div>&nbsp;&nbsp;<span class="t-key">"inference"</span><span class="t-dim">     →  </span><span class="t-val">"Sherpa-ONNX · ONNX Runtime"</span></div>
-        <div>&nbsp;&nbsp;<span class="t-key">"tts_engines"</span><span class="t-dim">   →  </span><span class="t-val">["Kokoro-82M", "Piper", "VITS"]</span></div>
-        <div>&nbsp;&nbsp;<span class="t-key">"audio_api"</span><span class="t-dim">     →  </span><span class="t-val">"Android AudioTrack (PCM)"</span></div>
-        <div>&nbsp;&nbsp;<span class="t-key">"distribution"</span><span class="t-dim">  →  </span><span class="t-val">"Google Play Store"</span></div>
-        <div>&nbsp;&nbsp;<span class="t-key">"version"</span><span class="t-dim">       →  </span><span class="t-val">"2.6  ·  Media Notification"</span></div>
-        <div>&nbsp;&nbsp;<span class="t-key">"license"</span><span class="t-dim">       →  </span><span class="t-val">"GNU GPL v3.0"</span></div>
-        <div><span class="t-dim">}</span></div>
-        <div>&nbsp;</div>
-        <div><span class="t-prompt">[$] </span><span class="type-cursor"></span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- PERFORMANCE -->
-<section>
-  <div class="container">
-    <div class="section-label reveal">06 // PERFORMANCE</div>
-    <h2 class="section-title reveal">Honest numbers.<br/><span class="hl">Real hardware.</span></h2>
-    <div class="perf-wrap reveal">
-      <table class="perf-table">
-        <thead>
-          <tr>
-            <th>Device Tier</th>
-            <th>Kokoro-82M</th>
-            <th>Piper / VITS</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><span class="td-g">● Flagship (SD 8 Gen 3)</span></td>
-            <td>~20–40 sec / min audio</td>
-            <td>~5 sec / min audio</td>
-          </tr>
-          <tr>
-            <td><span class="td-y">● Mid-range (8-core)</span></td>
-            <td>~60–90 sec / min audio</td>
-            <td>~10 sec / min audio</td>
-          </tr>
-          <tr>
-            <td><span class="td-r">● Budget (6-core)</span></td>
-            <td>~2–3 min / min audio</td>
-            <td>~20 sec / min audio</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <p style="margin-top:16px; font-size:12px; color:var(--text-dim); border-left:2px solid var(--border); padding-left:14px; line-height:1.8;">
-      Kokoro prioritizes quality over speed by design — the same 82M parameter architecture that powers premium commercial TTS, running entirely on a mobile CPU. Chunk-based playback means audio starts playing before full generation completes.
-    </p>
-  </div>
-</section>
-
-<!-- PLAY STORE CTA -->
-<section>
-  <div class="container">
-    <div class="play-cta reveal">
-      <h3>Ready to go <span class="hl">fully offline?</span></h3>
-      <p>Free to install. No account. No subscription.<br/>Your voice stays on your device — always.</p>
-      <a href="https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa" class="play-btn">
-        <span class="play-btn-icon">▶</span>
-        Download on Google Play
+  <div class="bg-gradient"></div>
+  
+  <nav id="navbar">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <img src="docs/site/assets/images/icon.png" alt="VoxSherpa" style="width: 32px; height: 32px;">
+        Vox<span>Sherpa</span>
       </a>
-      <div class="play-note">Android 11+ · ARM64 · ~500 MB storage recommended for models</div>
+      <div class="nav-links">
+        <a href="docs/site/models/index.html">Models</a>
+        <a href="docs/site/docs/index.html">Documentation</a>
+        <a href="docs/site/changelog/index.html">Changelog</a>
+        <a href="docs/site/credits/index.html">Credits</a>
+      </div>
     </div>
-  </div>
-</section>
+  </nav>
 
-<!-- CONTRIBUTE -->
-<section>
-  <div class="container">
-    <div class="section-label reveal">07 // CONTRIBUTE</div>
-    <h2 class="section-title reveal">Open Source —<br/><span class="hl">contributions welcome</span></h2>
-    <div class="contrib-block reveal">
-      <div><span class="c-num">1.</span> Fork the repo</div>
-      <div><span class="c-num">2.</span> <span class="c-cmd">git checkout -b</span> <span class="c-str">feature/YourFeature</span></div>
-      <div><span class="c-num">3.</span> <span class="c-cmd">git commit -m</span> <span class="c-str">"Add YourFeature"</span></div>
-      <div><span class="c-num">4.</span> <span class="c-cmd">git push origin</span> <span class="c-str">feature/YourFeature</span></div>
-      <div><span class="c-num">5.</span> Open a Pull Request</div>
+  <main>
+    <section class="hero container">
+      <div class="hero-badge">✨ Version 2.9 Now Live</div>
+      <h1><span>The Future of TTS</span><br>is Offline.</h1>
+      <p>Studio-quality neural text-to-speech that lives entirely on your device. No cloud. No limits. Just pure performance.</p>
+      <div class="btn-group">
+        <a href="https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa" class="btn btn-primary">Download App</a>
+        <a href="docs/site/models/index.html" class="btn btn-secondary">Browse Models</a>
+      </div>
+    </section>
+
+    <section class="container" style="padding-bottom: 100px;">
+      <div style="text-align: center; margin-bottom: 60px;">
+        <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 36px; font-weight: 800;">Experience Excellence</h2>
+      </div>
+      
+      <div class="features-grid">
+        <div class="glass-card feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>Absolute Privacy</h3>
+          <p>Your data stays yours. No telemetry, no cloud processing, no tracking. Ever.</p>
+        </div>
+        <div class="glass-card feature-card">
+          <div class="feature-icon">🧠</div>
+          <h3>Neural Engines</h3>
+          <p>Dual engines including Kokoro-82M and Piper for the perfect balance of quality and speed.</p>
+        </div>
+        <div class="glass-card feature-card">
+          <div class="feature-icon">🌐</div>
+          <h3>Global Reach</h3>
+          <p>Serious support for Hindi, English, and 50+ languages with high-fidelity offline models.</p>
+        </div>
+      </div>
+    </section>
+
+    <section style="background: rgba(255,255,255,0.02); padding: 100px 0;">
+      <div class="container">
+        <div style="display: flex; align-items: center; gap: 60px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 300px;">
+            <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 42px; font-weight: 800; line-height: 1.2; margin-bottom: 24px;">Designed for<br>Modern Android</h2>
+            <p style="color: var(--text-muted); font-size: 18px; margin-bottom: 32px;">A beautiful, intuitive interface that makes managing models and generating speech a breeze.</p>
+            <ul style="list-style: none; display: grid; gap: 16px;">
+              <li style="display: flex; align-items: center; gap: 12px; color: var(--text-muted);">
+                <span style="color: var(--primary);">✓</span> System-wide TTS Integration
+              </li>
+              <li style="display: flex; align-items: center; gap: 12px; color: var(--text-muted);">
+                <span style="color: var(--primary);">✓</span> Document to Audio Conversion
+              </li>
+              <li style="display: flex; align-items: center; gap: 12px; color: var(--text-muted);">
+                <span style="color: var(--primary);">✓</span> Real-time Waveform Preview
+              </li>
+            </ul>
+          </div>
+          <div style="flex: 1; min-width: 300px; display: flex; gap: 20px; justify-content: center;">
+            <img src="docs/site/assets/images/1.jpg" alt="App Screen" style="width: 220px; border-radius: 24px; border: 4px solid var(--glass-border); transform: rotate(-5deg);">
+            <img src="docs/site/assets/images/2.jpg" alt="App Screen" style="width: 220px; border-radius: 24px; border: 4px solid var(--glass-border); transform: rotate(5deg); margin-top: 40px;">
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <a href="index.html" class="logo">Vox<span>Sherpa</span></a>
+        <div class="footer-links">
+          <a href="docs/site/models/index.html">Models</a>
+          <a href="docs/site/docs/index.html">Docs</a>
+          <a href="docs/site/changelog/index.html">Changelog</a>
+          <a href="docs/site/credits/index.html">Credits</a>
+        </div>
+      </div>
+      <p class="copyright">"Built with obsession. Runs without internet."<br>&copy; 2026 CodeBySonu95</p>
     </div>
-    <p style="margin-top:20px;font-size:12px;color:var(--text-dim)">
-      Found a bug? → <a href="https://github.com/CodeBySonu95/VoxSherpa-TTS/issues">Open an Issue</a>
-    </p>
-  </div>
-</section>
+  </footer>
 
-<!-- LICENSE -->
-<section>
-  <div class="container">
-    <div class="section-label reveal">08 // LICENSE</div>
-    <h2 class="section-title reveal"><span class="hl">GNU GPL</span> v3.0</h2>
-    <div class="license-block reveal">
-      VoxSherpa TTS — Copyright (C) 2025 CodeBySonu95<br><br>
-      This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.<br><br>
-      This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.<br><br>
-      See the full <a href="https://github.com/CodeBySonu95/VoxSherpa-TTS/blob/main/LICENSE">LICENSE</a> file for details.
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="container">
-    <div class="footer-name">Code<span>By</span>Sonu95</div>
-    <p class="footer-quote">"Built with obsession. Runs without internet."</p>
-    <a href="https://github.com/CodeBySonu95" class="footer-link">⬡ github.com/CodeBySonu95</a>
-  </div>
-</footer>
-
-<script>
-  const cursor = document.getElementById('cursor');
-  const ring   = document.getElementById('cursorRing');
-  let mx=0,my=0,rx=0,ry=0;
-  document.addEventListener('mousemove', e => {
-    mx=e.clientX; my=e.clientY;
-    cursor.style.left=mx-5+'px'; cursor.style.top=my-5+'px';
-  });
-  (function animRing(){
-    rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12;
-    ring.style.left=rx-16+'px'; ring.style.top=ry-16+'px';
-    requestAnimationFrame(animRing);
-  })();
-  document.querySelectorAll('a,.feature-card,.badge,.step-num,.footer-link,.screenshot-frame,.play-btn').forEach(el=>{
-    el.addEventListener('mouseenter',()=>{ cursor.style.transform='scale(2)'; ring.style.transform='scale(1.5)'; });
-    el.addEventListener('mouseleave',()=>{ cursor.style.transform='scale(1)';  ring.style.transform='scale(1)'; });
-  });
-  const obs = new IntersectionObserver(entries=>{
-    entries.forEach((e,i)=>{
-      if(e.isIntersecting) setTimeout(()=>e.target.classList.add('visible'), i*80);
+  <script>
+    window.addEventListener('scroll', () => {
+      const nav = document.getElementById('navbar');
+      if (window.scrollY > 50) {
+        nav.classList.add('scrolled');
+      } else {
+        nav.classList.remove('scrolled');
+      }
     });
-  },{threshold:0.1});
-  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
-</script>
+  </script>
 </body>
 </html>

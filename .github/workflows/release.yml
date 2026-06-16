@@ -1,12 +1,11 @@
 name: Build Optimized Main APK
 
 on:
-  push:
+  workflow_dispatch:
+  pull_request:
     branches:
       - main
-  pull_request: 
-    branches:
-      - main
+      - alpha
 
 permissions:
   contents: write

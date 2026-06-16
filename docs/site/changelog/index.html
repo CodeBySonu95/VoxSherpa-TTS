@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Changelog — VoxSherpa TTS</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .timeline {
+      position: relative;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .timeline::after {
+      content: '';
+      position: absolute;
+      width: 2px;
+      background: var(--glass-border);
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      margin-left: -1px;
+    }
+    .release-card {
+      padding: 10px 40px;
+      position: relative;
+      background: inherit;
+      width: 50%;
+    }
+    .release-card::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      right: -8px;
+      background-color: var(--primary);
+      border: 4px solid var(--bg);
+      top: 15px;
+      border-radius: 50%;
+      z-index: 1;
+    }
+    .left { left: 0; }
+    .right { left: 50%; }
+    .right::after { left: -8px; }
+    .content {
+      padding: 24px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+    }
+    @media screen and (max-width: 600px) {
+      .timeline::after { left: 31px; }
+      .release-card { width: 100%; padding-left: 70px; padding-right: 25px; }
+      .release-card::after { left: 23px; }
+      .right { left: 0%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-gradient"></div>
+  
+  <nav id="navbar" class="scrolled">
+    <div class="container">
+      <a href="../../../index.html" class="logo">Vox<span>Sherpa</span></a>
+      <div class="nav-links">
+        <a href="../../../index.html">Home</a>
+        <a href="../models/index.html">Models</a>
+        <a href="../docs/index.html">Documentation</a>
+        <a href="index.html" class="active">Changelog</a>
+        <a href="../credits/index.html">Credits</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" style="padding-top: 140px;">
+    <div style="text-align: center; margin-bottom: 80px;">
+      <div class="hero-badge">Evolution</div>
+      <h1 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 48px; font-weight: 800; margin-bottom: 16px;">What's New</h1>
+      <p style="color: var(--text-muted);">Stay updated with the latest improvements and feature releases.</p>
+    </div>
+
+    <div class="timeline">
+      <div class="release-card left">
+        <div class="content">
+          <h3 style="color: var(--primary); margin-bottom: 8px;">v4.1 — Shortcuts</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">June 2026</p>
+          <ul style="list-style: none; font-size: 14px; color: var(--text-muted); display: grid; gap: 8px;">
+            <li>• Text History Support</li>
+            <li>• Instant Paste Button</li>
+            <li>• Speech-to-Text Integration</li>
+          </ul>
+        </div>
+      </div>
+      <div class="release-card right">
+        <div class="content">
+          <h3 style="color: var(--secondary); margin-bottom: 8px;">v4.0 — Dialogue</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">May 2026</p>
+          <ul style="list-style: none; font-size: 14px; color: var(--text-muted); display: grid; gap: 8px;">
+            <li>• Multi-speaker Generation</li>
+            <li>• New [speaker] Tag System</li>
+            <li>• Enhanced Flow Control</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 60px;">
+      <a href="https://github.com/CodeBySonu95/VoxSherpa-TTS/blob/main/docs/CHANGELOG.md" class="btn btn-secondary">View Full History</a>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <a href="../../../index.html" class="logo">Vox<span>Sherpa</span></a>
+        <div class="footer-links">
+          <a href="../../../index.html">Home</a>
+          <a href="../models/index.html">Models</a>
+          <a href="../docs/index.html">Docs</a>
+          <a href="index.html">Changelog</a>
+          <a href="../credits/index.html">Credits</a>
+        </div>
+      </div>
+      <p class="copyright">&copy; 2026 CodeBySonu95</p>
+    </div>
+  </footer>
+</body>
+</html>
