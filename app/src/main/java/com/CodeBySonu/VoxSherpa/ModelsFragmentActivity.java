@@ -280,6 +280,7 @@ public class ModelsFragmentActivity extends Fragment {
 		
 		
 		_setupDataAndStorage();
+		_mergeMmsCatalog();
 		_fetchFirebaseModels();
 		_setupRecyclerViewAdapter();
 		
@@ -1164,6 +1165,35 @@ public class ModelsFragmentActivity extends Fragment {
 	}
 	
 	
+	public void _mergeMmsCatalog() {
+		java.util.List<HashMap<String, Object>> catalog = com.CodeBySonu.VoxSherpa.MmsCatalog.loadModelEntries(getContext());
+		if (catalog == null || catalog.isEmpty()) return;
+
+		String savedData = sp1.getString("models_data", "[]");
+		java.util.ArrayList<HashMap<String, Object>> masterList = GSON.fromJson(savedData, new TypeToken<ArrayList<HashMap<String, Object>>>(){}.getType());
+		if (masterList == null) masterList = new java.util.ArrayList<>();
+
+		java.util.HashSet<String> existingUrls = new java.util.HashSet<>();
+		for (HashMap<String, Object> m : masterList) {
+			if (m.containsKey("model_url")) existingUrls.add(m.get("model_url").toString());
+		}
+
+		boolean changed = false;
+		for (HashMap<String, Object> entry : catalog) {
+			String url = entry.containsKey("model_url") ? entry.get("model_url").toString() : "";
+			if (!url.isEmpty() && !existingUrls.contains(url)) {
+				masterList.add(entry);
+				existingUrls.add(url);
+				changed = true;
+			}
+		}
+
+		if (changed) {
+			sp1.edit().putString("models_data", GSON.toJson(masterList)).apply();
+		}
+	}
+
+
 	public void _fetchFirebaseModels() {
 		fb.addListenerForSingleValueEvent(new ValueEventListener() {
 			@Override
@@ -1212,7 +1242,7 @@ public class ModelsFragmentActivity extends Fragment {
 						HashMap<String, Object> localModel = modelList.get(i);
 						if (localModel.containsKey("model_url")) {
 							String localUrl = localModel.get("model_url").toString();
-							if (!onlineUrls.contains(localUrl)) {
+							if (!onlineUrls.contains(localUrl) && !localUrl.contains("mms-tts-multilingual-models-onnx")) {
 								String onnxPath = localModel.containsKey("onnx_path") ? localModel.get("onnx_path").toString() : "";
 								String tokensPath = localModel.containsKey("tokens_path") ? localModel.get("tokens_path").toString() : "";
 								String voicesPath = localModel.containsKey("voices_bin_path") ? localModel.get("voices_bin_path").toString() : "";
