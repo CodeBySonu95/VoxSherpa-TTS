@@ -175,8 +175,10 @@ public class SettingFragmentActivity extends Fragment {
 		}
 		boolean isPunctuationOn = sp3.getBoolean("smart_punct", false);
 		boolean isEmotionOn = sp3.getBoolean("emotion_tags", false);
+		boolean isMmsOn = sp3.getBoolean("mms_models_enabled", false);
 		binding.switchPunctuation.setChecked(isPunctuationOn);
 		binding.switchEmotion.setChecked(isEmotionOn);
+		binding.switchMms.setChecked(isMmsOn);
 		binding.switchPunctuation.setOnCheckedChangeListener((buttonView, isChecked) -> {
 			sp3.edit().putBoolean("smart_punct", isChecked).apply();
 		});
@@ -197,6 +199,25 @@ public class SettingFragmentActivity extends Fragment {
 				.show();
 			} else {
 				sp3.edit().putBoolean("emotion_tags", false).apply();
+			}
+		});
+		binding.switchMms.setOnCheckedChangeListener((buttonView, isChecked) -> {
+			if (isChecked) {
+				new com.google.android.material.dialog.MaterialAlertDialogBuilder(getContext())
+				.setTitle("MMS Community Models")
+				.setMessage("This will add 1100+ low-resource language models to the Models tab. These are Facebook MMS models — quality varies by language. Downloaded models will be kept if you turn this off later.")
+				.setPositiveButton("Enable", (dialog, which) -> {
+					sp3.edit().putBoolean("mms_models_enabled", true).apply();
+					dialog.dismiss();
+				})
+				.setNegativeButton("Cancel", (dialog, which) -> {
+					buttonView.setChecked(false);
+					dialog.dismiss();
+				})
+				.setCancelable(false)
+				.show();
+			} else {
+				sp3.edit().putBoolean("mms_models_enabled", false).apply();
 			}
 		});
 		float currentPitch = sp3.getFloat("voice_pitch", 1.0f);

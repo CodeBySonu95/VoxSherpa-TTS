@@ -16,7 +16,8 @@
 [![Android](https://img.shields.io/badge/Android-11%2B-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://android.com)
 [![License](https://img.shields.io/badge/License-GPL%20v3.0-blue?style=for-the-badge)](LICENSE)
 [![Sherpa-ONNX](https://img.shields.io/badge/Powered%20by-Sherpa--ONNX-orange?style=for-the-badge)](https://github.com/k2-fsa/sherpa-onnx)
-[![Downloads](https://img.shields.io/github/downloads/CodeBySonu95/VoxSherpa-TTS/total?style=for-the-badge&logo=android&logoColor=white&label=Downloads&color=blue)](https://github.com/CodeBySonu95/VoxSherpa-TTS/releases)
+[![Downloads](https://img.shields.io/github/downloads/CodeBySonu95/VoxSherpa-TTS/total?style=for-the-badge&logo=android&logoColor=white&label=Downloads&color=blue&cacheSeconds=3600)](https://github.com/CodeBySonu95/VoxSherpa-TTS/releases)
+
 
 <h1>VoxSherpa TTS</h1>
 <h3>Studio-quality offline neural text-to-speech for Android.<br/>Hindi · English · British · Japanese · Chinese · and more — No cloud. No limits. No compromise.</h3>

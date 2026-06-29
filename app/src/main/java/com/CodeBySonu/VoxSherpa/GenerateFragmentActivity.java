@@ -688,21 +688,21 @@ public class GenerateFragmentActivity extends Fragment {
 					binding.voiceNameTv.setText("Kokoro Voice");
 				}
 			} else {
-				// PIPER FIX
 				String piperLang = "Unknown";
 				String piperGender = "Unknown";
-				
+				String modelLabel = "Piper";
+
 				try {
 					String modelsDataRaw = sp1.getString("models_data", "[]");
 					if (!modelsDataRaw.equals("[]")) {
-						java.util.ArrayList<java.util.HashMap<String, Object>> mList = 
-						new com.google.gson.Gson().fromJson(modelsDataRaw, 
+						java.util.ArrayList<java.util.HashMap<String, Object>> mList =
+						new com.google.gson.Gson().fromJson(modelsDataRaw,
 						new com.google.gson.reflect.TypeToken<java.util.ArrayList<java.util.HashMap<String, Object>>>(){}.getType());
-						
+
 						if (mList != null) {
 							for (java.util.HashMap<String, Object> model : mList) {
 								String onnxPath = model.containsKey("onnx_path") && model.get("onnx_path") != null ? model.get("onnx_path").toString() : "";
-								
+
 								if (activeModel.equals(onnxPath)) {
 									if (model.containsKey("language") && model.get("language") != null) {
 										piperLang = model.get("language").toString().trim();
@@ -710,21 +710,24 @@ public class GenerateFragmentActivity extends Fragment {
 									if (model.containsKey("gender") && model.get("gender") != null) {
 										piperGender = model.get("gender").toString().trim();
 									}
-									break; 
+									if (model.containsKey("type") && model.get("type").toString().contains("MMS")) {
+										modelLabel = "MMS";
+									}
+									break;
 								}
 							}
 						}
 					}
-				} catch (Exception e) {} 
-				
+				} catch (Exception e) {}
+
 				if (!piperLang.equals("Unknown") && piperLang.length() > 0) {
 					piperLang = piperLang.substring(0, 1).toUpperCase() + piperLang.substring(1).toLowerCase();
 				}
 				if (!piperGender.equals("Unknown") && piperGender.length() > 0) {
 					piperGender = piperGender.substring(0, 1).toUpperCase() + piperGender.substring(1).toLowerCase();
 				}
-				
-				binding.voiceNameTv.setText("Piper • " + piperGender + " • " + piperLang);
+
+				binding.voiceNameTv.setText(modelLabel + " • " + piperGender + " • " + piperLang);
 			}
 			binding.voiceNameTv.setTextColor(android.graphics.Color.WHITE);
 		}
@@ -988,8 +991,9 @@ public class GenerateFragmentActivity extends Fragment {
 					binding.voiceNameTv.setText("Kokoro Voice");
 				}
 			} else {
-				String piperLang = "Unknown";
+			String piperLang = "Unknown";
 				String piperGender = "Unknown";
+				String modelLabel = "Piper";
 				try {
 					String modelsDataRaw = sp1.getString("models_data", "[]");
 					if (!modelsDataRaw.equals("[]")) {
@@ -1006,6 +1010,9 @@ public class GenerateFragmentActivity extends Fragment {
 									if (model.containsKey("gender") && model.get("gender") != null) {
 										piperGender = model.get("gender").toString().trim();
 									}
+									if (model.containsKey("type") && model.get("type").toString().contains("MMS")) {
+										modelLabel = "MMS";
+									}
 									break;
 								}
 							}
@@ -1018,7 +1025,7 @@ public class GenerateFragmentActivity extends Fragment {
 				if (!piperGender.equals("Unknown") && piperGender.length() > 0) {
 					piperGender = piperGender.substring(0, 1).toUpperCase() + piperGender.substring(1).toLowerCase();
 				}
-				binding.voiceNameTv.setText("Piper • " + piperGender + " • " + piperLang);
+				binding.voiceNameTv.setText(modelLabel + " • " + piperGender + " • " + piperLang);
 			}
 			binding.voiceNameTv.setTextColor(android.graphics.Color.WHITE);
 		}
