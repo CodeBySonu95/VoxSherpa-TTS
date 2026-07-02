@@ -191,10 +191,26 @@ public class ModelsFragmentActivity extends Fragment {
 						binding.sortTv.setText("All Models");
 					}
 				};
-				String[] languagesFromXml = getResources().getStringArray(R.array.language_list);
-				String[] finalLanguages = new String[languagesFromXml.length + 1];
+			String[] languagesFromXml = getResources().getStringArray(R.array.language_list);
+				java.util.TreeSet<String> langSet = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+				for (String l : languagesFromXml) langSet.add(l);
+				try {
+					String savedDataForLangs = sp1.getString("models_data", "[]");
+					java.util.ArrayList<java.util.HashMap<String, Object>> allModels = new com.google.gson.Gson().fromJson(
+						savedDataForLangs,
+						new com.google.gson.reflect.TypeToken<java.util.ArrayList<java.util.HashMap<String, Object>>>(){}.getType()
+					);
+					if (allModels != null) {
+						for (java.util.HashMap<String, Object> m : allModels) {
+							String ml = m.containsKey("language") && m.get("language") != null ? m.get("language").toString().trim() : "";
+							if (!ml.isEmpty()) langSet.add(ml);
+						}
+					}
+				} catch (Exception e) {}
+				String[] finalLanguages = new String[langSet.size() + 1];
 				finalLanguages[0] = "All Languages";
-				System.arraycopy(languagesFromXml, 0, finalLanguages, 1, languagesFromXml.length);
+				int li = 1;
+				for (String l : langSet) finalLanguages[li++] = l;
 				android.widget.ArrayAdapter<String> langAdapter = new android.widget.ArrayAdapter<>(getContext(), R.layout.custom_dropdown_item, R.id.tv_drop_item, finalLanguages);
 				android.widget.AutoCompleteTextView dropdownLang = dialogView.findViewById(R.id.dropdown_lang);
 				if(dropdownLang != null) {
@@ -482,21 +498,21 @@ public class ModelsFragmentActivity extends Fragment {
 					useRemoveTv.setText("Download");
 					btnUseVoice.setCardBackgroundColor(android.graphics.Color.parseColor("#1D61FF"));
 				}
-				if (item.containsKey("is_playing") && item.get("is_playing").equals("true")) {
-					imgPreview.setVisibility(View.VISIBLE);
-					imgPreview.setImageResource(R.drawable.icon_pause_circle);
-					if (progressBuffering != null) progressBuffering.setVisibility(View.GONE);
-				} else if (item.containsKey("is_buffering") && item.get("is_buffering").equals("true")) {
-					imgPreview.setVisibility(View.GONE);
-					if (progressBuffering != null) progressBuffering.setVisibility(View.VISIBLE);
+			if (audioUrlToPlay.isEmpty()) {
+				boxPreviewStatus.setVisibility(View.GONE);
+			} else if (item.containsKey("is_playing") && item.get("is_playing").equals("true")) {
+				boxPreviewStatus.setVisibility(View.VISIBLE);
+				imgPreview.setVisibility(View.VISIBLE);
+				imgPreview.setImageResource(R.drawable.icon_pause_circle);
+				if (progressBuffering != null) progressBuffering.setVisibility(View.GONE);
+			} else if (item.containsKey("is_buffering") && item.get("is_buffering").equals("true")) {
+				boxPreviewStatus.setVisibility(View.VISIBLE);
+				imgPreview.setVisibility(View.GONE);
+				if (progressBuffering != null) progressBuffering.setVisibility(View.VISIBLE);
 			} else {
-				if (audioUrlToPlay.isEmpty()) {
-					boxPreviewStatus.setVisibility(View.GONE);
-				} else {
-					boxPreviewStatus.setVisibility(View.VISIBLE);
-					imgPreview.setVisibility(View.VISIBLE);
-					imgPreview.setImageResource(R.drawable.icon_play_circle);
-				}
+				boxPreviewStatus.setVisibility(View.VISIBLE);
+				imgPreview.setVisibility(View.VISIBLE);
+				imgPreview.setImageResource(R.drawable.icon_play_circle);
 				if (progressBuffering != null) progressBuffering.setVisibility(View.GONE);
 			}
 				boxPreviewStatus.setOnClickListener(view -> {
