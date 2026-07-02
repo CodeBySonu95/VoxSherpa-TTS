@@ -498,21 +498,21 @@ public class ModelsFragmentActivity extends Fragment {
 					useRemoveTv.setText("Download");
 					btnUseVoice.setCardBackgroundColor(android.graphics.Color.parseColor("#1D61FF"));
 				}
-				if (item.containsKey("is_playing") && item.get("is_playing").equals("true")) {
-					imgPreview.setVisibility(View.VISIBLE);
-					imgPreview.setImageResource(R.drawable.icon_pause_circle);
-					if (progressBuffering != null) progressBuffering.setVisibility(View.GONE);
-				} else if (item.containsKey("is_buffering") && item.get("is_buffering").equals("true")) {
-					imgPreview.setVisibility(View.GONE);
-					if (progressBuffering != null) progressBuffering.setVisibility(View.VISIBLE);
+			if (audioUrlToPlay.isEmpty()) {
+				boxPreviewStatus.setVisibility(View.GONE);
+			} else if (item.containsKey("is_playing") && item.get("is_playing").equals("true")) {
+				boxPreviewStatus.setVisibility(View.VISIBLE);
+				imgPreview.setVisibility(View.VISIBLE);
+				imgPreview.setImageResource(R.drawable.icon_pause_circle);
+				if (progressBuffering != null) progressBuffering.setVisibility(View.GONE);
+			} else if (item.containsKey("is_buffering") && item.get("is_buffering").equals("true")) {
+				boxPreviewStatus.setVisibility(View.VISIBLE);
+				imgPreview.setVisibility(View.GONE);
+				if (progressBuffering != null) progressBuffering.setVisibility(View.VISIBLE);
 			} else {
-				if (audioUrlToPlay.isEmpty()) {
-					boxPreviewStatus.setVisibility(View.GONE);
-				} else {
-					boxPreviewStatus.setVisibility(View.VISIBLE);
-					imgPreview.setVisibility(View.VISIBLE);
-					imgPreview.setImageResource(R.drawable.icon_play_circle);
-				}
+				boxPreviewStatus.setVisibility(View.VISIBLE);
+				imgPreview.setVisibility(View.VISIBLE);
+				imgPreview.setImageResource(R.drawable.icon_play_circle);
 				if (progressBuffering != null) progressBuffering.setVisibility(View.GONE);
 			}
 				boxPreviewStatus.setOnClickListener(view -> {
