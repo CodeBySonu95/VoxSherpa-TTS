@@ -107,19 +107,22 @@ public class VoiceEngine {
         espeakDataPath = destDir.getAbsolutePath();
     }
 
-    // ── Detect MMS models by token count ─────────────────────────────────────
-    // MMS models use character-based tokenization (< 200 tokens in tokens.txt).
-    // Piper/espeak models use phoneme-based tokenization (200+ tokens).
-    // This lets the engine auto-detect whether espeak-ng-data is needed,
-    // so callers don't need to specify a model type.
+    // ── Detect MMS vs Piper/espeak models ────────────────────────────────────
+    // Piper/espeak models always include $ (silence) in their tokens.txt.
+    // MMS models use character-based tokenization without silence markers.
+    // This determines whether espeak-ng-data is needed at load time —
+    // passing dataDir="" to a Piper model causes a native crash.
     private boolean isLikelyMmsModel(String tokensPath) {
         try (java.io.BufferedReader reader = new java.io.BufferedReader(
                 new java.io.InputStreamReader(
                     new java.io.FileInputStream(tokensPath), java.nio.charset.StandardCharsets.UTF_8))) {
-            int lineCount = 0;
-            while (reader.readLine() != null) {
-                lineCount++;
-                if (lineCount >= 200) return false;
+            String line;
+            while ((line = reader.readLine()) != null) {
+                int lastSpace = line.lastIndexOf(' ');
+                if (lastSpace > 0) {
+                    String token = line.substring(0, lastSpace);
+                    if (token.equals("$")) return false;
+                }
             }
             return true;
         } catch (Exception e) {
@@ -173,7 +176,7 @@ public class VoiceEngine {
 
     // ── Load model ───────────────────────────────────────────────────────────
     public synchronized String loadModel(Context context, String modelPath, String tokensPath) {
-        cancelRequested = false; // Reset on new load
+        cancelRequested = false;
         if (tts != null && activeModelUri.equals(modelPath)) return "Success";
 
         if (modelPath == null || modelPath.isEmpty())   return "Error: Model path is empty.";
