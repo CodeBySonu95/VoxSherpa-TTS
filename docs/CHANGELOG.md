@@ -4,15 +4,6 @@ All notable changes to VoxSherpa TTS are documented here.
 
 > **Note:** Versions 3.1 through 3.9 were skipped entirely due to a critical technical issue discovered during development. These versions were never publicly released. Development resumed at v4.0 with the Dialogue Engine Update.
 
----
-
-## [4.16] — Planned Features (Upcoming)
-
-- Voice Cloning support for more languages
-- Support for additional document formats: PDF, DOCX, RTF, FB2, AZW3, MOBI & JSON
-- Improved download logic for poor network conditions
-- More audio export formats
-- Silence Trimmer (Slider or Toggle)
 
 ---
 
