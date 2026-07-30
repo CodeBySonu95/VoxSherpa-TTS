@@ -24,6 +24,8 @@
 
 </div>
 
+> 🛡️ **Privacy-focused user?** Please check our [Documentation](https://github.com/CodeBySonu95/VoxSherpa-TTS/tree/main/docs) before downloading.
+
 ---
 
 ## 🏆 Featured In
@@ -117,7 +119,6 @@ It runs two professional-grade neural engines entirely on your device:
 
 ## Technical Architecture
 
-```
 User Text
     │
     ├─── Kokoro Engine (KokoroEngine.java)
@@ -127,7 +128,6 @@ User Text
     └─── Piper / VITS Engine (VoiceEngine.java)
               └── Sherpa-ONNX JNI → ONNX Runtime → CPU
                         └── VITS model (language-specific)
-```
 
 **Built with:**
 - [Sherpa-ONNX](https://github.com/k2-fsa/sherpa-onnx) — on-device neural inference
@@ -189,7 +189,6 @@ VoxSherpa is open source. Contributions welcome:
 
 ## License
 
-```
 Copyright (C) 2025 CodeBySonu95
 
 This program is free software: you can redistribute it and/or modify
@@ -203,7 +202,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 https://www.gnu.org/licenses/gpl-3.0.html
-```
 
 ---
 
