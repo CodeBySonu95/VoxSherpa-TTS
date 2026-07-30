@@ -2,17 +2,114 @@
 
 All notable changes to VoxSherpa TTS are documented here.
 
-> **Note:** Versions 3.0 through 3.9 were skipped entirely due to a critical technical issue discovered during development. These versions were never publicly released. Development resumed at v4.0 with the Dialogue Engine Update.
+> **Note:** Versions 3.1 through 3.9 were skipped entirely due to a critical technical issue discovered during development. These versions were never publicly released. Development resumed at v4.0 with the Dialogue Engine Update.
 
 ---
 
+## [4.16] — Planned Features (Upcoming)
 
-## [4.1] — Shortcuts Futures
+- Voice Cloning support for more languages
+- Support for additional document formats: PDF, DOCX, RTF, FB2, AZW3, MOBI & JSON
+- Improved download logic for poor network conditions
+- More audio export formats
+- Silence Trimmer (Slider or Toggle)
 
-- Text History
-- Clear Text Button
-- Paste Button
-- Speech-to-Text Button
+---
+
+## [4.15] — Android 11+ Update
+
+- Minimum SDK updated to 30 (Android 11+)
+- Resolved ANR (Application Not Responding) issues
+- Improved system stability
+
+---
+
+## [4.14] — Performance & ANR Fixes
+
+- Fixed critical ANR issues
+- Reduced ad frequency for better user experience
+
+---
+
+## [4.13] — System TTS Fixes
+
+- Fixed Android System TTS engine compatibility issues
+- Improved background speech synthesis stability
+
+---
+
+## [4.12] — Supertonic V3 & EPUB Reader
+
+- Added Supertonic V3 engine support
+- Voice clones now work seamlessly as Android System TTS
+- Improved EPUB reading & playback support
+- Added direct website link for online EPUB library
+- Fixed various app crashes
+
+---
+
+## [4.11] — Library Fixes
+
+- Resolved crashes related to the local speech library
+- Improved audio library file handling
+
+---
+
+## [4.10] — Testing Release
+
+- Minimum SDK updated to 25 for testing pipeline
+
+---
+
+## [4.9] — EPUB Support
+
+- Added native EPUB file support for document reading
+- Fixed custom Chinese model crash issue
+
+---
+
+## [4.8] — Website Integration & Online Library
+
+- Connected to Online Library featuring 1,000+ Piper voice models
+- Download and import models directly from the web library
+- Fixed Chinese number pronunciation issues
+- Various bug fixes and optimizations
+
+---
+
+## [4.7] — Voice Clone Beta
+
+- Introduced Voice Cloning (Beta)
+- Bug fixes and stability improvements
+
+---
+
+## [4.6] — Voice Cloning Initial Release
+
+- Added Voice Cloning support (English language)
+
+---
+
+## [4.3 – 4.5] — Major Updates & Compliance
+
+- Google Play Policy compliance updates
+- Performance optimizations and minor bug fixes
+
+---
+
+## [4.2] — Experience Update
+
+- UI/UX improvements across the app
+- General bug fixes and stability enhancements
+
+---
+
+## [4.1] — Productivity Tools
+
+- Text History tracker
+- Speech-to-Text button integration
+- Quick Paste button
+- Clear Text button
 
 ---
 
@@ -30,49 +127,55 @@ All notable changes to VoxSherpa TTS are documented here.
 
 ---
 
+## [3.0] — MMS Models Update
+
+- Added MMS (Massively Multilingual Speech) voice model support
+- Integrated 1,138+ MMS voice models
+- Expanded language and voice coverage
+- Improved overall model compatibility
+
+---
+
 ## [2.9.1] — Chinese Text Crash Hotfix
 
-Hotfix release targeting a Kokoro engine crash on Chinese language input.
-
-- Fixed crash on Chinese text input
+- Fixed Kokoro engine crash on Chinese text input
 - Improved multilingual character support
 - Stability improvements
 
 ---
 
-## [2.9] — Bug Fixes
+## [2.9] — System TTS Update
 
-- Revealed all downloaded models to System TTS
-- Bug fixes
+- Exposed all downloaded models to Android System TTS
+- Bug fixes and optimizations
 
 ---
 
-## [2.8] — Sample Voices
+## [2.8] — Voice Samples
 
 - System TTS upgrade
-- Sample voice preview added for all models
+- Added voice sample preview for all models
 
 ---
 
 ## [2.7] — Filter & Share
 
 - Filter voice models by category
-- Share any text directly to VoxSherpa TTS via share sheet
+- Share any text directly to VoxSherpa TTS via system share sheet
 
 ---
 
 ## [2.6] — Media Notification
 
-- MediaStyle notification with playback controls
+- MediaStyle notification with full playback controls
 - Pitch control in System TTS
 - Speed control in System TTS
 - Improved performance and stability
-- Bug fixes and optimizations
-- Minor UI improvements
+- Bug fixes and UI improvements
 
-**Internal changes (not user-visible):**
+**Internal Changes:**
 - Dropped 32-bit (x86/armeabi) support
-- Dropped Android 9 and 10 support
+- Minimum SDK updated (dropped Android 9 & 10 support)
 
 ---
 
@@ -83,12 +186,12 @@ Hotfix release targeting a Kokoro engine crash on Chinese language input.
 
 ---
 
-## [2.4] — Bug Fixes
+## [2.4] — Stability Update
 
 - Improved System TTS support with better language detection
-- Enhanced UI and overall app experience
+- Enhanced UI and user experience
 - Improved compatibility for large screen devices
-- Various bug fixes
+- Bug fixes
 
 ---
 
@@ -97,7 +200,7 @@ Hotfix release targeting a Kokoro engine crash on Chinese language input.
 - Interactive audio seeking
 - New mini player controls
 - Smoother and faster UI performance
-- Fixed cancel generation delay issue
+- Fixed generation cancellation delay issue
 
 ---
 
@@ -105,9 +208,9 @@ Hotfix release targeting a Kokoro engine crash on Chinese language input.
 
 - Regenerate audio on voice change
 - Improved smart punctuation handling
-- Improved emotion tags
-- Pitch control added
-- Send feedback feature
+- Enhanced emotion tags
+- Added pitch control
+- Added Send Feedback feature
 - UI/UX improvements
 
 ---
@@ -123,11 +226,11 @@ Initial public release of VoxSherpa TTS.
 - Favorites support
 - Speed control
 - Model download manager
-- Import custom model
+- Import custom models
 - Chunk-based playback
 - Smart pause handling (punctuation-aware)
 - System TTS integration
-- PDF to Audio
+- PDF to Audio conversion
 
 ---
 
