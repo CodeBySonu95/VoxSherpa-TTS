@@ -28,7 +28,6 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import com.CodeBySonu.VoxSherpa.databinding.*;
-import com.google.android.play.corecommon.*;
 import com.google.firebase.FirebaseApp;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -52,7 +51,8 @@ import com.google.gson.reflect.TypeToken;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageInfo;
+import android.content.pm.PackageInfo;
+
 
 public class SettingFragmentActivity extends Fragment {
 	
@@ -481,4 +481,4 @@ public class SettingFragmentActivity extends Fragment {
 		
 	}
 	
-}
+}
