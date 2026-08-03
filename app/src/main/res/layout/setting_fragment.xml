@@ -556,7 +556,7 @@
 			android:orientation="horizontal"
 			android:paddingVertical="8dp">
 			<ImageView
-				android:id="@+id/icon_license"
+				android:id="@+id/icon_security_update_round"
 				android:layout_width="24dp"
 				android:layout_height="24dp"
 				android:src="@drawable/default_image"
