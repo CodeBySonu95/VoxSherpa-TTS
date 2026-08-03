@@ -136,12 +136,11 @@ User Text
     │
     ├─── Kokoro Engine (KokoroEngine.java)
     │         └── Sherpa-ONNX JNI → ONNX Runtime → CPU/NNAPI
-    │                   └── kokoro-multi-lang-v1_0 (82M params, FP32)
+    │                   └── kokoro-multi-lang-v1_0
     │
     └─── Piper / VITS Engine (VoiceEngine.java)
               └── Sherpa-ONNX JNI → ONNX Runtime → CPU
-                        ├── VITS model (language-specific)
-                        └── Multi-speaker dialogue mode ([speaker] tag parser, style/tone & silence-gap control)
+                      └── VITS model (language-specific)
 ```
 
 **Built with:**
