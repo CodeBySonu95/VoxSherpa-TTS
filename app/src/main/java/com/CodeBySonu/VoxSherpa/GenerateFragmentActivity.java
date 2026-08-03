@@ -34,7 +34,6 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import com.CodeBySonu.VoxSherpa.databinding.*;
-import com.google.android.play.corecommon.*;
 import com.google.firebase.FirebaseApp;
 import com.k2fsa.sherpa.onnx.*;
 import com.tom_roush.pdfbox.*;
@@ -55,7 +54,8 @@ import com.CodeBySonu.VoxSherpa.system.VoxMediaController;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.util.concurrent.LinkedBlockingQueue;
 import com.CodeBySonu.VoxSherpa.system.VoxMediaService;
-import android.os.Process;
+import android.os.Process;
+
 
 public class GenerateFragmentActivity extends Fragment {
 	
@@ -1494,4 +1494,4 @@ public class GenerateFragmentActivity extends Fragment {
 		
 	}
 	
-}
+}
