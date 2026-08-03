@@ -48,7 +48,7 @@ It runs two professional-grade neural engines entirely on your device:
 | Engine | Quality | Speed | Best For |
 |--------|---------|-------|----------|
 | 🧠 **Kokoro-82M** | Studio-grade · rivals ElevenLabs | Slower on budget hardware | Audiobooks, voiceovers, professional content |
-| ⚡ **Piper / VITS** | Natural · clear | Fast on any device | Daily use, quick synthesis |
+| ⚡ **Piper / VITS** | Natural · clear · multi-speaker | Fast on any device | Daily use, dialogue synthesis, quick synthesis |
 
 ---
 
@@ -70,6 +70,17 @@ It runs two professional-grade neural engines entirely on your device:
 - **Kokoro-82M** — 82 million parameter neural model. Multilingual support including Hindi, English, British English, French, Spanish, Chinese, Japanese and 50+ languages. Same architecture used by top-tier commercial TTS services.
 - **Piper / VITS** — Fast, lightweight, natural. Generates speech in seconds on any Android device.
 
+### 🗣️ Multi-Speaker Dialogue Synthesis *(New in v4.0)*
+- Piper now supports **multiple speakers within a single script** — generate full conversations in one pass instead of stitching clips together
+- New **`[speaker]` tag system** to assign each line to a distinct voice directly inside your script:
+  ```
+  [speaker:1] Hello, how are you?
+  [speaker:2] I'm doing well. How about you?
+  ```
+- **Voice Style & Tone controls** — fine-tune how each speaker sounds to match the mood of the script
+- **Adjustable sentence gap / silence timing** — control the pause duration between lines for natural, realistic pacing
+- Ideal for audiobooks with multiple characters, podcasts, skits, and narrated dialogue
+
 ### 🔒 100% Offline & Private
 - All processing happens on your device
 - No internet required after model download
@@ -88,6 +99,7 @@ It runs two professional-grade neural engines entirely on your device:
 - Import your own `.onnx` models from local storage
 - Multiple models installed simultaneously
 - Smart storage tracking
+- Optional MMS model support — enable via a toggle in Settings if needed
 
 ### 🔊 System-Wide TTS
 - Set VoxSherpa as your default Android TTS engine
@@ -112,7 +124,7 @@ It runs two professional-grade neural engines entirely on your device:
 ### ⚙️ Smart Settings
 - **Smart Punctuation** — natural pauses after sentence breaks
 - **Emotion Tags** — `[whisper]`, `[angry]`, `[happy]` support
-- Per-model voice selection (Kokoro supports 100+ speakers)
+- Per-model voice selection (Kokoro supports 53+ speakers)
 - Theme-aware UI
 
 ---
@@ -127,12 +139,13 @@ User Text
     │
     └─── Piper / VITS Engine (VoiceEngine.java)
               └── Sherpa-ONNX JNI → ONNX Runtime → CPU
-                        └── VITS model (language-specific)
+                        ├── VITS model (language-specific)
+                        └── Multi-speaker dialogue mode ([speaker] tag parser, style/tone & silence-gap control)
 
 **Built with:**
 - [Sherpa-ONNX](https://github.com/k2-fsa/sherpa-onnx) — on-device neural inference
 - [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) — multilingual neural TTS model
-- [Piper](https://github.com/rhasspy/piper) — fast local TTS
+- [Piper](https://github.com/rhasspy/piper) — fast local TTS, now with multi-speaker dialogue support
 - Android AudioTrack API — low-latency PCM playback
 
 ---
@@ -209,7 +222,7 @@ https://www.gnu.org/licenses/gpl-3.0.html
 
 - [k2-fsa/sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) — the inference engine that makes this possible
 - [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) — the neural model behind studio-quality synthesis
-- [rhasspy/piper](https://github.com/rhasspy/piper) — fast local TTS engine
+- [rhasspy/piper](https://github.com/rhasspy/piper) — fast local TTS engine, now with multi-speaker dialogue support
 
 ---
 
