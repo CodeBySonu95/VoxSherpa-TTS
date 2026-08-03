@@ -1,7 +1,7 @@
 <manifest
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	package="com.CodeBySonu.VoxSherpa">
-<uses-permission android:name="com.android.vending.BILLING" />
+    
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -10,13 +10,16 @@
 	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 	<uses-permission android:name="android.permission.RECORD_AUDIO" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    
 	<application
-android:allowBackup="true" android:resizeableActivity="true"
+		android:allowBackup="true" 
+        android:resizeableActivity="true"
 		android:icon="@mipmap/ic_launcher"
 		android:label="@string/app_name"
 		android:name=".SketchApplication"
 		android:requestLegacyExternalStorage="true"
 		android:theme="@style/AppTheme">
+        
 		<activity
 			android:name=".MainActivity"
 			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
@@ -25,7 +28,7 @@ android:allowBackup="true" android:resizeableActivity="true"
 			android:exported="true">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
-<category android:name="android.intent.category.LAUNCHER" />
+				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 			<intent-filter android:label="VoxSherpa">
 				<action android:name="android.intent.action.PROCESS_TEXT" />
@@ -38,21 +41,24 @@ android:allowBackup="true" android:resizeableActivity="true"
 				<data android:mimeType="text/plain" />
 			</intent-filter>
 		</activity>
+        
 		<activity
 			android:name=".TtssettingsActivity"
 			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
 			android:hardwareAccelerated="true"
-android:supportsPictureInPicture="true"
-android:exported="true">
-    <intent-filter>
-        <action android:name="android.speech.tts.engine.INSTALL_TTS_DATA" />
-        <category android:name="android.intent.category.DEFAULT" />
-    </intent-filter>
-</activity>
+			android:supportsPictureInPicture="true"
+			android:exported="true">
+			<intent-filter>
+				<action android:name="android.speech.tts.engine.INSTALL_TTS_DATA" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+		</activity>
+        
 		<activity
 			android:name=".DebugActivity"
-android:screenOrientation="unspecified"
+			android:screenOrientation="unspecified"
 			android:theme="@style/AppTheme.DebugActivity" />
+            
 		<provider
 			android:name="androidx.startup.InitializationProvider"
 			android:authorities="com.CodeBySonu.VoxSherpa.androidx-startup"
@@ -64,14 +70,17 @@ android:screenOrientation="unspecified"
 				android:name="androidx.emoji2.text.EmojiCompatInitializer"
 				android:value="androidx.startup" />
 		</provider>
+        
 		<meta-data
 			android:name="com.google.android.gms.version"
 			android:value="@integer/google_play_services_version" />
+            
 		<provider
 			android:name="com.google.firebase.provider.FirebaseInitProvider"
 			android:authorities="com.CodeBySonu.VoxSherpa.firebaseinitprovider"
 			android:exported="false"
 			android:initOrder="100" />
+            
 		<service
 			android:name="com.google.firebase.components.ComponentDiscoveryService"
 			android:exported="false">
@@ -79,6 +88,7 @@ android:screenOrientation="unspecified"
 				android:name="com.google.firebase.components:com.google.firebase.database.DatabaseRegistrar"
 				android:value="com.google.firebase.components.ComponentRegistrar" />
 		</service>
+        
 		<provider
 			android:name="androidx.core.content.FileProvider"
 			android:authorities="com.CodeBySonu.VoxSherpa.provider"
@@ -88,42 +98,41 @@ android:screenOrientation="unspecified"
 				android:name="android.support.FILE_PROVIDER_PATHS"
 				android:resource="@xml/provider_paths" />
 		</provider>
-<service  
-    android:name=".system.VoxSherpaTtsService"  
-    android:label="VoxSherpa TTS"  
-    android:permission="android.permission.BIND_TEXT_TO_SPEECH_ENGINE"  
-    android:exported="true">
-    <intent-filter>
-        <action android:name="android.intent.action.TTS_SERVICE" />
-        <category android:name="android.intent.category.DEFAULT" />
-    </intent-filter>
-
-    <meta-data  
-        android:name="android.speech.tts"  
-        android:resource="@xml/tts_engine" />
-</service>  
-<property android:name="android.window.PROPERTY_COMPAT_ALLOW_ORIENTATION_OVERRIDE" android:value="true" />
-<activity 
-    android:name=".system.CheckTtsDataActivity" 
-    android:exported="true" 
-    android:theme="@android:style/Theme.NoDisplay">
-    <intent-filter>
-        <action android:name="android.speech.tts.engine.CHECK_TTS_DATA" />
-        <category android:name="android.intent.category.DEFAULT" />
-    </intent-filter>
-</activity>
-<service
-    android:name=".system.VoxMediaService"
-    android:exported="false"
-    android:foregroundServiceType="mediaPlayback">
-    <intent-filter>
-        <action android:name="android.intent.action.MEDIA_BUTTON" />
-    </intent-filter>
-</service>
-<activity
-    android:name="com.android.billingclient.api.ProxyBillingActivity"
-    android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-    android:exported="false"
-    android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-</application>
-</manifest>
+        
+		<service  
+			android:name=".system.VoxSherpaTtsService"  
+			android:label="VoxSherpa TTS"  
+			android:permission="android.permission.BIND_TEXT_TO_SPEECH_ENGINE"  
+			android:exported="true">
+			<intent-filter>
+				<action android:name="android.intent.action.TTS_SERVICE" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+			<meta-data  
+				android:name="android.speech.tts"  
+				android:resource="@xml/tts_engine" />
+		</service>  
+        
+		<property android:name="android.window.PROPERTY_COMPAT_ALLOW_ORIENTATION_OVERRIDE" android:value="true" />
+        
+		<activity 
+			android:name=".system.CheckTtsDataActivity" 
+			android:exported="true" 
+			android:theme="@android:style/Theme.NoDisplay">
+			<intent-filter>
+				<action android:name="android.speech.tts.engine.CHECK_TTS_DATA" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+		</activity>
+        
+		<service
+			android:name=".system.VoxMediaService"
+			android:exported="false"
+			android:foregroundServiceType="mediaPlayback">
+			<intent-filter>
+				<action android:name="android.intent.action.MEDIA_BUTTON" />
+			</intent-filter>
+		</service>
+        
+	</application>
+</manifest>
