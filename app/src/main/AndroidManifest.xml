@@ -1,13 +1,15 @@
 <manifest
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	package="com.CodeBySonu.VoxSherpa">
+<uses-permission android:name="com.android.vending.BILLING" />
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+	<uses-permission android:name="android.permission.RECORD_AUDIO" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 	<application
 android:allowBackup="true" android:resizeableActivity="true"
 		android:icon="@mipmap/ic_launcher"
@@ -118,5 +120,10 @@ android:screenOrientation="unspecified"
         <action android:name="android.intent.action.MEDIA_BUTTON" />
     </intent-filter>
 </service>
+<activity
+    android:name="com.android.billingclient.api.ProxyBillingActivity"
+    android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+    android:exported="false"
+    android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 </application>
 </manifest>

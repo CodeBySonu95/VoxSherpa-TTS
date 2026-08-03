@@ -32,6 +32,8 @@ public class AudioSampleHelper {
 
     private AudioSampleHelper() {
     }
+
+    // 🚀 FIX: Context add kiya gaya taaki system service se AudioManager liya ja sake
     public void playSample(Context context, String audioUrlOrPath, SamplePlayListener listener) {
         
         if (mediaPlayer != null && mediaPlayer.isPlaying() && currentlyPlayingUrl.equals(audioUrlOrPath)) {
@@ -48,11 +50,12 @@ public class AudioSampleHelper {
         // 🚀 AUDIO FOCUS LOGIC
         AudioAttributes playbackAttributes = new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH) // TTS ke liye SPEECH best hai
                 .build();
 
         AudioManager.OnAudioFocusChangeListener focusChangeListener = focusChange -> {
             if (focusChange == AudioManager.AUDIOFOCUS_LOSS || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+                // Agar system focus wapas le le (jaise call aa jaye), toh audio stop kar do
                 stopAudio();
             }
         };
@@ -72,6 +75,8 @@ public class AudioSampleHelper {
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
             );
         }
+
+        // Agar system ne focus deny kar diya (eg. in-call), toh error bhej do
         if (focusResult != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             if (currentListener != null) {
                 currentListener.onError("Audio focus denied by system");
@@ -79,6 +84,7 @@ public class AudioSampleHelper {
             return;
         }
 
+        // Audio Focus milne ke baad Playback Logic
         try {
             mediaPlayer = new MediaPlayer();
             mediaPlayer.setAudioAttributes(playbackAttributes);
@@ -130,6 +136,8 @@ public class AudioSampleHelper {
                 currentlyPlayingUrl = "";
             }
         }
+        
+        // 🚀 FOCUS ABANDON LOGIC: Audio rukne ke baad system ko focus wapas de do
         if (audioManager != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioFocusRequest != null) {
                 audioManager.abandonAudioFocusRequest(audioFocusRequest);

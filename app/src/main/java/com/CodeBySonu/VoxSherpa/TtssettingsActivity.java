@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.Adapter;
 import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 import com.CodeBySonu.VoxSherpa.databinding.*;
+import com.google.android.play.corecommon.*;
 import com.google.firebase.FirebaseApp;
 import com.k2fsa.sherpa.onnx.*;
 import com.tom_roush.pdfbox.*;
@@ -98,12 +99,17 @@ public class TtssettingsActivity extends AppCompatActivity {
 	}
 	
 	private void initializeLogic() {
-		
+		// 1. App ko batana ki hum Edge-to-Edge display khud handle karenge
 		androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+		
+		// 2. Modern WindowInsets Listener lagana taaki Status Bar aur Nav Bar ke peeche content na jaye
 		androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new androidx.core.view.OnApplyWindowInsetsListener() {
 			@Override
 			public androidx.core.view.WindowInsetsCompat onApplyWindowInsets(android.view.View v, androidx.core.view.WindowInsetsCompat insets) {
+				// System bars (Status bar + Navigation bar) ki insets (size) nikalna
 				androidx.core.graphics.Insets systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+				
+				// Root view ko utni hi padding dena jitni system bars le rahi hain
 				v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
 				
 				return insets;

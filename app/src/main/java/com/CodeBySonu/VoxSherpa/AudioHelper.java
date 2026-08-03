@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 
 public class AudioHelper {
 
+    // ✅ FIX: sampleRate parameter add kiya — Kokoro=24000, Piper/Vits=22050
     public static String saveWavFile(byte[] pcmData, String fileName, int sampleRate, Context context) {
         try {
             File musicDir = new File(android.os.Environment.getExternalStoragePublicDirectory(
@@ -17,7 +18,7 @@ public class AudioHelper {
             try (FileOutputStream fos = new FileOutputStream(wavFile)) {
                 long totalAudioLen = pcmData.length;
                 long totalDataLen  = totalAudioLen + 36;
-                long longSampleRate = sampleRate; //
+                long longSampleRate = sampleRate; // ✅ Ab hardcoded nahi, jo pass hoga wahi jayega
                 int  channels      = 1;
                 long byteRate      = 16L * longSampleRate * channels / 8;
 

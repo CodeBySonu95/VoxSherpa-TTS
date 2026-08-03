@@ -307,21 +307,21 @@ public class VoxSherpaTtsService extends TextToSpeechService {
         super.onDestroy();
     }
 
-    @Override
+            @Override
     protected void onSynthesizeText(SynthesisRequest request, SynthesisCallback callback) {
         isSynthesisCancelled = false;
         boolean hasError = false; 
         boolean emittedAudio = false; 
         
         try {
-            SharedPreferences sp3 = getSharedPreferences("sp3", MODE_PRIVATE);
-            SharedPreferences sp = getSharedPreferences("sp1", MODE_PRIVATE);
-            SharedPreferences sp5 = getSharedPreferences("sp5", MODE_PRIVATE);
+            android.content.SharedPreferences sp3 = getSharedPreferences("sp3", MODE_PRIVATE);
+            android.content.SharedPreferences sp = getSharedPreferences("sp1", MODE_PRIVATE);
+            android.content.SharedPreferences sp5 = getSharedPreferences("sp5", MODE_PRIVATE);
             
             CharSequence charText = request.getCharSequenceText();
             if (charText == null || charText.toString().trim().isEmpty()) {
-                int startResult = callback.start(22050, AudioFormat.ENCODING_PCM_16BIT, 1);
-                if (startResult != TextToSpeech.SUCCESS) {
+                int startResult = callback.start(22050, android.media.AudioFormat.ENCODING_PCM_16BIT, 1);
+                if (startResult != android.speech.tts.TextToSpeech.SUCCESS) {
                     callback.error();
                     hasError = true;
                 }
@@ -358,10 +358,8 @@ public class VoxSherpaTtsService extends TextToSpeechService {
 
             if (reqVoice != null) {
                 if (reqVoice.startsWith("VoxSherpa_")) {
-                    // Internal generic language request from Native Android settings
                     reqIsoLang = reqVoice.replace("VoxSherpa_", "");
                 } else {
-                    // Specific model request from 3rd party apps without prefix
                     if (reqVoice.contains("(Kokoro)")) {
                         String targetKokoroName = reqVoice.replace(" (Kokoro)", "");
                         java.util.List<KokoroVoiceHelper.VoiceItem> allKVoices = KokoroVoiceHelper.getAllVoices();
@@ -431,7 +429,7 @@ public class VoxSherpaTtsService extends TextToSpeechService {
 
                 if (matchedRawLang.isEmpty()) {
                     for (String raw : allAvailableRawLangs) {
-                        Locale loc = TtsLocaleHelper.getLocaleFromName(raw);
+                        java.util.Locale loc = TtsLocaleHelper.getLocaleFromName(raw);
                         if (loc != null) {
                             try {
                                 if (loc.getISO3Language().equalsIgnoreCase(reqIsoLang) || loc.getLanguage().equalsIgnoreCase(reqIsoLang)) {
@@ -481,6 +479,7 @@ public class VoxSherpaTtsService extends TextToSpeechService {
                                 targetModelType = "vits";
                                 targetOnnx = op;
                                 targetTokens = tk;
+                                matchedRawLang = m.containsKey("language") && m.get("language") != null ? m.get("language").toString() : "";
                                 voiceFound = true; break;
                             }
                         }
@@ -494,8 +493,13 @@ public class VoxSherpaTtsService extends TextToSpeechService {
                 return;
             }
 
+            // Fetch settings for text processing
             boolean isPunctOn = sp3.getBoolean("smart_punct", false);
             boolean isEmotionOn = sp3.getBoolean("emotion_tags", false);
+            float currentSilence = sp3.getFloat("silence_scale", 0.2f);
+            
+            // Read Voice Style to apply to Piper engine in background service
+            int currentVoiceStyle = sp3.getInt("voice_style", 1); 
 
             int sampleRate = 22050;
             boolean isKokoroTarget = targetModelType.equals("kokoro");
@@ -548,7 +552,24 @@ public class VoxSherpaTtsService extends TextToSpeechService {
                     hasError = true; return;
                 }
 
-                String loadResult = engine.loadModel(this, targetOnnx, targetTokens);
+                // Voice Style logic for background service
+                float noise = 0.667f;
+                float noiseW = 0.80f;
+                
+                if (currentVoiceStyle == 0) { // Audiobook
+                    noise = 0.33f;
+                    noiseW = 0.50f;
+                } else if (currentVoiceStyle == 2) { // Expressive
+                    noise = 0.85f;
+                    noiseW = 0.90f;
+                }
+                
+                // Set style dynamically before loading the model
+                engine.setNoiseScale(noise);
+                engine.setNoiseScaleW(noiseW);
+
+                // FIXED: Passed matchedRawLang as the 4th argument
+                String loadResult = engine.loadModel(this, targetOnnx, targetTokens, matchedRawLang);
                 if (!"Success".equals(loadResult)) {
                     callback.error();
                     hasError = true; return;
@@ -559,7 +580,7 @@ public class VoxSherpaTtsService extends TextToSpeechService {
                 if (sampleRate <= 0) sampleRate = 22050;
             }
 
-            List<String> sentences = new ArrayList<>();
+            java.util.List<String> sentences = new java.util.ArrayList<>();
             String[] parts = text.split("(?<=[.!?\\n|।])\\s+");
             for (String part : parts) {
                 if (!part.trim().isEmpty()) sentences.add(part.trim());
@@ -574,11 +595,7 @@ public class VoxSherpaTtsService extends TextToSpeechService {
                 byte[] chunkPcm = null;
                 
                 if (isPunctOn || isEmotionOn) {
-                    if (isKokoroTarget) {
-                        chunkPcm = KokoroEngine.getInstance().generateAudioPCM(sentence, engineSpeed, enginePitch);
-                    } else {
-                        chunkPcm = AudioEmotionHelper.processAndGenerate(sentence, isPunctOn, isEmotionOn, engineSpeed, enginePitch, 1.0f);
-                    }
+                    chunkPcm = AudioEmotionHelper.processAndGenerate(sentence, isPunctOn, isEmotionOn, engineSpeed, enginePitch, 1.0f, currentSilence);
                 } else {
                     if (isKokoroTarget) {
                         chunkPcm = KokoroEngine.getInstance().generateAudioPCM(sentence, engineSpeed, enginePitch);
@@ -591,8 +608,8 @@ public class VoxSherpaTtsService extends TextToSpeechService {
 
                 if (chunkPcm != null && chunkPcm.length > 0) {
                     if (!hasAudioStarted) {
-                        int startResult = callback.start(sampleRate, AudioFormat.ENCODING_PCM_16BIT, 1);
-                        if (startResult != TextToSpeech.SUCCESS) {
+                        int startResult = callback.start(sampleRate, android.media.AudioFormat.ENCODING_PCM_16BIT, 1);
+                        if (startResult != android.speech.tts.TextToSpeech.SUCCESS) {
                             callback.error();
                             hasError = true;
                             return;
@@ -626,8 +643,9 @@ public class VoxSherpaTtsService extends TextToSpeechService {
             }
         }
     }
+
     
-    private enum StreamResult {
+        private enum StreamResult {
         NO_AUDIO,
         PARTIAL_FAILURE,
         COMPLETE

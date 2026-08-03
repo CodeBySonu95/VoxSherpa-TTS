@@ -25,14 +25,24 @@ public class VoiceEngine {
     private OfflineTts tts;
     private String activeModelUri = "";
     private String activeTokensUri = "";
+    private String activeLanguage = "";
     private String espeakDataPath = "";
+    private String chineseHelperDataPath = "";
+
     private volatile boolean cancelRequested = false;
 
-    // ── VITS sampling knobs ──────────────────────────────────────────────────
-    // VoxSherpa's "calmed" defaults — lower than sherpa-onnx upstream
-    // (0.667 / 0.8) for steadier, more deterministic Piper output. Consumers
-    // can flip these via setNoiseScale[W]() to opt into more expressive
-    // (but less reproducible) synthesis.
+    // Engine state tracking
+    private volatile boolean isGenerating = false;
+
+    // Lock object to prevent native memory release while generating
+    private final Object nativeLock = new Object();
+
+    // Dynamic speaker selection
+    private volatile int activeSpeakerId = 0;
+
+    // Tracks whether the currently-loaded model was treated as an MMS model.
+    private volatile boolean activeModelIsMms = false;
+
     public static final float DEFAULT_NOISE_SCALE = 0.35f;
     public static final float DEFAULT_NOISE_SCALE_W = 0.667f;
     private volatile float noiseScale = DEFAULT_NOISE_SCALE;
@@ -40,7 +50,7 @@ public class VoiceEngine {
 
     private VoiceEngine() {}
 
-    // ── Singleton — thread-safe double-checked locking ───────────────────────
+    // Singleton implementation
     public static VoiceEngine getInstance() {
         if (instance == null) {
             synchronized (VoiceEngine.class) {
@@ -52,12 +62,22 @@ public class VoiceEngine {
         return instance;
     }
 
-    // ── Cancel ───────────────────────────────────────────────────────────────
     public void cancel() {
         cancelRequested = true;
     }
 
-    // ── Smart thread count ───────────────────────────────────────────────────
+    public void resetCancelState() {
+        cancelRequested = false;
+    }
+
+    public boolean isBusy() {
+        return isGenerating;
+    }
+
+    public boolean isActiveModelMms() {
+        return activeModelIsMms;
+    }
+
     private int getOptimalThreadCount() {
         int cores = Runtime.getRuntime().availableProcessors();
         if (cores >= 8) return 4;
@@ -66,13 +86,20 @@ public class VoiceEngine {
         return 1;
     }
 
-    // ── espeak-ng-data extract ───────────────────────────────────────────────
+    // espeak-ng-data extraction with nested directory protection
     private synchronized void extractEspeakData(Context context) {
+        if (context == null) return;
         File destDir = new File(context.getFilesDir(), "espeak-ng-data");
-        String[] existing = destDir.list();
+        File nestedDir = new File(destDir, "espeak-ng-data");
 
-        if (destDir.exists() && existing != null && existing.length > 0) {
+        File phontabDirect = new File(destDir, "phontab");
+        File phontabNested = new File(nestedDir, "phontab");
+
+        if (phontabDirect.exists() && phontabDirect.length() > 0) {
             espeakDataPath = destDir.getAbsolutePath();
+            return;
+        } else if (phontabNested.exists() && phontabNested.length() > 0) {
+            espeakDataPath = nestedDir.getAbsolutePath();
             return;
         }
 
@@ -104,40 +131,79 @@ public class VoiceEngine {
             }
         } catch (Exception ignored) {}
 
-        espeakDataPath = destDir.getAbsolutePath();
-    }
-
-    // ── Detect MMS models by token count ─────────────────────────────────────
-    // MMS models use character-based tokenization (< 200 tokens in tokens.txt).
-    // Piper/espeak models use phoneme-based tokenization (200+ tokens).
-    // This lets the engine auto-detect whether espeak-ng-data is needed,
-    // so callers don't need to specify a model type.
-    private boolean isLikelyMmsModel(String tokensPath) {
-        try (java.io.BufferedReader reader = new java.io.BufferedReader(
-                new java.io.InputStreamReader(
-                    new java.io.FileInputStream(tokensPath), java.nio.charset.StandardCharsets.UTF_8))) {
-            int lineCount = 0;
-            while (reader.readLine() != null) {
-                lineCount++;
-                if (lineCount >= 200) return false;
-            }
-            return true;
-        } catch (Exception e) {
-            return false;
+        if (new File(nestedDir, "phontab").exists()) {
+            espeakDataPath = nestedDir.getAbsolutePath();
+        } else {
+            espeakDataPath = destDir.getAbsolutePath();
         }
     }
 
-    // ── Provider fallback: XNNPACK → CPU, with MMS auto-detection ───────────
-    private OfflineTts _createTtsWithFallback(String modelPath, String tokensPath) {
+    // Chinese Helper extract
+    private synchronized void extractChineseHelperData(Context context) {
+        if (context == null) return;
+        File destDir = new File(context.getFilesDir(), "chinese_helper_data");
+
+        File phoneFst = new File(destDir, "phone.fst");
+
+        if (destDir.exists() && phoneFst.exists() && phoneFst.length() > 0) {
+            chineseHelperDataPath = destDir.getAbsolutePath();
+            return;
+        }
+
+        destDir.mkdirs();
+
+        try (InputStream is = context.getAssets().open("chinese_helper.zip");
+             ZipInputStream zis = new ZipInputStream(is)) {
+
+            ZipEntry ze;
+            byte[] buffer = new byte[32768];
+            while ((ze = zis.getNextEntry()) != null) {
+                File newFile = new File(destDir, ze.getName());
+                if (ze.isDirectory()) {
+                    newFile.mkdirs();
+                } else {
+                    File parent = newFile.getParentFile();
+                    if (parent != null && !parent.exists()) parent.mkdirs();
+                    try (FileOutputStream fos = new FileOutputStream(newFile)) {
+                        int len;
+                        while ((len = zis.read(buffer)) > 0) fos.write(buffer, 0, len);
+                    }
+                }
+                zis.closeEntry();
+            }
+        } catch (Exception ignored) {}
+
+        chineseHelperDataPath = destDir.getAbsolutePath();
+    }
+
+    // Provider fallback: XNNPACK to CPU
+    private OfflineTts _createTtsWithFallback(String modelPath, String tokensPath, String language, boolean isMms) {
         String[] providers = {"xnnpack", "cpu"};
-        boolean isMms = isLikelyMmsModel(tokensPath);
 
         for (String provider : providers) {
             try {
                 OfflineTtsVitsModelConfig vits = new OfflineTtsVitsModelConfig();
                 vits.setModel(modelPath);
                 vits.setTokens(tokensPath);
-                vits.setDataDir(isMms ? "" : espeakDataPath);
+
+                boolean isChinese = language != null && (language.toLowerCase().contains("zh") || language.toLowerCase().contains("chinese"));
+
+                if (isChinese) {
+                    vits.setDataDir("");
+                    if (chineseHelperDataPath != null && !chineseHelperDataPath.isEmpty()) {
+                        vits.setLexicon(new File(chineseHelperDataPath, "lexicon.txt").getAbsolutePath());
+                        vits.setDictDir(new File(chineseHelperDataPath, "dict").getAbsolutePath());
+                    }
+                } else {
+                    if (isMms) {
+                        vits.setDataDir("");
+                    } else {
+                        vits.setDataDir(espeakDataPath);
+                    }
+                    vits.setLexicon("");
+                    vits.setDictDir("");
+                }
+
                 vits.setNoiseScale(noiseScale);
                 vits.setNoiseScaleW(noiseScaleW);
                 vits.setLengthScale(1.0f);
@@ -152,13 +218,27 @@ public class VoiceEngine {
                 config.setModel(modelConfig);
                 config.setMaxNumSentences(5);
 
-                OfflineTts candidate = new OfflineTts(null, config);
+                if (isChinese && chineseHelperDataPath != null && !chineseHelperDataPath.isEmpty()) {
+                    String phone = new File(chineseHelperDataPath, "phone.fst").getAbsolutePath();
+                    String date = new File(chineseHelperDataPath, "date.fst").getAbsolutePath();
+                    String number = new File(chineseHelperDataPath, "number.fst").getAbsolutePath();
+                    String heteronym = new File(chineseHelperDataPath, "new_heteronym.fst").getAbsolutePath();
 
-                if (isMms) {
-                    return candidate;
+                    config.setRuleFsts(phone + "," + date + "," + number + "," + heteronym);
                 }
 
-                GeneratedAudio test = candidate.generate("Hello", 0, 1.0f);
+                OfflineTts candidate = new OfflineTts(null, config);
+
+                String testText;
+                if (isChinese) {
+                    testText = "测试";
+                } else if (isMms) {
+                    testText = firstUsableToken(tokensPath);
+                } else {
+                    testText = "Hello";
+                }
+
+                GeneratedAudio test = candidate.generate(testText, 0, 1.0f);
                 if (test != null && test.getSamples() != null && test.getSamples().length > 0) {
                     return candidate;
                 }
@@ -171,10 +251,34 @@ public class VoiceEngine {
         return null;
     }
 
-    // ── Load model ───────────────────────────────────────────────────────────
-    public synchronized String loadModel(Context context, String modelPath, String tokensPath) {
-        cancelRequested = false; // Reset on new load
-        if (tts != null && activeModelUri.equals(modelPath)) return "Success";
+    private String firstUsableToken(String tokensPath) {
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(
+                    new java.io.FileInputStream(tokensPath), java.nio.charset.StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) continue;
+                int sep = line.lastIndexOf(' ');
+                String symbol = sep > 0 ? line.substring(0, sep) : line;
+                symbol = symbol.trim();
+                if (!symbol.isEmpty() && Character.isLetter(symbol.charAt(0))) {
+                    return symbol;
+                }
+            }
+        } catch (Exception ignored) {}
+        return "a";
+    }
+
+    // Load model (Original Signature - Default to Piper logic)
+    public synchronized String loadModel(Context context, String modelPath, String tokensPath, String language) {
+        return loadModel(context, modelPath, tokensPath, language, false);
+    }
+
+    // Load model (New Overload - Explicitly define if it is an MMS model)
+    public synchronized String loadModel(Context context, String modelPath, String tokensPath, String language, Boolean explicitIsMms) {
+        cancelRequested = false;
+        if (tts != null && activeModelUri.equals(modelPath) && activeLanguage.equals(language)) return "Success";
 
         if (modelPath == null || modelPath.isEmpty())   return "Error: Model path is empty.";
         if (tokensPath == null || tokensPath.isEmpty()) return "Error: Tokens path is empty.";
@@ -187,45 +291,86 @@ public class VoiceEngine {
 
         try {
             destroy();
-            extractEspeakData(context);
 
-            tts = _createTtsWithFallback(modelPath, tokensPath);
+            boolean isChinese = language != null && (language.toLowerCase().contains("zh") || language.toLowerCase().contains("chinese"));
+            
+            // If explicitIsMms is not provided by the developer, safely default to Piper (false)
+            boolean isMms = (explicitIsMms != null) ? explicitIsMms : false;
+
+            if (isChinese) {
+                extractChineseHelperData(context);
+                if (chineseHelperDataPath == null || chineseHelperDataPath.isEmpty()) {
+                    return "Error: Chinese helper data extraction failed.";
+                }
+            } else {
+                extractEspeakData(context);
+                if (espeakDataPath == null || espeakDataPath.isEmpty()) {
+                    return "Error: espeak-ng-data extraction failed.";
+                }
+            }
+
+            tts = _createTtsWithFallback(modelPath, tokensPath, language, isMms);
 
             if (tts == null) return "Error: Model load failed on all providers.";
 
             activeModelUri = modelPath;
             activeTokensUri = tokensPath;
+            activeLanguage = language != null ? language : "";
+            activeModelIsMms = isMms;
+
             return "Success";
 
         } catch (Throwable t) {
             activeModelUri = "";
+            activeLanguage = "";
+            activeModelIsMms = false;
             tts = null;
             return "Error: " + (t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
         }
     }
 
-    // ── Generate audio PCM ───────────────────────────────────────────────────
+    // Generate audio PCM
     public byte[] generateAudioPCM(String inputText, float speedValue, float pitchValue) {
-        if (cancelRequested) return null;
-        if (inputText == null || inputText.trim().isEmpty()) return null;
+        if (cancelRequested) {
+            return null;
+        }
+        if (inputText == null || inputText.trim().isEmpty()) {
+            return null;
+        }
 
-        OfflineTts localTts;
+        float[] audioFloats = null;
+        int sampleRate = 0;
+
         synchronized (this) {
-            if (tts == null) return null;
-            localTts = tts;
+            if (tts == null || cancelRequested || isGenerating) {
+                return null;
+            }
+            isGenerating = true;
         }
 
         try {
-            if (cancelRequested) return null;
+            try {
+                GeneratedAudio audio = null;
+                synchronized (nativeLock) {
+                    if (tts != null && !cancelRequested) {
+                        audio = tts.generate(inputText.trim(), activeSpeakerId, speedValue);
+                        if (audio != null) {
+                            sampleRate = tts.sampleRate();
+                        }
+                    }
+                }
 
-            GeneratedAudio audio = localTts.generate(inputText.trim(), 0, speedValue);
+                if (audio != null) {
+                    audioFloats = audio.getSamples();
+                }
+            } catch (Throwable t) {
+                return null;
+            }
 
-            if (cancelRequested) return null;
+            if (cancelRequested || audioFloats == null || audioFloats.length == 0) {
+                return null;
+            }
 
-            if (audio == null) return null;
-
-            float[] audioFloats = audio.getSamples();
-            if (audioFloats == null || audioFloats.length == 0) return null;
             short[] shortSamples = new short[audioFloats.length];
             for (int i = 0; i < audioFloats.length; i++) {
                 float f = audioFloats[i];
@@ -235,8 +380,9 @@ public class VoiceEngine {
             }
 
             if (pitchValue != 1.0f) {
-                if (cancelRequested) return null;
-                int sampleRate = localTts.sampleRate();
+                if (cancelRequested) {
+                    return null;
+                }
                 com.CodeBySonu.VoxSherpa.Sonic sonic = new com.CodeBySonu.VoxSherpa.Sonic(sampleRate, 1);
                 sonic.setPitch(pitchValue);
                 sonic.writeShortToStream(shortSamples, shortSamples.length);
@@ -249,7 +395,9 @@ public class VoiceEngine {
                 }
             }
 
-            if (cancelRequested) return null;
+            if (cancelRequested) {
+                return null;
+            }
 
             byte[] pcmData = new byte[shortSamples.length * 2];
             for (int i = 0; i < shortSamples.length; i++) {
@@ -261,56 +409,47 @@ public class VoiceEngine {
 
         } catch (Throwable t) {
             return null;
+        } finally {
+            isGenerating = false;
         }
     }
 
-    // ── Sample rate ──────────────────────────────────────────────────────────
     public synchronized int getSampleRate() {
         if (tts == null) return 0;
         return tts.sampleRate();
     }
 
-    // ── State ────────────────────────────────────────────────────────────────
     public synchronized boolean isReady() {
         return tts != null;
     }
 
-    public synchronized void destroy() {
+    public void destroy() {
         cancelRequested = false;
-        if (tts != null) {
-            try { tts.release(); } catch (Throwable ignored) {}
-            tts = null;
-            activeModelUri = "";
-            activeTokensUri = "";
+        synchronized (nativeLock) {
+            if (tts != null) {
+                try { tts.release(); } catch (Throwable ignored) {}
+                tts = null;
+                activeModelUri = "";
+                activeTokensUri = "";
+                activeLanguage = "";
+                activeModelIsMms = false;
+            }
         }
     }
 
-    // ── Noise-scale tuning (VITS / Piper / Matcha) ───────────────────────────
-    //
-    // `noise_scale` and `noise_scale_w` are sampling knobs on the VITS prior:
-    //  • Lower values → drier, more deterministic output. Identical input text
-    //    re-renders sound nearly identical between runs.
-    //  • Higher values → the model samples more from its prior, giving slightly
-    //    different prosody on each generation.
-    //
-    // VoxSherpa's calmed defaults are (0.35, 0.667). sherpa-onnx upstream's
-    // "Vanilla" Piper defaults are (0.667, 0.8). Consumers (e.g. storyvox's
-    // Voice Determinism toggle) flip between presets.
-    //
-    // Behavior:
-    //  • If a model is currently loaded, the engine destroys + reconstructs
-    //    `OfflineTts` with the new config. This blocks for ~1-3s on Piper.
-    //  • If no model is loaded, the new value is stored and applied on the
-    //    next loadModel() call.
-    //  • Calling during synthesis: the synchronized monitor on the engine
-    //    serializes against loadModel/destroy, but a thread already inside
-    //    `generateAudioPCM` past the synchronized block holds a `localTts`
-    //    reference and may finish a generation against the *old* config
-    //    before observing the swap. cancelRequested is raised so cooperating
-    //    callers bail early. This matches `loadModel`'s existing semantics.
-    //
-    // No-op if the supplied value equals the currently-active value, so
-    // settings UIs can call freely without forcing a reload.
+    public void setActiveSpeakerId(int speakerId) {
+        this.activeSpeakerId = speakerId;
+    }
+
+    public synchronized int getNumSpeakers() {
+        if (tts == null) return 1;
+        try {
+            return tts.numSpeakers();
+        } catch (Throwable ignored) {
+            return 1;
+        }
+    }
+
     public synchronized void setNoiseScale(float scale) {
         if (this.noiseScale == scale) return;
         this.noiseScale = scale;
@@ -331,9 +470,6 @@ public class VoiceEngine {
         return noiseScaleW;
     }
 
-    // Internal: rebuild OfflineTts with the current (model, tokens, noise*)
-    // values. Caller must hold the monitor on `this`. No-op if no model is
-    // loaded.
     private void _reloadIfActive() {
         if (tts == null || activeModelUri.isEmpty() || activeTokensUri.isEmpty()) {
             return;
@@ -342,19 +478,29 @@ public class VoiceEngine {
 
         String model = activeModelUri;
         String tokens = activeTokensUri;
+        String language = activeLanguage;
+        boolean isMms = activeModelIsMms;
 
-        try { tts.release(); } catch (Throwable ignored) {}
-        tts = null;
-        activeModelUri = "";
-        activeTokensUri = "";
+        synchronized (nativeLock) {
+            try { tts.release(); } catch (Throwable ignored) {}
+            tts = null;
+            activeModelUri = "";
+            activeTokensUri = "";
+            activeLanguage = "";
+        }
 
         cancelRequested = false;
 
-        OfflineTts rebuilt = _createTtsWithFallback(model, tokens);
-        if (rebuilt != null) {
-            tts = rebuilt;
-            activeModelUri = model;
-            activeTokensUri = tokens;
+        OfflineTts rebuilt = _createTtsWithFallback(model, tokens, language, isMms);
+
+        synchronized (nativeLock) {
+            if (rebuilt != null) {
+                tts = rebuilt;
+                activeModelUri = model;
+                activeTokensUri = tokens;
+                activeLanguage = language;
+                activeModelIsMms = isMms;
+            }
         }
     }
 }
