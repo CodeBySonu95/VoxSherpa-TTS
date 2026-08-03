@@ -53,7 +53,8 @@ import android.media.AudioFocusRequest;
 import android.os.Build;
 import android.content.Context;
 import com.CodeBySonu.VoxSherpa.system.VoxMediaController;
-
+
+
 
 public class LibraryFragmentActivity extends Fragment {
 	
@@ -503,12 +504,13 @@ public class LibraryFragmentActivity extends Fragment {
 	@Override
 	public void onResume() {
 		super.onResume();
-		
+		// SharedPreferences se fresh data uthao
 		String libraryData = sp2.getString("library_list", "[]");
 		
 		allList = new com.google.gson.Gson().fromJson(libraryData, new com.google.gson.reflect.TypeToken<java.util.ArrayList<java.util.HashMap<String, Object>>>(){}.getType());
 		if (allList == null) allList = new java.util.ArrayList<>();
 		
+		// List ko clear karke naye data se bharo
 		displayList.clear();
 		
 		if (isFavTab) {
@@ -521,6 +523,8 @@ public class LibraryFragmentActivity extends Fragment {
 		} else {
 			displayList.addAll(allList);
 		}
+		
+		// UI Empty State Handle karo
 		if (displayList.isEmpty()) {
 			binding.recyclerviewHistory.setVisibility(android.view.View.GONE);
 			binding.linear4.setVisibility(android.view.View.VISIBLE);
@@ -530,11 +534,13 @@ public class LibraryFragmentActivity extends Fragment {
 			binding.linear4.setVisibility(android.view.View.GONE);
 		}
 		
+		// Adapter ko batao ki data change ho gaya hai
 		if (adapter != null) {
 			adapter.notifyDataSetChanged();
 		}
 	}
-	
+	
+
 	public void _updateMediaNotification(final double _state) {
 		int finalState = (int) _state;
 		
@@ -543,6 +549,7 @@ public class LibraryFragmentActivity extends Fragment {
 			String title = item.containsKey("text") ? item.get("text").toString() : "Unknown Audio";
 			String subtitle = item.containsKey("voice_name") ? item.get("voice_name").toString() : "Library";
 			
+			// Attempt to get exact duration for the notification seekbar
 			long trackDuration = -1L;
 			if (mediaPlayer != null) {
 				try {
@@ -550,7 +557,10 @@ public class LibraryFragmentActivity extends Fragment {
 				} catch (Exception ignored) {}
 			}
 			
+			// Set the controller mode to Library internally
 			com.CodeBySonu.VoxSherpa.system.VoxMediaController.getInstance(getContext()).updatePlaybackState(title, subtitle, finalState, true);
+			
+			// Fire a direct intent to include the duration extra for the Service
 			android.content.Intent durIntent = new android.content.Intent(getContext(), com.CodeBySonu.VoxSherpa.system.VoxMediaService.class);
 			durIntent.setAction("ACTION_UPDATE_STATE");
 			durIntent.putExtra("title", title);
@@ -672,4 +682,4 @@ public class LibraryFragmentActivity extends Fragment {
 		
 	}
 	
-}
+}

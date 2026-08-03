@@ -52,7 +52,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageInfo;
-
+
 
 public class SettingFragmentActivity extends Fragment {
 	
@@ -81,27 +81,48 @@ public class SettingFragmentActivity extends Fragment {
 		binding.relativelayout24.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View _view) {
-				Intent i = new Intent(Intent.ACTION_VIEW);
-				i.setData(Uri.parse("https://codebysonu95.github.io/VoxSherpa-TTS/assets/Privacy.html"));
-				startActivity(i);
+				try {
+					Intent intent = new Intent(Intent.ACTION_VIEW,
+					android.net.Uri.parse("market://details?id=com.CodeBySonu.VoxSherpa"));
+					intent.setPackage("com.android.vending");
+					startActivity(intent);
+				} catch (android.content.ActivityNotFoundException e) {
+					startActivity(new Intent(
+					Intent.ACTION_VIEW,
+					android.net.Uri.parse("https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa")
+					));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		});
 		
 		binding.linear2.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View _view) {
+				
+				Intent i = new Intent(Intent.ACTION_VIEW);
+				i.setData(Uri.parse("https://codebysonu95.github.io/VoxSherpa-TTS/assets/Privacy.html"));
+				startActivity(i);
+			}
+		});
+		
+		binding.linear3.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View _view) {
 				Intent intent = new Intent(Intent.ACTION_VIEW,
 				android.net.Uri.parse("https://github.com/CodeBySonu95/VoxSherpa-TTS"));
+				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				
-				if (intent.resolveActivity(getContext().getPackageManager()) != null) {
+				try {
 					startActivity(intent);
-				} else {
+				} catch (android.content.ActivityNotFoundException e) {
 					android.widget.Toast.makeText(getContext(), "No browser found", android.widget.Toast.LENGTH_SHORT).show();
 				}
 			}
 		});
 		
-		binding.linear4.setOnClickListener(new View.OnClickListener() {
+		binding.linear7.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View _view) {
 				PackageManager pm = getActivity().getPackageManager();
@@ -118,8 +139,9 @@ public class SettingFragmentActivity extends Fragment {
 				"Android: " + Build.VERSION.RELEASE + "\n\n" +
 				"Your feedback:\n";
 				
+				// 🚀 NAYA LOGIC: ACTION_SENDTO aur mailto: scheme ka use karein
 				Intent intent = new Intent(Intent.ACTION_SENDTO);
-				intent.setData(Uri.parse("mailto:"));
+				intent.setData(Uri.parse("mailto:")); // Ye STRICTLY sirf email apps ko bulayega (PayPal, WhatsApp blocked)
 				intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"codebysonu95@gmail.com"});
 				intent.putExtra(Intent.EXTRA_SUBJECT, "VoxSherpa Feedback");
 				intent.putExtra(Intent.EXTRA_TEXT, body);
@@ -145,50 +167,63 @@ public class SettingFragmentActivity extends Fragment {
 				startActivity(intent1);
 			}
 		});
-		
-		binding.linear3.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View _view) {
-				try {
-					android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW, 
-					android.net.Uri.parse("market://details?id=com.CodeBySonu.VoxSherpa"));
-					intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-					startActivity(intent);
-				} catch (android.content.ActivityNotFoundException e) {
-					android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW, 
-					android.net.Uri.parse("https://play.google.com/store/apps/details?id=com.CodeBySonu.VoxSherpa"));
-					intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-					startActivity(intent);
-				}
-				
-			}
-		});
 	}
 	
 	private void initializeLogic() {
+		// 1. App Version Setup (Dynamic fetch)
 		try {
-			android.content.pm.PackageInfo pInfo = getContext().getPackageManager().getPackageInfo(getContext().getPackageName(), 0);
+			PackageInfo pInfo = getContext().getPackageManager().getPackageInfo(getContext().getPackageName(), 0);
 			String version = pInfo.versionName;
 			binding.textview73.setText("v" + version + "-stable");
 		} catch (Exception e) {
-			binding.textview73.setText("v1.0.0-stable");
+			binding.textview73.setText("v1.0.0-stable"); // Fallback
 		}
+		
+		// 2. Switches Setup (Default: OFF)
 		boolean isPunctuationOn = sp3.getBoolean("smart_punct", false);
 		boolean isEmotionOn = sp3.getBoolean("emotion_tags", false);
-		boolean isMmsOn = sp3.getBoolean("mms_models_enabled", false);
+		boolean isMultiSpeakerOn = sp3.getBoolean("multi_speaker_tags", false);
+		boolean isMmsOn = sp3.getBoolean("mms_models_enabled", false); // Added MMS state
+		
 		binding.switchPunctuation.setChecked(isPunctuationOn);
 		binding.switchEmotion.setChecked(isEmotionOn);
-		binding.switchMms.setChecked(isMmsOn);
+		binding.switchMultiSpeakers.setChecked(isMultiSpeakerOn);
+		binding.switchMms.setChecked(isMmsOn); // Added MMS switch binding
+		
+		// Punctuation Switch Setup
 		binding.switchPunctuation.setOnCheckedChangeListener((buttonView, isChecked) -> {
 			sp3.edit().putBoolean("smart_punct", isChecked).apply();
 		});
+		
+		// Emotion Switch Setup
 		binding.switchEmotion.setOnCheckedChangeListener((buttonView, isChecked) -> {
 			if (isChecked) {
-				new com.google.android.material.dialog.MaterialAlertDialogBuilder(getContext())
+				new MaterialAlertDialogBuilder(getContext())
 				.setTitle("Beta Feature")
 				.setMessage("Emotion tagging is currently in beta. Please note that it may not perform perfectly with all voice models. Do you wish to continue?")
 				.setPositiveButton("Continue", (dialog, which) -> {
 					sp3.edit().putBoolean("emotion_tags", true).apply();
+					dialog.dismiss();
+				})
+				.setNegativeButton("Cancel", (dialog, which) -> {
+					buttonView.setChecked(false); 
+					dialog.dismiss();
+				})
+				.setCancelable(false)
+				.show();
+			} else {
+				sp3.edit().putBoolean("emotion_tags", false).apply();
+			}
+		});
+		
+		// Multi-Speaker Switch Setup
+		binding.switchMultiSpeakers.setOnCheckedChangeListener((buttonView, isChecked) -> {
+			if (isChecked) {
+				new MaterialAlertDialogBuilder(getContext())
+				.setTitle("Multi-Speaker Notice")
+				.setMessage("This feature is currently available only for multi-speaker Piper models. It does not support single voice Piper or Kokoro models.")
+				.setPositiveButton("OK", (dialog, which) -> {
+					sp3.edit().putBoolean("multi_speaker_tags", true).apply();
 					dialog.dismiss();
 				})
 				.setNegativeButton("Cancel", (dialog, which) -> {
@@ -198,12 +233,14 @@ public class SettingFragmentActivity extends Fragment {
 				.setCancelable(false)
 				.show();
 			} else {
-				sp3.edit().putBoolean("emotion_tags", false).apply();
+				sp3.edit().putBoolean("multi_speaker_tags", false).apply();
 			}
 		});
+		
+		// MMS Switch Setup (Added Logic)
 		binding.switchMms.setOnCheckedChangeListener((buttonView, isChecked) -> {
 			if (isChecked) {
-				new com.google.android.material.dialog.MaterialAlertDialogBuilder(getContext())
+				new MaterialAlertDialogBuilder(getContext())
 				.setTitle("MMS Community Models")
 				.setMessage("This will add 1100+ low-resource language models to the Models tab. These are Facebook MMS models — quality varies by language. Downloaded models will be kept if you turn this off later.")
 				.setPositiveButton("Enable", (dialog, which) -> {
@@ -220,6 +257,8 @@ public class SettingFragmentActivity extends Fragment {
 				sp3.edit().putBoolean("mms_models_enabled", false).apply();
 			}
 		});
+		
+		// 3. Pitch SeekBar Setup
 		float currentPitch = sp3.getFloat("voice_pitch", 1.0f);
 		int pitchProgress;
 		if (currentPitch <= 1.0f) {
@@ -227,26 +266,38 @@ public class SettingFragmentActivity extends Fragment {
 		} else {
 			pitchProgress = 50 + (int) (((currentPitch - 1.0f) / 1.0f) * 50f);
 		}
+		
 		binding.seekbarPitch.setMax(100);
 		binding.seekbarPitch.setProgress(pitchProgress);
-		binding.pitchTv.setText(String.format(java.util.Locale.US, "%.2f", currentPitch));
-		binding.seekbarPitch.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+		binding.pitchTv.setText(String.format(Locale.US, "%.2f", currentPitch));
+		
+		binding.seekbarPitch.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 			@Override
-			public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 				float pitchValue;
 				if (progress <= 50) {
-					pitchValue = 0.25f + (progress / 50f) * 0.75f;
+					pitchValue = 0.25f + (progress / 50f) * 0.75f; 
 				} else {
 					pitchValue = 1.0f + ((progress - 50) / 50f) * 1.0f;
 				}
-				binding.pitchTv.setText(String.format(java.util.Locale.US, "%.2f", pitchValue));
-				if (fromUser) {
-					sp3.edit().putFloat("voice_pitch", pitchValue).apply();
-				}
+				binding.pitchTv.setText(String.format(Locale.US, "%.2f", pitchValue));
 			}
-			@Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
-			@Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+			@Override 
+			public void onStartTrackingTouch(SeekBar seekBar) {}
+			@Override 
+			public void onStopTrackingTouch(SeekBar seekBar) {
+				float pitchValue;
+				int progress = seekBar.getProgress();
+				if (progress <= 50) {
+					pitchValue = 0.25f + (progress / 50f) * 0.75f; 
+				} else {
+					pitchValue = 1.0f + ((progress - 50) / 50f) * 1.0f;
+				}
+				sp3.edit().putFloat("voice_pitch", pitchValue).apply();
+			}
 		});
+		
+		// 4. Speed SeekBar Setup
 		float currentSpeed = sp3.getFloat("voice_speed", 1.0f);
 		int speedProgress;
 		if (currentSpeed <= 1.0f) {
@@ -254,43 +305,112 @@ public class SettingFragmentActivity extends Fragment {
 		} else {
 			speedProgress = 50 + (int) (((currentSpeed - 1.0f) / 1.0f) * 50f);
 		}
+		
 		binding.seekbarSpeed.setMax(100);
 		binding.seekbarSpeed.setProgress(speedProgress);
-		binding.speedTv.setText(String.format(java.util.Locale.US, "%.2fx", currentSpeed));
-		binding.seekbarSpeed.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+		binding.speedTv.setText(String.format(Locale.US, "%.2fx", currentSpeed));
+		
+		binding.seekbarSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 			@Override
-			public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 				float speedValue;
 				if (progress <= 50) {
 					speedValue = 0.25f + (progress / 50f) * 0.75f;
 				} else {
 					speedValue = 1.0f + ((progress - 50) / 50f) * 1.0f;
 				}
-				binding.speedTv.setText(String.format(java.util.Locale.US, "%.2fx", speedValue));
-				if (fromUser) {
-					sp3.edit().putFloat("voice_speed", speedValue).apply();
+				binding.speedTv.setText(String.format(Locale.US, "%.2fx", speedValue));
+			}
+			@Override 
+			public void onStartTrackingTouch(SeekBar seekBar) {}
+			@Override 
+			public void onStopTrackingTouch(SeekBar seekBar) {
+				float speedValue;
+				int progress = seekBar.getProgress();
+				if (progress <= 50) {
+					speedValue = 0.25f + (progress / 50f) * 0.75f;
+				} else {
+					speedValue = 1.0f + ((progress - 50) / 50f) * 1.0f;
+				}
+				sp3.edit().putFloat("voice_speed", speedValue).apply();
+			}
+		});
+		
+		// 5. Silence (Pause) SeekBar Setup
+		float currentSilence = sp3.getFloat("silence_scale", 0.2f);
+		binding.seekbarSilencePause.setMax(100);
+		binding.seekbarSilencePause.setProgress((int) (currentSilence * 100));
+		binding.silenceTv.setText(String.format(Locale.US, "%.2f", currentSilence));
+		
+		binding.seekbarSilencePause.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				float silenceValue = progress / 100.0f;
+				binding.silenceTv.setText(String.format(Locale.US, "%.2f", silenceValue));
+			}
+			
+			@Override 
+			public void onStartTrackingTouch(SeekBar seekBar) {
+				boolean hideWarning = sp3.getBoolean("hide_silence_warning", false);
+				
+				if (!hideWarning) {
+					CheckBox dontShowAgainCb = new CheckBox(getContext());
+					dontShowAgainCb.setText("Do not ask me again");
+					
+					LinearLayout layout = new LinearLayout(getContext());
+					layout.setOrientation(LinearLayout.VERTICAL);
+					layout.setPadding(60, 20, 60, 0); 
+					layout.addView(dontShowAgainCb);
+					
+					new MaterialAlertDialogBuilder(getContext())
+					.setTitle("Silence & Pause Info")
+					.setMessage("This slider adjusts the pause duration between sentences.\n\nNote: 'Emotion Tags' must be enabled for this feature to work.")
+					.setView(layout)
+					.setPositiveButton("Got it", (dialog, which) -> {
+						if (dontShowAgainCb.isChecked()) {
+							sp3.edit().putBoolean("hide_silence_warning", true).apply();
+						}
+						dialog.dismiss();
+					})
+					.setNegativeButton("Cancel", (dialog, which) -> {
+						float savedVal = sp3.getFloat("silence_scale", 0.2f);
+						seekBar.setProgress((int) (savedVal * 100));
+						dialog.dismiss();
+					})
+					.setCancelable(false)
+					.show();
 				}
 			}
-			@Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
-			@Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+			
+			@Override 
+			public void onStopTrackingTouch(SeekBar seekBar) {
+				float finalSilence = seekBar.getProgress() / 100.0f;
+				sp3.edit().putFloat("silence_scale", finalSilence).apply();
+			}
 		});
+		
+		// 6. Storage & Models Calculation
 		String savedData = sp1.getString("models_data", "[]");
 		int downloadedModelCount = 0;
 		long totalActualSizeBytes = 0;
+		
 		try {
-			java.util.ArrayList<java.util.HashMap<String, Object>> modelList = new com.google.gson.Gson().fromJson(savedData, new com.google.gson.reflect.TypeToken<java.util.ArrayList<java.util.HashMap<String, Object>>>(){}.getType());
+			ArrayList<HashMap<String, Object>> modelList = new Gson().fromJson(savedData, new TypeToken<ArrayList<HashMap<String, Object>>>(){}.getType());
 			if (modelList != null) {
-				for (java.util.HashMap<String, Object> model : modelList) {
+				for (HashMap<String, Object> model : modelList) {
 					String onnxPath = model.containsKey("onnx_path") && model.get("onnx_path") != null ? model.get("onnx_path").toString() : "";
 					String tokensPath = model.containsKey("tokens_path") && model.get("tokens_path") != null ? model.get("tokens_path").toString() : "";
+					
 					if (!onnxPath.isEmpty()) {
 						downloadedModelCount++;
-						java.io.File onnxFile = new java.io.File(onnxPath);
+						
+						File onnxFile = new File(onnxPath);
 						if (onnxFile.exists()) {
 							totalActualSizeBytes += onnxFile.length();
 						}
+						
 						if (!tokensPath.isEmpty()) {
-							java.io.File tokensFile = new java.io.File(tokensPath);
+							File tokensFile = new File(tokensPath);
 							if (tokensFile.exists()) {
 								totalActualSizeBytes += tokensFile.length();
 							}
@@ -299,47 +419,61 @@ public class SettingFragmentActivity extends Fragment {
 				}
 			}
 		} catch (Exception e) { }
+		
 		binding.textview68.setText(downloadedModelCount + " local models imported");
+		
 		double sizeInMB = totalActualSizeBytes / (1024.0 * 1024.0);
 		if (sizeInMB > 1024) {
-			binding.totalSizeCountTv.setText(String.format(java.util.Locale.US, "%.2f GB", sizeInMB / 1024.0));
+			binding.totalSizeCountTv.setText(String.format(Locale.US, "%.2f GB", sizeInMB / 1024.0));
 		} else {
-			binding.totalSizeCountTv.setText(String.format(java.util.Locale.US, "%.2f MB", sizeInMB));
+			binding.totalSizeCountTv.setText(String.format(Locale.US, "%.2f MB", sizeInMB));
 		}
+		
+		// 7. Clear Cache Logic
 		binding.clearCiv.setOnClickListener(view -> {
-			new com.google.android.material.dialog.MaterialAlertDialogBuilder(getContext())
+			new MaterialAlertDialogBuilder(getContext())
 			.setTitle("Clear All Cache")
 			.setMessage("This will delete all imported ONNX models and reset settings. Are you sure?")
 			.setPositiveButton("Clear", (dialog, which) -> {
 				String currentData = sp1.getString("models_data", "[]");
 				try {
-					java.util.ArrayList<java.util.HashMap<String, Object>> mList = new com.google.gson.Gson().fromJson(currentData, new com.google.gson.reflect.TypeToken<java.util.ArrayList<java.util.HashMap<String, Object>>>(){}.getType());
+					ArrayList<HashMap<String, Object>> mList = new Gson().fromJson(currentData, new TypeToken<ArrayList<HashMap<String, Object>>>(){}.getType());
 					if (mList != null) {
-						for (java.util.HashMap<String, Object> model : mList) {
+						for (HashMap<String, Object> model : mList) {
 							String oPath = model.containsKey("onnx_path") && model.get("onnx_path") != null ? model.get("onnx_path").toString() : "";
 							String tPath = model.containsKey("tokens_path") && model.get("tokens_path") != null ? model.get("tokens_path").toString() : "";
-							if (!oPath.isEmpty()) new java.io.File(oPath).delete();
-							if (!tPath.isEmpty()) new java.io.File(tPath).delete();
+							
+							if (!oPath.isEmpty()) new File(oPath).delete();
+							if (!tPath.isEmpty()) new File(tPath).delete();
 						}
 					}
 				} catch (Exception e) {}
-				java.io.File modelsDir = new java.io.File(getContext().getFilesDir(), "PiperModels");
+				
+				File modelsDir = new File(getContext().getFilesDir(), "PiperModels");
 				if (modelsDir.exists() && modelsDir.isDirectory()) {
-					java.io.File[] files = modelsDir.listFiles();
+					File[] files = modelsDir.listFiles();
 					if (files != null) {
-						for (java.io.File f : files) f.delete();
+						for (File f : files) f.delete();
 					}
 				}
+				
 				sp1.edit().clear().apply();
-				sp3.edit().clear().apply();
+				sp3.edit().clear().apply(); 
+				
 				binding.textview68.setText("0 local models imported");
 				binding.totalSizeCountTv.setText("0.00 MB");
+				
 				binding.switchPunctuation.setChecked(false);
 				binding.switchEmotion.setChecked(false);
+				binding.switchMultiSpeakers.setChecked(false);
+				binding.switchMms.setChecked(false); // Reset MMS toggle as well
+				
 				binding.seekbarPitch.setProgress(50);
 				binding.seekbarSpeed.setProgress(50);
-				com.google.android.material.snackbar.Snackbar.make(view, "Cache and models cleared successfully", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
-				.setBackgroundTint(android.graphics.Color.parseColor("#1D61FF")).setTextColor(android.graphics.Color.WHITE).show();
+				binding.seekbarSilencePause.setProgress(20); 
+				
+				Snackbar.make(view, "Cache and models cleared successfully", Snackbar.LENGTH_SHORT)
+				.setBackgroundTint(Color.parseColor("#1D61FF")).setTextColor(Color.WHITE).show();
 			})
 			.setNegativeButton("Cancel", null)
 			.show();
@@ -347,4 +481,4 @@ public class SettingFragmentActivity extends Fragment {
 		
 	}
 	
-}
+}

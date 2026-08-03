@@ -58,7 +58,8 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import android.database.Cursor;
-
+
+
 
 public class ModelsFragmentActivity extends Fragment {
 	
@@ -104,20 +105,26 @@ public class ModelsFragmentActivity extends Fragment {
 		binding.btnFilter.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View _view) {
+				// 1. Icon ko rotate karna (Top ki taraf) jab dialog khule
 				binding.imageview8.animate().rotation(-90f).setDuration(300).start();
+				
+				// 2. Dialog Setup
 				com.google.android.material.bottomsheet.BottomSheetDialog sortDialog = new com.google.android.material.bottomsheet.BottomSheetDialog(getContext());
 				View dialogView = getActivity().getLayoutInflater().inflate(R.layout.sort_bottom_dialog, null);
+				
 				android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
 				gd.setColor(android.graphics.Color.parseColor("#131B2D"));
 				float radius = 24f * getResources().getDisplayMetrics().density;
 				gd.setCornerRadii(new float[]{
-					radius, radius,
-					radius, radius,
-					0f, 0f,
+					radius, radius, 
+					radius, radius, 
+					0f, 0f, 
 					0f, 0f
 				});
 				dialogView.setBackground(gd);
 				sortDialog.setContentView(dialogView);
+				
+				// Fix for black corners in BottomSheet
 				sortDialog.setOnShowListener(new android.content.DialogInterface.OnShowListener() {
 					@Override
 					public void onShow(android.content.DialogInterface dialog) {
@@ -128,38 +135,52 @@ public class ModelsFragmentActivity extends Fragment {
 						}
 					}
 				});
+				
+				// Views ko find karna
 				LinearLayout layoutAll = dialogView.findViewById(R.id.layout_all_models);
 				LinearLayout layoutDownload = dialogView.findViewById(R.id.layout_download);
 				LinearLayout layoutInstalled = dialogView.findViewById(R.id.layout_installed);
 				LinearLayout layoutNewest = dialogView.findViewById(R.id.layout_newest);
 				LinearLayout layoutOldest = dialogView.findViewById(R.id.layout_oldest);
+				
 				RadioButton rbAll = dialogView.findViewById(R.id.rb_all_models);
 				RadioButton rbDownload = dialogView.findViewById(R.id.rb_download);
 				RadioButton rbInstalled = dialogView.findViewById(R.id.rb_installed);
 				RadioButton rbNewest = dialogView.findViewById(R.id.rb_newest);
 				RadioButton rbOldest = dialogView.findViewById(R.id.rb_oldest);
+				
+				// Get current selections from SP1
 				String currentSort = sp1.getString("sort_preference", "all_models");
 				String currentLanguage = sp1.getString("language_filter", "All Languages");
+				
 				if(currentSort.equals("download")) rbDownload.setChecked(true);
 				else if(currentSort.equals("installed")) rbInstalled.setChecked(true);
 				else if(currentSort.equals("newest")) rbNewest.setChecked(true);
 				else if(currentSort.equals("oldest")) rbOldest.setChecked(true);
 				else rbAll.setChecked(true);
+				
+				// 3. COMBINED FILTER & SORT LOGIC (Runnable block to avoid duplicate code)
 				Runnable applyFilterAndSort = () -> {
 					String activeSort = sp1.getString("sort_preference", "all_models");
 					String activeLang = sp1.getString("language_filter", "All Languages");
+					
 					String savedData = sp1.getString("models_data", "[]");
 					java.util.ArrayList<java.util.HashMap<String, Object>> masterList = new com.google.gson.Gson().fromJson(
-					savedData,
+					savedData, 
 					new com.google.gson.reflect.TypeToken<java.util.ArrayList<java.util.HashMap<String, Object>>>(){}.getType()
 					);
+					
 					if (masterList == null) masterList = new java.util.ArrayList<>();
-					modelList.clear();
+					modelList.clear(); 
+					
 					for (java.util.HashMap<String, Object> item : masterList) {
 						String onnxPath = item.containsKey("onnx_path") && item.get("onnx_path") != null ? item.get("onnx_path").toString() : "";
 						boolean isInstalled = !onnxPath.isEmpty();
+						
+						// Language filter check
 						String itemLang = item.containsKey("language") && item.get("language") != null ? item.get("language").toString() : "";
 						boolean languageMatch = activeLang.equals("All Languages") || activeLang.equals(itemLang);
+						
 						if (languageMatch) {
 							if (activeSort.equals("download")) {
 								if (!isInstalled) modelList.add(item);
@@ -170,13 +191,17 @@ public class ModelsFragmentActivity extends Fragment {
 							}
 						}
 					}
+					
 					if (activeSort.equals("newest")) {
 						java.util.Collections.reverse(modelList);
 					}
+					
 					if (binding.recyclerviewModels.getAdapter() != null) {
 						binding.recyclerviewModels.getAdapter().notifyDataSetChanged();
 					}
 					_updateEmptyState();
+					
+					// UI Text Update Logic
 					if (!activeLang.equals("All Languages")) {
 						binding.sortTv.setText(activeLang);
 					} else if (activeSort.equals("download")) {
@@ -191,40 +216,61 @@ public class ModelsFragmentActivity extends Fragment {
 						binding.sortTv.setText("All Models");
 					}
 				};
+				
+				// 4. SETUP LANGUAGE DROPDOWN
 				String[] languagesFromXml = getResources().getStringArray(R.array.language_list);
 				String[] finalLanguages = new String[languagesFromXml.length + 1];
 				finalLanguages[0] = "All Languages";
 				System.arraycopy(languagesFromXml, 0, finalLanguages, 1, languagesFromXml.length);
+				
 				android.widget.ArrayAdapter<String> langAdapter = new android.widget.ArrayAdapter<>(getContext(), R.layout.custom_dropdown_item, R.id.tv_drop_item, finalLanguages);
 				android.widget.AutoCompleteTextView dropdownLang = dialogView.findViewById(R.id.dropdown_lang);
+				
 				if(dropdownLang != null) {
 					dropdownLang.setAdapter(langAdapter);
+					
+					// Show the currently selected language in the dropdown UI
 					dropdownLang.setText(currentLanguage, false);
+					
 					dropdownLang.setOnItemClickListener((parentView, view, position, id) -> {
 						String selectedLang = finalLanguages[position];
+						
+						// Save the new language filter
 						sp1.edit().putString("language_filter", selectedLang).apply();
 						sortDialog.dismiss();
+						
+						// Trigger the combined filter logic
 						applyFilterAndSort.run();
 					});
 				}
+				
+				// 5. STANDARD SORT BUTTONS CLICK LISTENER
 				View.OnClickListener clickListener = v -> {
 					String selected = "all_models";
 					if(v.getId() == R.id.layout_download) selected = "download";
 					else if(v.getId() == R.id.layout_installed) selected = "installed";
 					else if(v.getId() == R.id.layout_newest) selected = "newest";
 					else if(v.getId() == R.id.layout_oldest) selected = "oldest";
+					
+					// Save the new sort preference
 					sp1.edit().putString("sort_preference", selected).apply();
 					sortDialog.dismiss();
+					
+					// Trigger the combined filter logic
 					applyFilterAndSort.run();
 				};
+				
 				layoutAll.setOnClickListener(clickListener);
 				layoutDownload.setOnClickListener(clickListener);
 				layoutInstalled.setOnClickListener(clickListener);
 				layoutNewest.setOnClickListener(clickListener);
 				layoutOldest.setOnClickListener(clickListener);
+				
+				// 6. Dialog Band Hone Par Icon Reset
 				sortDialog.setOnDismissListener(dialogInterface -> {
 					binding.imageview8.animate().rotation(0f).setDuration(300).start();
 				});
+				
 				sortDialog.show();
 				
 			}
@@ -269,14 +315,7 @@ public class ModelsFragmentActivity extends Fragment {
 		};
 		fb.addChildEventListener(_fb_child_listener);
 	}
-
-	@Override
-	public void onResume() {
-		super.onResume();
-		_syncMmsCatalog();
-		_applyFilterAndSort();
-	}
-
+	
 	private void initializeLogic() {
 		String initialSort = sp1.getString("sort_preference", "all_models");
 		if (initialSort.equals("download")) binding.sortTv.setText("Download");
@@ -290,7 +329,6 @@ public class ModelsFragmentActivity extends Fragment {
 		_setupDataAndStorage();
 		_fetchFirebaseModels();
 		_setupRecyclerViewAdapter();
-		
 		_setupFabAndImportDialog();
 	}
 	
@@ -359,8 +397,8 @@ public class ModelsFragmentActivity extends Fragment {
 					snack.show();
 				}
 			}
+			
 		}
-		
 		switch (_requestCode) {
 			
 			default:
@@ -368,6 +406,12 @@ public class ModelsFragmentActivity extends Fragment {
 		}
 	}
 	
+	
+	@Override
+	public void onResume() {
+		super.onResume();
+		_syncMmsCatalog();
+	}
 	public void _updateEmptyState() {
 		boolean empty = modelList.isEmpty();
 		binding.recyclerviewModels.setVisibility(empty ? View.GONE : View.VISIBLE);
@@ -381,13 +425,16 @@ public class ModelsFragmentActivity extends Fragment {
 		if (animator instanceof androidx.recyclerview.widget.SimpleItemAnimator) {
 			((androidx.recyclerview.widget.SimpleItemAnimator) animator).setSupportsChangeAnimations(false);
 		}
+		
 		binding.recyclerviewModels.setAdapter(new androidx.recyclerview.widget.RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerView.ViewHolder>() {
+			
 			@NonNull
 			@Override
-			public androidx.recyclerview.widget.RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-				View itemView = getActivity().getLayoutInflater().inflate(R.layout.item_model, parent, false);
+			public androidx.recyclerview.widget.RecyclerView.ViewHolder onCreateViewHolder(@NonNull android.view.ViewGroup parent, int viewType) {
+				android.view.View itemView = getActivity().getLayoutInflater().inflate(R.layout.item_model, parent, false);
 				return new androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {};
 			}
+			
 			@Override
 			public void onBindViewHolder(@NonNull androidx.recyclerview.widget.RecyclerView.ViewHolder holder, int position, @NonNull java.util.List<Object> payloads) {
 				if (payloads.isEmpty()) {
@@ -397,13 +444,17 @@ public class ModelsFragmentActivity extends Fragment {
 						if (payload.equals("PROGRESS_UPDATE")) {
 							int pos = holder.getAdapterPosition();
 							if (pos == androidx.recyclerview.widget.RecyclerView.NO_POSITION) return;
+							
 							java.util.HashMap<String, Object> item = modelList.get(pos);
-							ProgressBar progressBar = holder.itemView.findViewById(R.id.progress_download);
-							TextView txtModelSub = holder.itemView.findViewById(R.id.txt_model_sub);
+							
+							android.widget.ProgressBar progressBar = holder.itemView.findViewById(R.id.progress_download);
+							android.widget.TextView txtModelSub = holder.itemView.findViewById(R.id.txt_model_sub);
+							
 							int progress = item.containsKey("download_progress") ? Integer.parseInt(item.get("download_progress").toString()) : 0;
 							String lang = item.containsKey("language") ? item.get("language").toString() : "Unknown";
 							String gender = item.containsKey("gender") ? item.get("gender").toString() : "Unknown";
 							String size = item.containsKey("size") ? item.get("size").toString() : "0 MB";
+							
 							if (progress > 0) {
 								progressBar.setIndeterminate(false);
 								progressBar.setProgress(progress);
@@ -413,14 +464,19 @@ public class ModelsFragmentActivity extends Fragment {
 					}
 				}
 			}
+			
 			@Override
 			public void onBindViewHolder(@NonNull androidx.recyclerview.widget.RecyclerView.ViewHolder holder, int position) {
-				View v = holder.itemView;
-				Context context = v.getContext();
+				android.view.View v = holder.itemView;
+				android.content.Context context = v.getContext();
+				
 				int pos = holder.getAdapterPosition();
 				if (pos == androidx.recyclerview.widget.RecyclerView.NO_POSITION) return;
+				
 				java.util.HashMap<String, Object> item = modelList.get(pos);
+				
 				boolean isKokoro = item.containsKey("type") && item.get("type").toString().contains("Kokoro");
+				
 				String modelName = "Unknown Model";
 				if (item.containsKey("name") && item.get("name") != null && !item.get("name").toString().trim().isEmpty()) {
 					modelName = item.get("name").toString();
@@ -428,82 +484,97 @@ public class ModelsFragmentActivity extends Fragment {
 					modelName = item.get("language").toString() + " " + item.get("gender").toString();
 					if (item.containsKey("quality")) modelName += " (" + item.get("quality").toString() + ")";
 				}
-				((TextView) v.findViewById(R.id.txt_model_id)).setText(modelName);
+				((android.widget.TextView) v.findViewById(R.id.txt_model_id)).setText(modelName);
+				
 				final String finalModelName = modelName;
+				
 				String lang = item.containsKey("language") ? item.get("language").toString() : "Unknown";
 				String gender = item.containsKey("gender") ? item.get("gender").toString() : "Unknown";
 				String size = item.containsKey("size") ? item.get("size").toString() : "0 MB";
+				
+				String currentOnnx = item.containsKey("onnx_path") && item.get("onnx_path") != null ? item.get("onnx_path").toString() : "";
 				final String audioUrlToPlay = item.containsKey("semple") && item.get("semple") != null ? item.get("semple").toString().trim() : "";
-				String currentOnnx = item.containsKey("onnx_path") ? item.get("onnx_path").toString() : "";
+				
 				boolean isDownloaded = !currentOnnx.isEmpty();
 				boolean isDownloading = item.containsKey("is_downloading") && item.get("is_downloading").toString().equals("true");
 				int progress = item.containsKey("download_progress") ? Integer.parseInt(item.get("download_progress").toString()) : 0;
+				
 				String activeOnnx = sp1.getString("active_model", "");
-				ImageView selectIv = v.findViewById(R.id.select_iv);
-				TextView useRemoveTv = v.findViewById(R.id.use_remove_tv);
+				
+				android.widget.ImageView selectIv = v.findViewById(R.id.select_iv);
+				android.widget.TextView useRemoveTv = v.findViewById(R.id.use_remove_tv);
 				com.google.android.material.card.MaterialCardView btnUseVoice = v.findViewById(R.id.btn_use_voice);
 				com.google.android.material.card.MaterialCardView btnDelete = v.findViewById(R.id.btn_delete);
-				TextView txtModelSub = v.findViewById(R.id.txt_model_sub);
+				android.widget.TextView txtModelSub = v.findViewById(R.id.txt_model_sub);
+				
 				com.google.android.material.card.MaterialCardView boxPreviewStatus = v.findViewById(R.id.box_preview_status);
-				ImageView imgPreview = v.findViewById(R.id.img_preview_status);
-				ProgressBar progressBar = v.findViewById(R.id.progress_download);
-				ProgressBar progressBuffering = v.findViewById(R.id.progress_buffering);
+				android.widget.ImageView imgPreview = v.findViewById(R.id.img_preview_status);
+				android.widget.ProgressBar progressBar = v.findViewById(R.id.progress_download);
+				android.widget.ProgressBar progressBuffering = v.findViewById(R.id.progress_buffering);
+				
 				if (isDownloaded) {
-					progressBar.setVisibility(View.GONE);
-					btnDelete.setVisibility(View.VISIBLE);
+					progressBar.setVisibility(android.view.View.GONE);
+					btnDelete.setVisibility(android.view.View.VISIBLE);
 					txtModelSub.setText(lang + " • " + gender + " • " + size);
+					
 					if (currentOnnx.equals(activeOnnx)) {
-						selectIv.setVisibility(View.VISIBLE);
+						selectIv.setVisibility(android.view.View.VISIBLE);
 						useRemoveTv.setText("Remove");
 						btnUseVoice.setCardBackgroundColor(android.graphics.Color.parseColor("#FF4B4B"));
 					} else {
-						selectIv.setVisibility(View.GONE);
+						selectIv.setVisibility(android.view.View.GONE);
 						useRemoveTv.setText("Use Voice");
 						btnUseVoice.setCardBackgroundColor(android.graphics.Color.parseColor("#1D61FF"));
 					}
 				} else if (isDownloading) {
-					progressBar.setVisibility(View.VISIBLE);
+					progressBar.setVisibility(android.view.View.VISIBLE);
 					progressBar.setIndeterminate(false);
 					progressBar.setProgress(progress);
-					btnDelete.setVisibility(View.GONE);
+					btnDelete.setVisibility(android.view.View.GONE);
+					
 					if (progress > 0) {
 						txtModelSub.setText(lang + " • " + gender + " • " + progress + "% of " + size);
 					} else {
 						txtModelSub.setText(lang + " • " + gender + " • Starting...");
 					}
-					selectIv.setVisibility(View.GONE);
+					
+					selectIv.setVisibility(android.view.View.GONE);
 					useRemoveTv.setText("Cancel");
 					btnUseVoice.setCardBackgroundColor(android.graphics.Color.parseColor("#718096"));
 				} else {
-					progressBar.setVisibility(View.GONE);
-					btnDelete.setVisibility(View.GONE);
+					progressBar.setVisibility(android.view.View.GONE);
+					btnDelete.setVisibility(android.view.View.GONE);
 					txtModelSub.setText(lang + " • " + gender + " • " + size);
-					selectIv.setVisibility(View.GONE);
+					
+					selectIv.setVisibility(android.view.View.GONE);
 					useRemoveTv.setText("Download");
 					btnUseVoice.setCardBackgroundColor(android.graphics.Color.parseColor("#1D61FF"));
 				}
+				
 				if (item.containsKey("is_playing") && item.get("is_playing").equals("true")) {
-					imgPreview.setVisibility(View.VISIBLE);
-					imgPreview.setImageResource(R.drawable.icon_pause_circle);
-					if (progressBuffering != null) progressBuffering.setVisibility(View.GONE);
+					imgPreview.setVisibility(android.view.View.VISIBLE);
+					imgPreview.setImageResource(R.drawable.icon_pause_circle); 
+					if (progressBuffering != null) progressBuffering.setVisibility(android.view.View.GONE);
 				} else if (item.containsKey("is_buffering") && item.get("is_buffering").equals("true")) {
-					imgPreview.setVisibility(View.GONE);
-					if (progressBuffering != null) progressBuffering.setVisibility(View.VISIBLE);
-			} else {
-				if (audioUrlToPlay.isEmpty()) {
-					boxPreviewStatus.setVisibility(View.GONE);
+					imgPreview.setVisibility(android.view.View.GONE);
+					if (progressBuffering != null) progressBuffering.setVisibility(android.view.View.VISIBLE);
 				} else {
-					boxPreviewStatus.setVisibility(View.VISIBLE);
-					imgPreview.setVisibility(View.VISIBLE);
-					imgPreview.setImageResource(R.drawable.icon_play_circle);
+					if (audioUrlToPlay.isEmpty()) {
+						boxPreviewStatus.setVisibility(android.view.View.GONE);
+					} else {
+						boxPreviewStatus.setVisibility(android.view.View.VISIBLE);
+						imgPreview.setVisibility(android.view.View.VISIBLE);
+						imgPreview.setImageResource(R.drawable.icon_play_circle); 
+					}
+					if (progressBuffering != null) progressBuffering.setVisibility(android.view.View.GONE);
 				}
-				if (progressBuffering != null) progressBuffering.setVisibility(View.GONE);
-			}
+				
 				boxPreviewStatus.setOnClickListener(view -> {
 					if (audioUrlToPlay.isEmpty()) {
 						com.google.android.material.snackbar.Snackbar.make(v, "Sample audio not available.", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
 						return;
 					}
+					
 					if (item.containsKey("is_playing") && item.get("is_playing").equals("true")) {
 						com.CodeBySonu.VoxSherpa.AudioSampleHelper.getInstance().stopAudio();
 						item.put("is_playing", "false");
@@ -512,6 +583,7 @@ public class ModelsFragmentActivity extends Fragment {
 						}
 						return;
 					}
+					
 					for (int i = 0; i < modelList.size(); i++) {
 						java.util.HashMap<String, Object> m = modelList.get(i);
 						if ("true".equals(m.get("is_playing")) || "true".equals(m.get("is_buffering"))) {
@@ -522,10 +594,12 @@ public class ModelsFragmentActivity extends Fragment {
 							}
 						}
 					}
+					
 					item.put("is_buffering", "true");
 					if (binding.recyclerviewModels.getAdapter() != null) {
 						binding.recyclerviewModels.getAdapter().notifyItemChanged(pos);
 					}
+					
 					com.CodeBySonu.VoxSherpa.AudioSampleHelper.getInstance().playSample(v.getContext(), audioUrlToPlay, new com.CodeBySonu.VoxSherpa.AudioSampleHelper.SamplePlayListener() {
 						@Override
 						public void onPlayStarted() {
@@ -539,6 +613,7 @@ public class ModelsFragmentActivity extends Fragment {
 								});
 							}
 						}
+						
 						@Override
 						public void onPlayStopped() {
 							if (getActivity() != null) {
@@ -551,6 +626,7 @@ public class ModelsFragmentActivity extends Fragment {
 								});
 							}
 						}
+						
 						@Override
 						public void onError(String error) {
 							if (getActivity() != null) {
@@ -566,15 +642,20 @@ public class ModelsFragmentActivity extends Fragment {
 						}
 					});
 				});
+				
 				final String capturedOnnx = currentOnnx;
 				final String capturedTokens = item.containsKey("tokens_path") && item.get("tokens_path") != null ? item.get("tokens_path").toString() : "";
 				final String capturedVoicesBin = item.containsKey("voices_bin_path") && item.get("voices_bin_path") != null ? item.get("voices_bin_path").toString() : "";
-				final String capturedModelType = isKokoro ? "kokoro" : "vits";
+				
+				// Ensure proper model type passes correctly for Explicit MMS check
+				final String capturedModelType = isKokoro ? "kokoro" : (item.containsKey("type") && item.get("type").toString().equals("MMS") ? "mms" : "vits");
+				
 				if (isDownloading && !item.containsKey("handler_running")) {
 					item.put("handler_running", "true");
 					long onnxId = item.containsKey("onnx_download_id") ? Long.parseLong(item.get("onnx_download_id").toString()) : -1;
+					
 					if (onnxId != -1) {
-						Handler handler = new Handler(Looper.getMainLooper());
+						android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
 						Runnable progressRunnable = new Runnable() {
 							@Override
 							public void run() {
@@ -586,66 +667,120 @@ public class ModelsFragmentActivity extends Fragment {
 										break;
 									}
 								}
-								if (targetPos == -1) return;
+								
+								if (targetPos == -1) return; 
+								
 								java.util.HashMap<String, Object> currentItem = modelList.get(targetPos);
+								
 								if (!currentItem.containsKey("is_downloading") || currentItem.get("is_downloading").toString().equals("false")) {
 									currentItem.remove("handler_running");
-									return;
+									return; 
 								}
-								DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-								DownloadManager.Query q = new DownloadManager.Query();
+								
+								android.app.DownloadManager dm = (android.app.DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+								android.app.DownloadManager.Query q = new android.app.DownloadManager.Query();
 								q.setFilterById(onnxId);
-								Cursor cursor = dm.query(q);
+								android.database.Cursor cursor = dm.query(q);
+								
 								if (cursor != null && cursor.moveToFirst()) {
-									int statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
-									int downloadedIndex = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
-									int totalIndex = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES);
+									int statusIndex = cursor.getColumnIndex(android.app.DownloadManager.COLUMN_STATUS);
+									int downloadedIndex = cursor.getColumnIndex(android.app.DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
+									int totalIndex = cursor.getColumnIndex(android.app.DownloadManager.COLUMN_TOTAL_SIZE_BYTES);
+									
 									if (statusIndex >= 0) {
 										int status = cursor.getInt(statusIndex);
 										long bytesDownloaded = downloadedIndex >= 0 ? cursor.getLong(downloadedIndex) : 0;
 										long bytesTotal = totalIndex >= 0 ? cursor.getLong(totalIndex) : -1;
-										if (status == DownloadManager.STATUS_SUCCESSFUL) {
+										
+										if (status == android.app.DownloadManager.STATUS_SUCCESSFUL) {
 											currentItem.put("is_downloading", "false");
 											currentItem.put("download_progress", "100");
 											currentItem.remove("handler_running");
+											
 											String targetOnnxName = currentItem.containsKey("target_onnx_name") ? currentItem.get("target_onnx_name").toString() : "";
 											String targetTokensName = currentItem.containsKey("target_tokens_name") ? currentItem.get("target_tokens_name").toString() : "";
 											String targetVoicesName = currentItem.containsKey("target_voices_name") ? currentItem.get("target_voices_name").toString() : "";
-											File onnxFile = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), targetOnnxName);
-											File tokensFile = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), targetTokensName);
-											currentItem.put("onnx_path", onnxFile.getAbsolutePath());
-											currentItem.put("tokens_path", tokensFile.getAbsolutePath());
 											boolean isKokoroType = currentItem.containsKey("type") && currentItem.get("type").toString().contains("Kokoro");
-											if (isKokoroType && !targetVoicesName.isEmpty()) {
-												File voicesFile = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), targetVoicesName);
-												currentItem.put("voices_bin_path", voicesFile.getAbsolutePath());
-											}
-											sp1.edit().putString("models_data", new com.google.gson.Gson().toJson(modelList)).apply();
-											com.CodeBySonu.VoxSherpa.system.TtsDefaultHelper.syncDefaultVoices(context);
+											
 											final int finalTargetPos = targetPos;
-											if (getActivity() != null) {
-												getActivity().runOnUiThread(() -> {
-													if (isAdded() && binding.recyclerviewModels.getAdapter() != null) {
-														binding.recyclerviewModels.getAdapter().notifyItemChanged(finalTargetPos);
+											
+											new Thread(() -> {
+												try {
+													java.io.File internalModelsDir = new java.io.File(context.getFilesDir(), "secure_models");
+													if (!internalModelsDir.exists()) internalModelsDir.mkdirs();
+													
+													java.io.File sourceOnnx = new java.io.File(context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS), targetOnnxName);
+													java.io.File destinationOnnx = new java.io.File(internalModelsDir, targetOnnxName);
+													
+													if (sourceOnnx.exists()) {
+														try (java.io.InputStream in = new java.io.FileInputStream(sourceOnnx); java.io.OutputStream out = new java.io.FileOutputStream(destinationOnnx)) {
+															byte[] buf = new byte[16384]; int len;
+															while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+														}
+														sourceOnnx.delete();
 													}
-												});
-											}
+													
+													java.io.File sourceTokens = new java.io.File(context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS), targetTokensName);
+													java.io.File destinationTokens = new java.io.File(internalModelsDir, targetTokensName);
+													
+													if (sourceTokens.exists()) {
+														try (java.io.InputStream in = new java.io.FileInputStream(sourceTokens); java.io.OutputStream out = new java.io.FileOutputStream(destinationTokens)) {
+															byte[] buf = new byte[16384]; int len;
+															while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+														}
+														sourceTokens.delete();
+													}
+													
+													currentItem.put("onnx_path", destinationOnnx.getAbsolutePath());
+													currentItem.put("tokens_path", destinationTokens.getAbsolutePath());
+													
+													if (isKokoroType && !targetVoicesName.isEmpty()) {
+														java.io.File sourceVoices = new java.io.File(context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS), targetVoicesName);
+														java.io.File destinationVoices = new java.io.File(internalModelsDir, targetVoicesName);
+														if (sourceVoices.exists()) {
+															try (java.io.InputStream in = new java.io.FileInputStream(sourceVoices); java.io.OutputStream out = new java.io.FileOutputStream(destinationVoices)) {
+																byte[] buf = new byte[16384]; int len;
+																while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+															}
+															sourceVoices.delete();
+														}
+														currentItem.put("voices_bin_path", destinationVoices.getAbsolutePath());
+													}
+													
+													sp1.edit().putString("models_data", new com.google.gson.Gson().toJson(modelList)).apply();
+													com.CodeBySonu.VoxSherpa.system.TtsDefaultHelper.syncDefaultVoices(context);
+													
+													if (getActivity() != null) {
+														getActivity().runOnUiThread(() -> {
+															if (isAdded() && binding.recyclerviewModels.getAdapter() != null) {
+																binding.recyclerviewModels.getAdapter().notifyItemChanged(finalTargetPos);
+															}
+														});
+													}
+												} catch (Exception e) {
+													e.printStackTrace();
+												}
+											}).start();
+											
 											cursor.close();
 											return;
-										} else if (status == DownloadManager.STATUS_FAILED) {
-											int reasonIndex = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
+											
+										} else if (status == android.app.DownloadManager.STATUS_FAILED) {
+											int reasonIndex = cursor.getColumnIndex(android.app.DownloadManager.COLUMN_REASON);
 											int reason = reasonIndex >= 0 ? cursor.getInt(reasonIndex) : -1;
+											
 											currentItem.put("is_downloading", "false");
 											currentItem.put("download_progress", "0");
 											currentItem.remove("handler_running");
+											
 											final int finalTargetPos = targetPos;
 											if (getActivity() != null) {
 												getActivity().runOnUiThread(() -> {
 													if (!isAdded()) return;
-													if(binding.recyclerviewModels.getAdapter() != null) {
+													if (binding.recyclerviewModels.getAdapter() != null) {
 														binding.recyclerviewModels.getAdapter().notifyItemChanged(finalTargetPos);
 													}
-													View root = getView();
+													android.view.View root = getView();
 													if (root != null) {
 														com.google.android.material.snackbar.Snackbar.make(root, "Download Failed! Code: " + reason, com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
 														.setBackgroundTint(android.graphics.Color.parseColor("#FF4B4B")).setTextColor(android.graphics.Color.WHITE).show();
@@ -654,11 +789,14 @@ public class ModelsFragmentActivity extends Fragment {
 											}
 											cursor.close();
 											return;
-										} else if (status == DownloadManager.STATUS_RUNNING || status == DownloadManager.STATUS_PAUSED) {
+											
+										} else if (status == android.app.DownloadManager.STATUS_RUNNING || status == android.app.DownloadManager.STATUS_PAUSED) {
 											if (bytesTotal > 0) {
 												int prog = (int) ((bytesDownloaded * 100) / bytesTotal);
+												if (prog >= 100) prog = 99;
 												currentItem.put("download_progress", String.valueOf(prog));
 											}
+											
 											final int finalTargetPos = targetPos;
 											if (getActivity() != null) {
 												getActivity().runOnUiThread(() -> {
@@ -677,68 +815,98 @@ public class ModelsFragmentActivity extends Fragment {
 						handler.post(progressRunnable);
 					}
 				}
+				
 				btnUseVoice.setOnClickListener(view -> {
 					if (isLoading) return;
+					
 					int clickedPos = holder.getAdapterPosition();
 					if (clickedPos == androidx.recyclerview.widget.RecyclerView.NO_POSITION) return;
+					
+					if (com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().isBusy() 
+					|| com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().isBusy()) {
+						
+						android.widget.Toast.makeText(context, "Please wait, audio generation in progress...", android.widget.Toast.LENGTH_SHORT).show();
+						
+						try { com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().cancel(); } catch (Throwable ignored) {}
+						try { com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().cancel(); } catch (Throwable ignored) {}
+						return;
+					}
+					
 					if (isDownloading) {
 						try {
 							long onnxId = Long.parseLong(item.get("onnx_download_id").toString());
 							long tokensId = Long.parseLong(item.get("tokens_download_id").toString());
-							DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+							android.app.DownloadManager dm = (android.app.DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
 							dm.remove(onnxId, tokensId);
+							
 							if (isKokoro && item.containsKey("voices_bin_download_id")) {
 								long voicesId = Long.parseLong(item.get("voices_bin_download_id").toString());
 								dm.remove(voicesId);
 							}
 						} catch (Exception e) {}
+						
 						item.put("is_downloading", "false");
 						item.put("download_progress", "0");
-						if(binding.recyclerviewModels.getAdapter() != null) {
+						if (binding.recyclerviewModels.getAdapter() != null) {
 							binding.recyclerviewModels.getAdapter().notifyItemChanged(clickedPos);
 						}
+						
 					} else if (!isDownloaded) {
 						String onnxUrl = item.containsKey("model_url") ? item.get("model_url").toString() : "";
 						String tokensUrl = item.containsKey("tokens_url") ? item.get("tokens_url").toString() : "";
 						String voicesBinUrl = item.containsKey("voices_bin_url") ? item.get("voices_bin_url").toString() : "";
+						
 						if (onnxUrl.isEmpty() || tokensUrl.isEmpty() || (isKokoro && voicesBinUrl.isEmpty())) {
 							com.google.android.material.snackbar.Snackbar.make(v, "Unable to download. Required links are missing.", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
 							.setBackgroundTint(android.graphics.Color.parseColor("#FF4B4B")).setTextColor(android.graphics.Color.WHITE).show();
 							return;
 						}
+						
 						try {
-							DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-							DownloadManager.Request reqOnnx = new DownloadManager.Request(Uri.parse(onnxUrl));
+							android.app.DownloadManager dm = (android.app.DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+							
+							android.app.DownloadManager.Request reqOnnx = new android.app.DownloadManager.Request(android.net.Uri.parse(onnxUrl));
 							String onnxFileName = "model_" + System.currentTimeMillis() + ".onnx";
-							reqOnnx.setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, onnxFileName);
+							reqOnnx.setDestinationInExternalFilesDir(context, android.os.Environment.DIRECTORY_DOWNLOADS, onnxFileName);
 							reqOnnx.setTitle("Downloading Voice Model");
-							reqOnnx.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+							reqOnnx.setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE);
 							long onnxId = dm.enqueue(reqOnnx);
-							DownloadManager.Request reqTokens = new DownloadManager.Request(Uri.parse(tokensUrl));
+							
+							android.app.DownloadManager.Request reqTokens = new android.app.DownloadManager.Request(android.net.Uri.parse(tokensUrl));
 							String tokensFileName = "tokens_" + System.currentTimeMillis() + ".txt";
-							reqTokens.setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, tokensFileName);
+							reqTokens.setDestinationInExternalFilesDir(context, android.os.Environment.DIRECTORY_DOWNLOADS, tokensFileName);
 							reqTokens.setTitle("Downloading Tokens");
 							long tokensId = dm.enqueue(reqTokens);
+							
 							long voicesBinId = -1;
 							String voicesBinFileName = "";
+							
 							if (isKokoro) {
-								DownloadManager.Request reqVoices = new DownloadManager.Request(Uri.parse(voicesBinUrl));
+								android.app.DownloadManager.Request reqVoices = new android.app.DownloadManager.Request(android.net.Uri.parse(voicesBinUrl));
 								voicesBinFileName = "voices_" + System.currentTimeMillis() + ".bin";
-								reqVoices.setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, voicesBinFileName);
+								reqVoices.setDestinationInExternalFilesDir(context, android.os.Environment.DIRECTORY_DOWNLOADS, voicesBinFileName);
 								reqVoices.setTitle("Downloading Voices Library");
 								voicesBinId = dm.enqueue(reqVoices);
 								item.put("voices_bin_download_id", String.valueOf(voicesBinId));
 							}
+							
 							item.put("target_onnx_name", onnxFileName);
 							item.put("target_tokens_name", tokensFileName);
 							if (isKokoro) item.put("target_voices_name", voicesBinFileName);
+							
 							item.put("is_downloading", "true");
 							item.put("download_progress", "0");
 							item.put("onnx_download_id", String.valueOf(onnxId));
 							item.put("tokens_download_id", String.valueOf(tokensId));
-							if(binding.recyclerviewModels.getAdapter() != null) {
-								binding.recyclerviewModels.getAdapter().notifyItemChanged(clickedPos);
+							
+							if (getActivity() != null) {
+								getActivity().runOnUiThread(() -> {
+									if (binding.recyclerviewModels.getAdapter() != null) {
+										binding.recyclerviewModels.getAdapter().notifyItemChanged(clickedPos); 
+									}
+								});
 							}
+							
 						} catch (IllegalArgumentException e) {
 							com.google.android.material.snackbar.Snackbar.make(v, "Unable to initiate download. Link is invalid.", com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
 							.setBackgroundTint(android.graphics.Color.parseColor("#FF4B4B")).setTextColor(android.graphics.Color.WHITE).show();
@@ -746,18 +914,21 @@ public class ModelsFragmentActivity extends Fragment {
 							com.google.android.material.snackbar.Snackbar.make(v, "An unexpected error occurred.", com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
 							.setBackgroundTint(android.graphics.Color.parseColor("#FF4B4B")).setTextColor(android.graphics.Color.WHITE).show();
 						}
+						
 					} else {
 						if (capturedOnnx.equals(activeOnnx)) {
 							isLoading = true;
 							btnUseVoice.setEnabled(false);
 							btnUseVoice.setAlpha(0.5f);
 							useRemoveTv.setText("Loading...");
+							
 							try {
 								com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().destroy();
 								try {
 									com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().destroy();
 								} catch (Throwable ignoredKokoro) {}
 							} catch (Throwable ignored) {}
+							
 							sp1.edit()
 							.putString("active_model", "")
 							.putString("active_tokens", "")
@@ -766,18 +937,20 @@ public class ModelsFragmentActivity extends Fragment {
 							.putString("active_voices_bin", "")
 							.putString("active_language", "")
 							.apply();
+							
 							isLoading = false;
 							btnUseVoice.setEnabled(true);
 							btnUseVoice.setAlpha(1.0f);
-							if(binding.recyclerviewModels.getAdapter() != null) {
+							if (binding.recyclerviewModels.getAdapter() != null) {
 								binding.recyclerviewModels.getAdapter().notifyDataSetChanged();
 							}
 							return;
 						}
+						
 						if (isKokoro) {
 							new com.google.android.material.dialog.MaterialAlertDialogBuilder(context)
 							.setTitle("Studio Quality Voice")
-							.setMessage("Kokoro is a high-fidelity neural model. Due to its complex architecture, synthesis may take longer than standard voices. Generation speed depends entirely on your device's processor capabilities.")
+							.setMessage("Kokoro is a high-fidelity neural model. Due to its complex architecture, synthesis may take longer than standard voices.")
 							.setPositiveButton("I Understand", (dialog, which) -> {
 								proceedToLoadModel(holder, btnUseVoice, useRemoveTv, capturedOnnx, capturedTokens, capturedVoicesBin, capturedModelType, finalModelName, lang);
 							})
@@ -789,20 +962,23 @@ public class ModelsFragmentActivity extends Fragment {
 						}
 					}
 				});
+				
 				v.findViewById(R.id.btn_delete).setOnClickListener(view -> {
 					int safePos = holder.getAdapterPosition();
 					if (safePos == androidx.recyclerview.widget.RecyclerView.NO_POSITION) return;
+					
 					java.util.HashMap<String, Object> itemToDelete = modelList.get(safePos);
+					
 					String onnxToDelete   = itemToDelete.containsKey("onnx_path")   && itemToDelete.get("onnx_path")   != null ? itemToDelete.get("onnx_path").toString()   : "";
 					String tokensToDelete = itemToDelete.containsKey("tokens_path") && itemToDelete.get("tokens_path") != null ? itemToDelete.get("tokens_path").toString() : "";
 					String voicesToDelete = itemToDelete.containsKey("voices_bin_path") && itemToDelete.get("voices_bin_path") != null ? itemToDelete.get("voices_bin_path").toString() : "";
+					
 					if (onnxToDelete.equals(sp1.getString("active_model", ""))) {
 						try {
 							com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().destroy();
-							try {
-								com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().destroy();
-							} catch (Throwable ignored) {}
+							try { com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().destroy(); } catch (Throwable ignored) {}
 						} catch (Throwable ignored) {}
+						
 						sp1.edit()
 						.putString("active_model", "")
 						.putString("active_tokens", "")
@@ -812,11 +988,14 @@ public class ModelsFragmentActivity extends Fragment {
 						.putString("active_language", "")
 						.apply();
 					}
-					if (!onnxToDelete.isEmpty())   new File(onnxToDelete).delete();
-					if (!tokensToDelete.isEmpty()) new File(tokensToDelete).delete();
-					if (!voicesToDelete.isEmpty()) new File(voicesToDelete).delete();
+					
+					if (!onnxToDelete.isEmpty())   new java.io.File(onnxToDelete).delete();
+					if (!tokensToDelete.isEmpty()) new java.io.File(tokensToDelete).delete();
+					if (!voicesToDelete.isEmpty()) new java.io.File(voicesToDelete).delete();
+					
 					String allData = sp1.getString("models_data", "[]");
 					java.util.ArrayList<java.util.HashMap<String, Object>> mList = new com.google.gson.Gson().fromJson(allData, new com.google.gson.reflect.TypeToken<java.util.ArrayList<java.util.HashMap<String, Object>>>(){}.getType());
+					
 					if (mList != null) {
 						String nameToDelete = itemToDelete.containsKey("name") ? itemToDelete.get("name").toString() : "";
 						for (int i = 0; i < mList.size(); i++) {
@@ -834,53 +1013,72 @@ public class ModelsFragmentActivity extends Fragment {
 						}
 						sp1.edit().putString("models_data", new com.google.gson.Gson().toJson(mList)).apply();
 					}
+					
 					_applyFilterAndSort();
 				});
 			}
+			
 			private void proceedToLoadModel(
 			androidx.recyclerview.widget.RecyclerView.ViewHolder holder,
 			com.google.android.material.card.MaterialCardView btnUseVoice,
-			TextView useRemoveTv,
+			android.widget.TextView useRemoveTv,
 			String capturedOnnx,
 			String capturedTokens,
 			String capturedVoicesBin,
 			String capturedModelType,
 			String finalModelName,
-			String capturedLanguage) {
+			String capturedLanguage) { 
+				
 				boolean isKokoroType = capturedModelType.equals("kokoro");
+				// FIX: Extract the explicit MMS flag from the type string
+				boolean isMmsType = capturedModelType.equals("mms");
+				
 				isLoading = true;
 				btnUseVoice.setEnabled(false);
 				btnUseVoice.setAlpha(0.5f);
 				useRemoveTv.setText("Loading...");
+				
 				new Thread(() -> {
 					try { com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().cancel(); } catch (Throwable ignored) {}
 					try { com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().cancel(); } catch (Throwable ignored) {}
+					
 					try { Thread.sleep(200); } catch (Exception ignored) {}
-					try {
-						com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().destroy();
-					} catch (Throwable ignored) {}
-					try {
-						com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().destroy();
-					} catch (Throwable ignored) {}
-					String result;
+					
+					try { com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().destroy(); } catch (Throwable ignored) {}
+					try { com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().destroy(); } catch (Throwable ignored) {}
+					
+					String result = "Error";
+					int totalSpeakers = 1;
+					
 					try {
 						if (isKokoroType) {
 							result = com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().loadModel(
 							holder.itemView.getContext(), capturedOnnx, capturedTokens, capturedVoicesBin
 							);
+							if ("Success".equals(result)) {
+								totalSpeakers = com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().getNumSpeakers();
+							}
 						} else {
+							// FIX: Pass explicit isMmsType (Boolean) flag to the updated Engine method
 							result = com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().loadModel(
-							holder.itemView.getContext(), capturedOnnx, capturedTokens
+							holder.itemView.getContext(), capturedOnnx, capturedTokens, capturedLanguage, isMmsType
 							);
+							if ("Success".equals(result)) {
+								totalSpeakers = com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().getNumSpeakers();
+							}
 						}
 					} catch (Throwable t) {
 						result = "Error: Invalid or corrupt model.";
 					}
+					
 					final String finalResult = result;
+					final int finalTotalSpeakers = totalSpeakers; 
+					
 					if (getActivity() != null) {
 						getActivity().runOnUiThread(() -> {
 							if (!isAdded()) return;
-							View root = getView();
+							android.view.View root = getView();
+							
 							try {
 								if ("Success".equals(finalResult)) {
 									sp1.edit()
@@ -889,8 +1087,10 @@ public class ModelsFragmentActivity extends Fragment {
 									.putString("active_model_name", finalModelName)
 									.putString("active_model_type", capturedModelType)
 									.putString("active_voices_bin", capturedVoicesBin)
-									.putString("active_language", capturedLanguage)
+									.putString("active_language", capturedLanguage) 
+									.putInt("active_speaker_count", finalTotalSpeakers) 
 									.apply();
+									
 								} else {
 									if (root != null) {
 										com.google.android.material.snackbar.Snackbar.make(root, "Failed to load model.", com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
@@ -902,7 +1102,7 @@ public class ModelsFragmentActivity extends Fragment {
 								isLoading = false;
 								btnUseVoice.setEnabled(true);
 								btnUseVoice.setAlpha(1.0f);
-								if(binding.recyclerviewModels.getAdapter() != null) {
+								if (binding.recyclerviewModels.getAdapter() != null) {
 									binding.recyclerviewModels.getAdapter().notifyDataSetChanged();
 								}
 							}
@@ -910,6 +1110,7 @@ public class ModelsFragmentActivity extends Fragment {
 					}
 				}).start();
 			}
+			
 			@Override
 			public int getItemCount() {
 				return modelList.size();
@@ -920,6 +1121,7 @@ public class ModelsFragmentActivity extends Fragment {
 	
 	
 	public void _setupFabAndImportDialog() {
+		
 		binding.fabAddModel.setOnClickListener(v -> {
 			importDialog = new com.google.android.material.bottomsheet.BottomSheetDialog(getContext());
 			dialogView   = getActivity().getLayoutInflater().inflate(R.layout.dialog_import_model, null);
@@ -1100,38 +1302,59 @@ public class ModelsFragmentActivity extends Fragment {
 			importDialog.show();
 		});
 		
+		
 	}
 	
 	
 	public void _applyFilterAndSort() {
+		// 1. SP1 se poora master data nikalna
 		String savedData = sp1.getString("models_data", "[]");
 		java.util.ArrayList<java.util.HashMap<String, Object>> masterList = new com.google.gson.Gson().fromJson(savedData, new com.google.gson.reflect.TypeToken<java.util.ArrayList<java.util.HashMap<String, Object>>>(){}.getType());
+		
 		if (masterList == null) masterList = new java.util.ArrayList<>();
+		
 		String currentSort = sp1.getString("sort_preference", "all_models");
+		// 🚀 NAYA LOGIC: Language filter SP1 se get karna (Default 'All Languages')
 		String currentLanguage = sp1.getString("language_filter", "All Languages");
-		modelList.clear();
+		
+		// 2. UI wali list clear karo
+		modelList.clear(); 
+		
+		// 3. Filter logic lagao (Sort + Language dono ek sath)
 		for (java.util.HashMap<String, Object> item : masterList) {
 			String onnxPath = item.containsKey("onnx_path") && item.get("onnx_path") != null ? item.get("onnx_path").toString() : "";
 			boolean isInstalled = !onnxPath.isEmpty();
+			
+			// Check karo ki model ki language selected language se match karti hai ya nahi
 			String itemLang = item.containsKey("language") && item.get("language") != null ? item.get("language").toString() : "";
 			boolean languageMatch = currentLanguage.equals("All Languages") || currentLanguage.equals(itemLang);
+			
+			// Agar language match hoti hai, sirf tabhi aage ka filter check karo
 			if (languageMatch) {
 				if (currentSort.equals("download")) {
 					if (!isInstalled) modelList.add(item);
 				} else if (currentSort.equals("installed")) {
 					if (isInstalled) modelList.add(item);
 				} else {
-					modelList.add(item);
+					modelList.add(item); // All, Newest, Oldest me sab add honge
 				}
 			}
 		}
+		
+		// 4. Sorting logic lagao
 		if (currentSort.equals("newest")) {
+			// List ko ulta (reverse) kar do, taaki naye aage aa jayein
 			java.util.Collections.reverse(modelList);
 		}
+		
+		// 5. Adapter ko batao ki data change ho gaya hai
 		if (binding.recyclerviewModels.getAdapter() != null) {
 			binding.recyclerviewModels.getAdapter().notifyDataSetChanged();
 		}
 		_updateEmptyState();
+		
+		// 6. UI Text Update Logic
+		// Agar custom language selected hai, toh text me language ka naam dikhao
 		if (!currentLanguage.equals("All Languages")) {
 			binding.sortTv.setText(currentLanguage);
 		} else if (currentSort.equals("download")) {
@@ -1177,82 +1400,46 @@ public class ModelsFragmentActivity extends Fragment {
 	}
 	
 	
-	public void _syncMmsCatalog() {
-		SharedPreferences sp3 = getContext().getSharedPreferences("sp3", android.content.Context.MODE_PRIVATE);
-		boolean mmsEnabled = sp3.getBoolean("mms_models_enabled", false);
-
-		String savedData = sp1.getString("models_data", "[]");
-		java.util.ArrayList<HashMap<String, Object>> masterList = GSON.fromJson(savedData, new TypeToken<ArrayList<HashMap<String, Object>>>(){}.getType());
-		if (masterList == null) masterList = new java.util.ArrayList<>();
-
-		if (mmsEnabled) {
-			java.util.List<HashMap<String, Object>> catalog = com.CodeBySonu.VoxSherpa.MmsCatalog.loadModelEntries(getContext());
-			if (catalog == null || catalog.isEmpty()) return;
-
-			java.util.HashSet<String> existingUrls = new java.util.HashSet<>();
-			for (HashMap<String, Object> m : masterList) {
-				if (m.containsKey("model_url")) existingUrls.add(m.get("model_url").toString());
-			}
-
-			boolean changed = false;
-			for (HashMap<String, Object> entry : catalog) {
-				String url = entry.containsKey("model_url") ? entry.get("model_url").toString() : "";
-				if (!url.isEmpty() && !existingUrls.contains(url)) {
-					masterList.add(entry);
-					existingUrls.add(url);
-					changed = true;
-				}
-			}
-
-			if (changed) {
-				sp1.edit().putString("models_data", GSON.toJson(masterList)).apply();
-			}
-		} else {
-			boolean changed = false;
-			java.util.Iterator<HashMap<String, Object>> it = masterList.iterator();
-			while (it.hasNext()) {
-				HashMap<String, Object> m = it.next();
-				boolean isMms = m.containsKey("type") && m.get("type").toString().contains("MMS");
-				String onnxPath = m.containsKey("onnx_path") && m.get("onnx_path") != null ? m.get("onnx_path").toString() : "";
-				if (isMms && onnxPath.isEmpty()) {
-					it.remove();
-					changed = true;
-				}
-			}
-			if (changed) {
-				sp1.edit().putString("models_data", GSON.toJson(masterList)).apply();
-			}
-		}
-	}
-
-
 	public void _fetchFirebaseModels() {
+		// =========================================================================
+		// SMART SYNC LOGIC (FOR NORMAL TTS MODELS)
+		// =========================================================================
 		fb.addListenerForSingleValueEvent(new ValueEventListener() {
 			@Override
 			public void onDataChange(@NonNull DataSnapshot snapshot) {
 				if (snapshot.exists()) {
 					boolean isListUpdated = false;
+					
 					java.util.ArrayList<String> onlineUrls = new java.util.ArrayList<>();
+					
 					for (DataSnapshot categorySnapshot : snapshot.getChildren()) {
 						for (DataSnapshot child : categorySnapshot.getChildren()) {
 							try {
 								HashMap<String, Object> onlineModel = (HashMap<String, Object>) child.getValue();
+								
 								if (onlineModel != null && onlineModel.containsKey("model_url")) {
 									String onlineUrl = onlineModel.get("model_url").toString();
-									onlineUrls.add(onlineUrl);
+									onlineUrls.add(onlineUrl); 
+									
 									if (!onlineModel.containsKey("is_downloading")) onlineModel.put("is_downloading", "false");
 									if (!onlineModel.containsKey("download_progress")) onlineModel.put("download_progress", "0");
+									
 									boolean isAlreadyExists = false;
 									for (int i = 0; i < modelList.size(); i++) {
 										HashMap<String, Object> localModel = modelList.get(i);
 										String localUrl = localModel.containsKey("model_url") ? localModel.get("model_url").toString() : "";
+										
 										if (!onlineUrl.isEmpty() && onlineUrl.equals(localUrl)) {
 											isAlreadyExists = true;
+											
+											// Update details if changed (Smart Sync)
 											String[] keysToSync = {"name", "type", "voices_bin_url", "semple", "gender", "language", "size", "quality", "tokens_url"};
+											
 											for (String key : keysToSync) {
 												if (onlineModel.containsKey(key)) {
 													Object onlineVal = onlineModel.get(key);
 													Object localVal = localModel.get(key);
+													
 													if (onlineVal != null && !onlineVal.equals(localVal)) {
 														localModel.put(key, onlineVal);
 														isListUpdated = true;
@@ -1262,35 +1449,46 @@ public class ModelsFragmentActivity extends Fragment {
 											break;
 										}
 									}
+									
 									if (!isAlreadyExists) {
 										modelList.add(onlineModel);
 										isListUpdated = true;
 									}
 								}
-							} catch (Exception e) {}
+							} catch (Exception e) {
+								android.util.Log.e("VoxSherpa", "Model Parse Error: " + e.getMessage());
+							}
 						}
 					}
+					
 					for (int i = modelList.size() - 1; i >= 0; i--) {
 						HashMap<String, Object> localModel = modelList.get(i);
+						
 						if (localModel.containsKey("model_url")) {
 							String localUrl = localModel.get("model_url").toString();
+							
+							// Retain MMS protection logic to prevent deletion of offline MMS models
 							if (!onlineUrls.contains(localUrl) && !localUrl.contains("mms-tts-multilingual-models-onnx")) {
 								String onnxPath = localModel.containsKey("onnx_path") ? localModel.get("onnx_path").toString() : "";
 								String tokensPath = localModel.containsKey("tokens_path") ? localModel.get("tokens_path").toString() : "";
 								String voicesPath = localModel.containsKey("voices_bin_path") ? localModel.get("voices_bin_path").toString() : "";
+								
 								if (!onnxPath.isEmpty()) new java.io.File(onnxPath).delete();
 								if (!tokensPath.isEmpty()) new java.io.File(tokensPath).delete();
 								if (!voicesPath.isEmpty()) new java.io.File(voicesPath).delete();
+								
 								if (onnxPath.equals(sp1.getString("active_model", ""))) {
 									try { com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().destroy(); } catch (Throwable ignored) {}
 									try { com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().destroy(); } catch (Throwable ignored) {}
 									sp1.edit().putString("active_model", "").putString("active_tokens", "").putString("active_model_name", "").apply();
 								}
+								
 								modelList.remove(i);
 								isListUpdated = true;
 							}
 						}
 					}
+					
 					if (isListUpdated) {
 						sp1.edit().putString("models_data", new com.google.gson.Gson().toJson(modelList)).apply();
 						_updateEmptyState();
@@ -1300,12 +1498,79 @@ public class ModelsFragmentActivity extends Fragment {
 					}
 				}
 			}
+			
 			@Override
 			public void onCancelled(@NonNull com.google.firebase.database.DatabaseError error) {
 				com.google.android.material.snackbar.Snackbar.make(binding.getRoot(), "Failed to fetch models from server.", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
+				android.util.Log.e("VoxSherpa", "Firebase Sync Cancelled: " + error.getMessage());
 			}
 		});
 		
 	}
 	
-}
+	
+	public void _syncMmsCatalog() {
+		SharedPreferences sp3 = getContext().getSharedPreferences("sp3", android.content.Context.MODE_PRIVATE);
+		boolean mmsEnabled = sp3.getBoolean("mms_models_enabled", false);
+		
+		String savedData = sp1.getString("models_data", "[]");
+		java.util.ArrayList<HashMap<String, Object>> masterList = GSON.fromJson(savedData, new TypeToken<ArrayList<HashMap<String, Object>>>(){}.getType());
+		if (masterList == null) masterList = new java.util.ArrayList<>();
+		
+		if (mmsEnabled) {
+			java.util.List<HashMap<String, Object>> catalog = com.CodeBySonu.VoxSherpa.MmsCatalog.loadModelEntries(getContext());
+			if (catalog == null || catalog.isEmpty()) return;
+			
+			java.util.HashSet<String> existingUrls = new java.util.HashSet<>();
+			for (HashMap<String, Object> m : masterList) {
+				if (m.containsKey("model_url")) existingUrls.add(m.get("model_url").toString());
+			}
+			
+			boolean changed = false;
+			for (HashMap<String, Object> entry : catalog) {
+				String url = entry.containsKey("model_url") ? entry.get("model_url").toString() : "";
+				if (!url.isEmpty() && !existingUrls.contains(url)) {
+					masterList.add(entry);
+					existingUrls.add(url);
+					changed = true;
+				}
+			}
+			
+			if (changed) {
+				sp1.edit().putString("models_data", GSON.toJson(masterList)).apply();
+				
+				modelList.clear();
+				modelList.addAll(masterList);
+				if (binding.recyclerviewModels.getAdapter() != null) {
+					binding.recyclerviewModels.getAdapter().notifyDataSetChanged();
+				}
+				
+			}
+		} else {
+			boolean changed = false;
+			java.util.Iterator<HashMap<String, Object>> it = masterList.iterator();
+			while (it.hasNext()) {
+				HashMap<String, Object> m = it.next();
+				boolean isMms = m.containsKey("type") && m.get("type").toString().contains("MMS");
+				String onnxPath = m.containsKey("onnx_path") && m.get("onnx_path") != null ? m.get("onnx_path").toString() : "";
+				
+				if (isMms && onnxPath.isEmpty()) {
+					it.remove();
+					changed = true;
+				}
+			}
+			
+			if (changed) {
+				sp1.edit().putString("models_data", GSON.toJson(masterList)).apply();
+				
+				modelList.clear();
+				modelList.addAll(masterList);
+				if (binding.recyclerviewModels.getAdapter() != null) {
+					binding.recyclerviewModels.getAdapter().notifyDataSetChanged();
+				}
+			}
+		}
+		
+	}
+	
+}

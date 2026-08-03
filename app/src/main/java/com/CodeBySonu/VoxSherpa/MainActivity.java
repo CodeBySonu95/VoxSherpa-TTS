@@ -45,12 +45,21 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.graphics.Insets;
 
 import androidx.viewpager2.widget.ViewPager2;
-import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+
+import com.google.android.gms.tasks.Task;
+import android.content.IntentSender;
+import com.google.android.material.snackbar.Snackbar;
+import android.graphics.Color;
+
 
 public class MainActivity extends AppCompatActivity {
 	
 	private MainBinding binding;
 	public String sharedProcessText = "";
+	private boolean isFirstTabLoad = true;
+	private java.util.LinkedList<Integer> tabHistory = new java.util.LinkedList<>();
+	private boolean isPoppingBackStack = false;
 	
 	@Override
 	protected void onCreate(Bundle _savedInstanceState) {
@@ -66,29 +75,44 @@ public class MainActivity extends AppCompatActivity {
 	}
 	
 	private void initializeLogic() {
-		
 		com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(getApplicationContext());
 		
 		com.CodeBySonu.VoxSherpa.system.TtsDefaultHelper.syncDefaultVoices(this);
 		
-		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+		// 4. UI & Window Settings
+		getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+		androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+		android.view.View rootLayout = binding.getRoot();
 		
-		WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-		View rootLayout = binding.getRoot();
-		ViewCompat.setOnApplyWindowInsetsListener(rootLayout, new androidx.core.view.OnApplyWindowInsetsListener() {
+		androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(rootLayout, new androidx.core.view.OnApplyWindowInsetsListener() {
 			@Override
-			public WindowInsetsCompat onApplyWindowInsets(View v, WindowInsetsCompat windowInsets) {
-				Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-				v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
-				return WindowInsetsCompat.CONSUMED;
+			public androidx.core.view.WindowInsetsCompat onApplyWindowInsets(android.view.View v, androidx.core.view.WindowInsetsCompat windowInsets) {
+				androidx.core.graphics.Insets insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+				
+				if (binding.viewpager != null) {
+					android.view.ViewGroup.MarginLayoutParams vpParams = (android.view.ViewGroup.MarginLayoutParams) binding.viewpager.getLayoutParams();
+					vpParams.topMargin = insets.top;
+					binding.viewpager.setLayoutParams(vpParams);
+				}
+				
+				android.view.View bottomNav = findViewById(R.id.bottom_nav_container);
+				if (bottomNav != null) {
+					int baseHeightPx = (int) (75 * getResources().getDisplayMetrics().density); 
+					android.view.ViewGroup.LayoutParams navParams = bottomNav.getLayoutParams();
+					navParams.height = baseHeightPx + insets.bottom;
+					bottomNav.setLayoutParams(navParams);
+					bottomNav.setPadding(0, 0, 0, insets.bottom);
+				}
+				
+				return windowInsets;
 			}
 		});
 		
-		// 1. SETUP VIEWPAGER2 ADAPTER (Inline)
-		binding.viewpager.setAdapter(new FragmentStateAdapter(this) {
-			@NonNull
+		// 5. ViewPager2 Setup
+		binding.viewpager.setAdapter(new androidx.viewpager2.adapter.FragmentStateAdapter(this) {
+			@androidx.annotation.NonNull
 			@Override
-			public Fragment createFragment(int position) {
+			public androidx.fragment.app.Fragment createFragment(int position) {
 				switch (position) {
 					case 0: return new GenerateFragmentActivity();
 					case 1: return new ModelsFragmentActivity();
@@ -97,28 +121,38 @@ public class MainActivity extends AppCompatActivity {
 					default: return new GenerateFragmentActivity();
 				}
 			}
-			
 			@Override
-			public int getItemCount() {
-				return 4; // Total 4 Tabs
-			}
+			public int getItemCount() { return 4; }
 		});
 		
 		binding.viewpager.setOffscreenPageLimit(3); 
 		
-		// 3. SYNC UI WITH SWIPES & CLICKS
-		binding.viewpager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+		binding.viewpager.registerOnPageChangeCallback(new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
 			@Override
 			public void onPageSelected(int position) {
 				super.onPageSelected(position);
 				
-				int inactiveColor = Color.parseColor("#8E99AF");
-				int activeColor = Color.parseColor("#1D61FF");
+				// --- CUSTOM HISTORY ANTI-LOOP LOGIC START ---
+				// Update history only when the user is not pressing the back button
+				if (!isPoppingBackStack) {
+					// If this tab is already in the history, remove it (No duplicates)
+					if (tabHistory.contains(position)) {
+						tabHistory.remove(Integer.valueOf(position));
+					}
+					// Push the current tab to the top of the history
+					tabHistory.push(position);
+				}
+				// Reset the flag for the next normal click
+				isPoppingBackStack = false; 
+				// --- CUSTOM HISTORY ANTI-LOOP LOGIC END ---
 				
-				binding.bgGenerate.setCardBackgroundColor(Color.TRANSPARENT);
-				binding.bgModels.setCardBackgroundColor(Color.TRANSPARENT);
-				binding.bgLibrary.setCardBackgroundColor(Color.TRANSPARENT);
-				binding.bgSettings.setCardBackgroundColor(Color.TRANSPARENT);
+				int inactiveColor = android.graphics.Color.parseColor("#8E99AF");
+				int activeColor = android.graphics.Color.parseColor("#1D61FF");
+				
+				binding.bgGenerate.setCardBackgroundColor(android.graphics.Color.TRANSPARENT);
+				binding.bgModels.setCardBackgroundColor(android.graphics.Color.TRANSPARENT);
+				binding.bgLibrary.setCardBackgroundColor(android.graphics.Color.TRANSPARENT);
+				binding.bgSettings.setCardBackgroundColor(android.graphics.Color.TRANSPARENT);
 				
 				binding.iconGenerate.setColorFilter(inactiveColor);
 				binding.iconModels.setColorFilter(inactiveColor);
@@ -132,40 +166,32 @@ public class MainActivity extends AppCompatActivity {
 				
 				if (position == 0) {
 					binding.bgGenerate.setCardBackgroundColor(activeColor);
-					binding.iconGenerate.setColorFilter(Color.WHITE);
-					binding.txtGenerate.setTextColor(Color.WHITE);
+					binding.iconGenerate.setColorFilter(android.graphics.Color.WHITE);
+					binding.txtGenerate.setTextColor(android.graphics.Color.WHITE);
 				} else if (position == 1) {
 					binding.bgModels.setCardBackgroundColor(activeColor);
-					binding.iconModels.setColorFilter(Color.WHITE);
-					binding.txtModels.setTextColor(Color.WHITE);
+					binding.iconModels.setColorFilter(android.graphics.Color.WHITE);
+					binding.txtModels.setTextColor(android.graphics.Color.WHITE);
 				} else if (position == 2) {
 					binding.bgLibrary.setCardBackgroundColor(activeColor);
-					binding.iconLibrary.setColorFilter(Color.WHITE);
-					binding.txtLibrary.setTextColor(Color.WHITE);
+					binding.iconLibrary.setColorFilter(android.graphics.Color.WHITE);
+					binding.txtLibrary.setTextColor(android.graphics.Color.WHITE);
 				} else if (position == 3) {
 					binding.bgSettings.setCardBackgroundColor(activeColor);
-					binding.iconSettings.setColorFilter(Color.WHITE);
-					binding.txtSettings.setTextColor(Color.WHITE);
+					binding.iconSettings.setColorFilter(android.graphics.Color.WHITE);
+					binding.txtSettings.setTextColor(android.graphics.Color.WHITE);
 				}
+				
+				// Ad logic completely removed to keep it free and open-source.
+				isFirstTabLoad = false;
 			}
 		});
 		
-		// 4. BOTTOM NAV CLICK LISTENERS (Instant Switch Trick)
-		binding.navGenerate.setOnClickListener(v -> {
-			binding.viewpager.setCurrentItem(0, false); 
-		});
-		
-		binding.navModels.setOnClickListener(v -> {
-			binding.viewpager.setCurrentItem(1, false);
-		});
-		
-		binding.navLibrary.setOnClickListener(v -> {
-			binding.viewpager.setCurrentItem(2, false);
-		});
-		
-		binding.navSettings.setOnClickListener(v -> {
-			binding.viewpager.setCurrentItem(3, false);
-		});
+		// Navigation Clicks
+		binding.navGenerate.setOnClickListener(v -> binding.viewpager.setCurrentItem(0, false));
+		binding.navModels.setOnClickListener(v -> binding.viewpager.setCurrentItem(1, false));
+		binding.navLibrary.setOnClickListener(v -> binding.viewpager.setCurrentItem(2, false));
+		binding.navSettings.setOnClickListener(v -> binding.viewpager.setCurrentItem(3, false));
 		
 	}
 	
@@ -203,4 +229,17 @@ public class MainActivity extends AppCompatActivity {
 			setIntent(currentIntent);
 		}
 	}
-}
+	
+	@Override
+	public void onBackPressed() {
+		
+		if (tabHistory.size() > 1) {
+			tabHistory.pop();
+			int previousTab = tabHistory.peek();
+			isPoppingBackStack = true;
+			binding.viewpager.setCurrentItem(previousTab, false);
+		} else {
+			super.onBackPressed();
+		}
+	}
+}

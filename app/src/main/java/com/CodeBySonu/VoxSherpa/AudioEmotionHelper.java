@@ -7,12 +7,15 @@ import java.util.regex.Pattern;
 
 public class AudioEmotionHelper {
 
-    private static int SAMPLE_RATE = 22050;
-    private static int BYTES_PER_SECOND = 44100;
-    
-    // Track the last volume to create a smooth transition between chunks
-    private static float lastTargetVolume = 1.0f;
     private static final Random random = new Random();
+    
+    // 🚀 NEW: Static flag to track if a speaker change happened
+    private static volatile boolean speakerGapTriggered = false;
+
+    public static void triggerSpeakerGap() {
+        speakerGapTriggered = true;
+    }
+    
 
     // ==========================================
     // 1. EmotionProfile Core System
@@ -31,6 +34,19 @@ public class AudioEmotionHelper {
         }
     }
 
+    // Retrieves the active sample rate safely without using global static state
+    private static int getActiveSampleRate() {
+        if (KokoroEngine.getInstance().isReady()) {
+            int sr = KokoroEngine.getInstance().getSampleRate();
+            return sr > 0 ? sr : 24000;
+        } else if (VoiceEngine.getInstance().isReady()) {
+            int sr = VoiceEngine.getInstance().getSampleRate();
+            return sr > 0 ? sr : 22050;
+        }
+        return 24000; // Default fallback
+    }
+
+
     // ==========================================
     // 2. Main Processing Method
     // ==========================================
@@ -40,17 +56,33 @@ public class AudioEmotionHelper {
             boolean isEmotionOn,
             float baseSpeed,
             float basePitch, 
-            float baseVolume 
+            float baseVolume,
+            float silenceScaleUI 
     ) {
         try (ByteArrayOutputStream finalAudioStream = new ByteArrayOutputStream()) {
 
-            // Reset state variables for a fresh new generation
-            lastTargetVolume = baseVolume;
+            // Thread-safe local variables (Replaces the unsafe static variables)
+            float localTargetVolume = baseVolume;
+            int activeSampleRate = getActiveSampleRate();
+            int bytesPerSecond = activeSampleRate * 2;
             
-            // Default Profile
+            // 🚀 PERFECT SLIDER MATH: 50% slider (0.5f) = 1.0x (Normal behavior)
+            float multiplier = silenceScaleUI * 2.0f;
+            
+            // --- SPEAKER CHANGE GAP LOGIC ---
+            boolean applySpeakerGap = speakerGapTriggered;
+            if (applySpeakerGap) {
+                speakerGapTriggered = false; 
+                int baseSpeakerGapMs = 500; // Normal gap between two different speakers
+                int gapMs = (int)(baseSpeakerGapMs * multiplier); 
+                
+                if (gapMs > 0) {
+                    finalAudioStream.write(createSilence(gapMs, bytesPerSecond));
+                }
+            }
+            
             EmotionProfile currentProfile = new EmotionProfile(baseVolume, baseSpeed, basePitch, 1500);
 
-            // Regex: Finds Tags like [sad], [angry] AND Punctuation like ..., ., ,, !, ?, ।
             String regex = "(\\[[a-zA-Z]+\\]|\\.\\.\\.|[.,!?।])";
             Pattern pattern = Pattern.compile(regex);
             Matcher matcher = pattern.matcher(inputText);
@@ -58,22 +90,19 @@ public class AudioEmotionHelper {
             int lastEnd = 0;
 
             while (matcher.find()) {
-                // Generate Voice for the text BEFORE the special token
                 String textChunk = inputText.substring(lastEnd, matcher.start()).trim();
                 
                 if (!textChunk.isEmpty() && !textChunk.matches("\\[[a-zA-Z]+\\]")) {
-                    byte[] chunkAudio = generateWithEngine(textChunk, currentProfile, lastTargetVolume);
+                    byte[] chunkAudio = generateWithEngine(textChunk, currentProfile, localTargetVolume, activeSampleRate);
                     if (chunkAudio != null) {
                         finalAudioStream.write(chunkAudio);
                     }
-                    lastTargetVolume = currentProfile.volume; // Update for the next chunk
+                    localTargetVolume = currentProfile.volume; 
                 }
 
-                // Identify what the special token is
                 String token = matcher.group();
 
                 if (token.startsWith("[")) {
-                    // --- EMOTION TAG LOGIC (SUBTLE & GRADUAL) ---
                     if (isEmotionOn) {
                         String tag = token.toLowerCase();
                         switch (tag) {
@@ -105,56 +134,46 @@ public class AudioEmotionHelper {
                         }
                     }
                 } else {
-                    // --- PUNCTUATION SILENCE & JITTER LOGIC ---
+                    // --- PUNCTUATION SILENCE LOGIC ---
                     if (isPunctOn) {
                         int baseSilenceMs = 0;
 
                         switch (token) {
-                            case ",":
-                                baseSilenceMs = 140;
-                                break;
-                            case "!":
-                                baseSilenceMs = 190;
-                                break;
-                            case "?":
-                                baseSilenceMs = 230;
-                                break;
-                            case ".":
-                            case "।":
-                                baseSilenceMs = 280;
-                                break;
-                            case "...":
-                                baseSilenceMs = 380;
-                                break;
+                            case ",": baseSilenceMs = 150; break;
+                            case "!": baseSilenceMs = 200; break;
+                            case "?": baseSilenceMs = 250; break;
+                            case ".": case "।": baseSilenceMs = 300; break;
+                            case "...": baseSilenceMs = 450; break;
                         }
 
                         if (baseSilenceMs > 0) {
-                            // Adjust pause based on current speaking speed
-                            baseSilenceMs = (int)(baseSilenceMs / currentProfile.speed);
+                            // Apply the exact same multiplier as speaker gap
+                            baseSilenceMs = (int)(baseSilenceMs * multiplier);
 
-                            // Soft jitter ±10%
-                            int jitterRange = (int)(baseSilenceMs * 0.10f);
-                            int finalSilenceMs = baseSilenceMs;
+                            if (baseSilenceMs > 0) {
+                                baseSilenceMs = (int)(baseSilenceMs / currentProfile.speed);
 
-                            if (jitterRange > 0) {
-                                finalSilenceMs += (random.nextInt(jitterRange * 2) - jitterRange);
+                                int jitterRange = (int)(baseSilenceMs * 0.10f);
+                                int finalSilenceMs = baseSilenceMs;
+
+                                if (jitterRange > 0) {
+                                    finalSilenceMs += (random.nextInt(jitterRange * 2) - jitterRange);
+                                }
+                                
+                                if (finalSilenceMs < 0) finalSilenceMs = 0;
+
+                                finalAudioStream.write(createSilence(finalSilenceMs, bytesPerSecond));
                             }
-
-                            // Safety clamp
-                            if (finalSilenceMs < 60) finalSilenceMs = 60;
-                            if (finalSilenceMs > 600) finalSilenceMs = 600;
-
-                            byte[] silenceBytes = createSilence(finalSilenceMs);
-                            finalAudioStream.write(silenceBytes);
                         }
                     }
                 }
 
                 lastEnd = matcher.end();
             }
+
             String remainingText = inputText.substring(lastEnd).trim();
             if (!remainingText.isEmpty() && !remainingText.matches("\\[[a-zA-Z]+\\]")) {
-                byte[] chunkAudio = generateWithEngine(remainingText, currentProfile, lastTargetVolume);
+                byte[] chunkAudio = generateWithEngine(remainingText, currentProfile, localTargetVolume, activeSampleRate);
                 if (chunkAudio != null) {
                     finalAudioStream.write(chunkAudio);
                 }
@@ -166,27 +185,20 @@ public class AudioEmotionHelper {
             return null;
         }
     }
+    
 
     // ==========================================
     // 3. Engine Connection & DSP Modification
     // ==========================================
-    private static byte[] generateWithEngine(String text, EmotionProfile profile, float startVol) {
+    private static byte[] generateWithEngine(String text, EmotionProfile profile, float startVol, int sampleRate) {
         
-        byte[] rawPcm;
+        byte[] rawPcm = null;
 
-        // Dynamic Engine selection + Sample Rate update
+        // Directly generate using the active engine
         if (KokoroEngine.getInstance().isReady()) {
-            SAMPLE_RATE = KokoroEngine.getInstance().getSampleRate();
-            if(SAMPLE_RATE == 0) SAMPLE_RATE = 24000;
-            BYTES_PER_SECOND = SAMPLE_RATE * 2;
             rawPcm = KokoroEngine.getInstance().generateAudioPCM(text, profile.speed, profile.pitch);
         } else if (VoiceEngine.getInstance().isReady()) {
-            SAMPLE_RATE = VoiceEngine.getInstance().getSampleRate();
-            if(SAMPLE_RATE == 0) SAMPLE_RATE = 22050;
-            BYTES_PER_SECOND = SAMPLE_RATE * 2;
             rawPcm = VoiceEngine.getInstance().generateAudioPCM(text, profile.speed, profile.pitch);
-        } else {
-             return null;
         }
 
         if (rawPcm == null || rawPcm.length == 0) return null;
@@ -196,9 +208,11 @@ public class AudioEmotionHelper {
             return rawPcm;
         }
 
-        // --- LONG ATTACK ENVELOPE
+        // --- LONG ATTACK ENVELOPE (Gradual Volume Shift) ---
         int totalSamples = rawPcm.length / 2;
-        int transitionSamples = (SAMPLE_RATE * profile.attackTimeMs) / 1000; 
+        int transitionSamples = (sampleRate * profile.attackTimeMs) / 1000; 
+        
+        // Ensure transition doesn't exceed total samples
         transitionSamples = Math.min(transitionSamples, totalSamples); 
         
         float volumeStep = 0f;
@@ -238,9 +252,9 @@ public class AudioEmotionHelper {
     }
 
     // Creates an array filled with Zeros to physically stop the speaker
-    private static byte[] createSilence(int durationMs) {
+    private static byte[] createSilence(int durationMs, int bytesPerSecond) {
         if (durationMs <= 0) return new byte[0];
-        int bytesNeeded = (BYTES_PER_SECOND * durationMs) / 1000;
+        int bytesNeeded = (bytesPerSecond * durationMs) / 1000;
         // Ensure even number of bytes for 16-bit alignment
         if (bytesNeeded % 2 != 0) bytesNeeded++;
         return new byte[bytesNeeded]; 

@@ -10,6 +10,8 @@ public class TtsLocaleHelper {
         }
 
         String search = rawName.trim().toLowerCase();
+
+        // FAST OVERRIDES: Sirf Language set hai, Country ko completely nikal diya gaya hai
         if (search.contains("english")) return Locale.ENGLISH;
         if (search.contains("hindi")) return new Locale("hi");
         if (search.contains("chinese") || search.contains("mandarin")) return Locale.CHINESE;
@@ -42,11 +44,14 @@ public class TtsLocaleHelper {
 
     public static String[] getTtsLanguageArray(String rawName) {
         Locale locale = getLocaleFromName(rawName);
+        
+        // 🚀 STRICT: Agar language nahi hai, toh bilkul khali bhej do, koi fake English nahi
         if (locale == null) {
             return new String[] {"", "", ""};
         }
 
         try {
+            // Sirf aur sirf ISO-3 Language Code return hoga, conflict khtam.
             String isoLang = locale.getISO3Language();
             return new String[] { isoLang, "", "" };
         } catch (Exception e) {

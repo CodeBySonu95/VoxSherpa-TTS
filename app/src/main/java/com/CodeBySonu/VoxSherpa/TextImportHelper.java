@@ -69,6 +69,7 @@ public class TextImportHelper {
                 stripper.setEndPage(i);
                 String pageText = stripper.getText(document);
                 
+                // NAYA: PDF se text nikalte hi usko Hindi ke liye fix kar do
                 pageText = _fixHindiPdfText(pageText);
                 
                 stringBuilder.append(pageText).append("\n");
@@ -99,15 +100,27 @@ public class TextImportHelper {
         return stringBuilder.toString();
     }
 
+        // --- NAYA HELPER METHOD: Hindi Text ko normalize/fix karne ke liye ---
     private static String _fixHindiPdfText(String text) {
         if (text == null || text.isEmpty()) return "";
 
+        // 1. Chhoti 'ee' (ि) ko sahi jagah shift karna (e.g., "पिरवार" -> "परिवार")
         text = text.replaceAll("ि([क-हक़-य़])", "$1ि");
+
+        // 2. NAYA FIX: Punctuation (comma, quotes) agar matra/bindu se pehle aa gaye hain toh theek karna
+        // Logic: (Punctuation) + (Matra) ko swap karke (Matra) + (Punctuation) kar do
+        // e.g., "मे,ं" -> "में," aur "'राम'ू" -> "'रामू'"
         text = text.replaceAll("([,\\.;:'\"!?\\-])([ािीुूृेैोौंँः])", "$2$1");
+
+        // 3. Space ke baad aane wali matra/bindu ko theek karna (e.g., "मे ंबेचकर" -> "में बेचकर")
         text = text.replaceAll(" ([ािीुूृेैोौंँः])", "$1 ");
+
+        // 4. Chandrabindu aur matra ki sequence theek karna
         text = text.replaceAll("ँू", "ूँ");
         text = text.replaceAll("ंू", "ूं");
-        text = text.replaceAll("ें", "ें");
+        text = text.replaceAll("ें", "ें"); // "में" jaisi spelling ko perfect karne ke liye
+
+        // 5. Faltu double spaces hata dena taaki TTS ruk-ruk kar na bole
         text = text.replaceAll(" +", " ");
 
         return text;
