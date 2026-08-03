@@ -75,7 +75,7 @@ It runs two professional-grade neural engines entirely on your device:
 - New **`[speaker]` tag system** to assign each line to a distinct voice directly inside your script:
   ```
   [speaker:1] Hello, how are you?
-  [speaker:2] I'm doing well. How about you?
+  [speaker:2] I'm good, thanks! How about you?
   ```
 - **Voice Style & Tone controls** — fine-tune how each speaker sounds to match the mood of the script
 - **Adjustable sentence gap / silence timing** — control the pause duration between lines for natural, realistic pacing
@@ -124,13 +124,14 @@ It runs two professional-grade neural engines entirely on your device:
 ### ⚙️ Smart Settings
 - **Smart Punctuation** — natural pauses after sentence breaks
 - **Emotion Tags** — `[whisper]`, `[angry]`, `[happy]` support
-- Per-model voice selection (Kokoro supports 53+ speakers)
+- Per-model voice selection (Kokoro supports 50+ speakers)
 - Theme-aware UI
 
 ---
 
 ## Technical Architecture
 
+```
 User Text
     │
     ├─── Kokoro Engine (KokoroEngine.java)
@@ -141,6 +142,7 @@ User Text
               └── Sherpa-ONNX JNI → ONNX Runtime → CPU
                         ├── VITS model (language-specific)
                         └── Multi-speaker dialogue mode ([speaker] tag parser, style/tone & silence-gap control)
+```
 
 **Built with:**
 - [Sherpa-ONNX](https://github.com/k2-fsa/sherpa-onnx) — on-device neural inference
