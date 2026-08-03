@@ -36,7 +36,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.Adapter;
 import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 import com.CodeBySonu.VoxSherpa.databinding.*;
-import com.google.android.play.corecommon.*;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -59,7 +58,8 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import android.database.Cursor;
-
+
+
 
 public class ModelsFragmentActivity extends Fragment {
 	
@@ -1573,4 +1573,4 @@ public class ModelsFragmentActivity extends Fragment {
 		
 	}
 	
-}
+}
