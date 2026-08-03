@@ -30,7 +30,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.Adapter;
 import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 import com.CodeBySonu.VoxSherpa.databinding.*;
-import com.google.android.play.corecommon.*;
 import com.google.firebase.FirebaseApp;
 import com.k2fsa.sherpa.onnx.*;
 import com.tom_roush.pdfbox.*;
@@ -508,4 +507,4 @@ public class TtssettingsActivity extends AppCompatActivity {
 		
 	}
 	
-}
+}
