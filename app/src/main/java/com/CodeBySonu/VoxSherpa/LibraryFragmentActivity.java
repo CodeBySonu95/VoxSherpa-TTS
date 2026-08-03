@@ -29,7 +29,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.Adapter;
 import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 import com.CodeBySonu.VoxSherpa.databinding.*;
-import com.google.android.play.corecommon.*;
 import com.google.firebase.FirebaseApp;
 import com.k2fsa.sherpa.onnx.*;
 import com.tom_roush.pdfbox.*;
@@ -54,7 +53,8 @@ import android.media.AudioFocusRequest;
 import android.os.Build;
 import android.content.Context;
 import com.CodeBySonu.VoxSherpa.system.VoxMediaController;
-
+
+
 
 public class LibraryFragmentActivity extends Fragment {
 	
@@ -539,7 +539,8 @@ public class LibraryFragmentActivity extends Fragment {
 			adapter.notifyDataSetChanged();
 		}
 	}
-	
+	
+
 	public void _updateMediaNotification(final double _state) {
 		int finalState = (int) _state;
 		
@@ -681,4 +682,4 @@ public class LibraryFragmentActivity extends Fragment {
 		
 	}
 	
-}
+}
