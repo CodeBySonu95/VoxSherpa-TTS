@@ -58,6 +58,27 @@
         </div>
       </div>
 
+      <div class="glass-card" style="margin-bottom: 40px;">
+        <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 20px; color: var(--primary);">Converting Piper Models for Sherpa-onnx</h2>
+        <p style="margin-bottom: 16px; color: var(--text-muted);">
+          Many Piper TTS models lack the required <code>tokens.txt</code> file needed for Sherpa-onnx compatibility. You can easily convert them using our automated Google Colab workflow.
+        </p>
+        
+        <div style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 20px;">
+          <h4 style="margin-bottom: 8px; color: var(--text);">Step-by-Step Conversion Guide</h4>
+          <ol style="padding-left: 20px; color: var(--text-muted); display: grid; gap: 8px; font-size: 14px;">
+            <li>Go to <a href="https://colab.research.google.com/" target="_blank" style="color: var(--primary); text-decoration: underline;">Google Colab</a> and create a new notebook.</li>
+            <li>Copy our conversion script from <a href="https://huggingface.co/CodeBySonu95/VoxSherpa-TTS/resolve/main/sample.py" target="_blank" style="color: var(--primary); text-decoration: underline;">Hugging Face (sample.py)</a>.</li>
+            <li>Paste the code into your Colab notebook (or ask Colab's Gemini assistant to execute it).</li>
+            <li>Run the cell using the Play icon. The script will automatically process your files and output the Sherpa-onnx ready <code>.onnx</code> and token files.</li>
+          </ol>
+        </div>
+
+        <p style="font-size: 14px; color: var(--text-muted);">
+          Have questions or need assistance? Reach out via email at <a href="mailto:codebysonu95@gmail.com" style="color: var(--primary); text-decoration: underline;">codebysonu95@gmail.com</a>.
+        </p>
+      </div>
+
       <div class="glass-card">
         <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 20px;">Engine Support</h2>
         <p style="margin-bottom: 24px; color: var(--text-muted);">VoxSherpa supports multiple high-performance neural engines:</p>
