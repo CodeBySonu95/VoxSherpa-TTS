@@ -50,9 +50,10 @@ VoxSherpa TTS is available in two editions to give users full freedom of choice 
 
 We value honesty above everything else. Here is the breakdown of how data is handled on the Google Play Store edition:
 
-1. **VoxSherpa TTS Does NOT Collect Your Data:** The core app, neural engines, local text processing, and speech synthesis never log, store, or transmit your texts or audio clips to any remote server.
-2. **Third-Party Ad Collection (Free Tier):** To keep the Play Store app free while funding active development, the free tier uses Google AdMob. AdMob may request standard parameters (like Device IDs or approximate location) strictly to deliver non-repetitive ads, combat ad fraud, and prevent spam.
-3. **Zero Data Tracking for Premium Users:** When you purchase a Monthly or Lifetime Premium subscription, **all AdMob code and tracking logic are completely bypassed and disabled**. Premium users enjoy an ad-free, data-collection-free experience identical to the GitHub version, alongside all advanced Play Store features.
+1. **VoxSherpa TTS Does NOT Collect Your Data:** The core app does not collect, log, or store any of your personal data. The app works fully offline without any loss of features or functionality.
+2. **Third-Party Ad Collection (Free Tier):** To keep the Play Store app free while funding active development, the free tier uses Google AdMob. AdMob may request standard non-sensitive data (such as Device IDs, app performance logs, and device details) strictly to deliver ads, prevent fraud, and combat invalid traffic.
+3. **Ad-Free Experience for Premium Users:** When you purchase a Monthly or Lifetime Premium subscription, **all AdMob code is completely bypassed and disabled**. Premium users enjoy a pure, ad-free experience.
+   
 
 ---
 
