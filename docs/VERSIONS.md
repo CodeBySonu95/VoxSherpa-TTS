@@ -15,7 +15,7 @@ VoxSherpa TTS is available in two editions to give users full freedom of choice 
 | **Data Collection** | Zero (100% Offline) |
 | **In-App Purchases** | Never |
 | **License** | Open Source |
-| **Updates** | Slightly behind Play Store (typically 1–3 versions) |
+| **Updates** | Slightly behind Play Store (typically 1–3 Months) |
 | **Source Code** | Fully available |
 
 > The GitHub version will **always** remain 100% ad-free, offline, and open source. This is a promise, not a policy.
