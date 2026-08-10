@@ -11,6 +11,7 @@ import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.os.Build;
 import android.os.IBinder;
+import android.util.Log;
 
 import com.CodeBySonu.VoxSherpa.R;
 import com.CodeBySonu.VoxSherpa.MainActivity;
@@ -195,7 +196,16 @@ public class VoxMediaService extends Service {
             }
         }
 
-        startForeground(NOTIFY_ID, builder.build());
+        
+        try {
+            startForeground(NOTIFY_ID, builder.build());
+        } catch (Exception e) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                Log.e("VoxMediaService", "System blocked starting foreground service from background", e);
+            } else {
+                Log.e("VoxMediaService", "Error starting foreground service", e);
+            }
+        }
         
         if (state == VoxMediaController.STATE_STOPPED || state == VoxMediaController.STATE_PAUSED) {
             stopForeground(false);
