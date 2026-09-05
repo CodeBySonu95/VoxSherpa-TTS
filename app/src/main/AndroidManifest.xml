@@ -102,9 +102,9 @@
 		<service  
 			android:name=".system.VoxSherpaTtsService"  
 			android:label="VoxSherpa TTS"  
-			android:permission="android.permission.BIND_TEXT_TO_SPEECH_ENGINE"  
 			android:exported="true">
 			<intent-filter>
+				<action android:name="android.intent.action.TTS_service" />
 				<action android:name="android.intent.action.TTS_SERVICE" />
 				<category android:name="android.intent.category.DEFAULT" />
 			</intent-filter>
