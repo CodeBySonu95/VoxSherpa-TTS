@@ -182,41 +182,42 @@ public class VoiceEngine {
 
         for (String provider : providers) {
             try {
-                OfflineTtsVitsModelConfig vits = new OfflineTtsVitsModelConfig();
-                vits.setModel(modelPath);
-                vits.setTokens(tokensPath);
+                OfflineTtsVitsModelConfig.Builder vitsBuilder = OfflineTtsVitsModelConfig.builder();
+                vitsBuilder.setModel(modelPath);
+                vitsBuilder.setTokens(tokensPath);
 
                 boolean isChinese = language != null && (language.toLowerCase().contains("zh") || language.toLowerCase().contains("chinese"));
 
                 if (isChinese) {
-                    vits.setDataDir("");
+                    vitsBuilder.setDataDir("");
                     if (chineseHelperDataPath != null && !chineseHelperDataPath.isEmpty()) {
-                        vits.setLexicon(new File(chineseHelperDataPath, "lexicon.txt").getAbsolutePath());
-                        vits.setDictDir(new File(chineseHelperDataPath, "dict").getAbsolutePath());
+                        vitsBuilder.setLexicon(new File(chineseHelperDataPath, "lexicon.txt").getAbsolutePath());
+                        vitsBuilder.setDictDir(new File(chineseHelperDataPath, "dict").getAbsolutePath());
                     }
                 } else {
                     if (isMms) {
-                        vits.setDataDir("");
+                        vitsBuilder.setDataDir("");
                     } else {
-                        vits.setDataDir(espeakDataPath);
+                        vitsBuilder.setDataDir(espeakDataPath);
                     }
-                    vits.setLexicon("");
-                    vits.setDictDir("");
+                    vitsBuilder.setLexicon("");
+                    vitsBuilder.setDictDir("");
                 }
 
-                vits.setNoiseScale(noiseScale);
-                vits.setNoiseScaleW(noiseScaleW);
-                vits.setLengthScale(1.0f);
+                vitsBuilder.setNoiseScale(noiseScale)
+                .setNoiseScaleW(noiseScaleW)
+                .setLengthScale(1.0f).build();
 
-                OfflineTtsModelConfig modelConfig = new OfflineTtsModelConfig();
-                modelConfig.setVits(vits);
-                modelConfig.setNumThreads(getOptimalThreadCount());
-                modelConfig.setProvider(provider);
-                modelConfig.setDebug(false);
+                OfflineTtsModelConfig.Builder modelConfigBuilder = OfflineTtsModelConfig.builder();
+                modelConfigBuilder.setVits(vitsBuilder.build());
+                modelConfigBuilder.setNumThreads(getOptimalThreadCount());
+                modelConfigBuilder.setProvider(provider);
+                modelConfigBuilder.setDebug(false);
+				OfflineTtsModelConfig modelConfig = modelConfigBuilder.build();
 
-                OfflineTtsConfig config = new OfflineTtsConfig();
-                config.setModel(modelConfig);
-                config.setMaxNumSentences(5);
+                OfflineTtsConfig.Builder configBuilder = OfflineTtsConfig.builder();
+                configBuilder.setModel(modelConfig);
+                configBuilder.setMaxNumSentences(5);
 
                 if (isChinese && chineseHelperDataPath != null && !chineseHelperDataPath.isEmpty()) {
                     String phone = new File(chineseHelperDataPath, "phone.fst").getAbsolutePath();
@@ -224,10 +225,10 @@ public class VoiceEngine {
                     String number = new File(chineseHelperDataPath, "number.fst").getAbsolutePath();
                     String heteronym = new File(chineseHelperDataPath, "new_heteronym.fst").getAbsolutePath();
 
-                    config.setRuleFsts(phone + "," + date + "," + number + "," + heteronym);
+                    configBuilder.setRuleFsts(phone + "," + date + "," + number + "," + heteronym);
                 }
 
-                OfflineTts candidate = new OfflineTts(null, config);
+                OfflineTts candidate = new OfflineTts(configBuilder.build());
 
                 String testText;
                 if (isChinese) {
@@ -355,7 +356,7 @@ public class VoiceEngine {
                     if (tts != null && !cancelRequested) {
                         audio = tts.generate(inputText.trim(), activeSpeakerId, speedValue);
                         if (audio != null) {
-                            sampleRate = tts.sampleRate();
+                            sampleRate = tts.getSampleRate();
                         }
                     }
                 }
@@ -416,7 +417,7 @@ public class VoiceEngine {
 
     public synchronized int getSampleRate() {
         if (tts == null) return 0;
-        return tts.sampleRate();
+        return tts.getSampleRate();
     }
 
     public synchronized boolean isReady() {
@@ -444,7 +445,7 @@ public class VoiceEngine {
     public synchronized int getNumSpeakers() {
         if (tts == null) return 1;
         try {
-            return tts.numSpeakers();
+            return tts.getNumSpeakers();
         } catch (Throwable ignored) {
             return 1;
         }

@@ -8,3 +8,5 @@
 .externalNativeBuild
 .cxx
 app/build/
+app/src/main/cpp/sherpa-onnx
+app/src/main/cpp/oboe

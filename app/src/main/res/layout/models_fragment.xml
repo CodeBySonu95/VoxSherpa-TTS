@@ -176,23 +176,4 @@
 			</LinearLayout>
 		</FrameLayout>
 	</LinearLayout>
-	<com.google.android.material.card.MaterialCardView
-		android:id="@+id/fab_add_model"
-		android:layout_width="50dp"
-		android:layout_height="50dp"
-		android:layout_margin="20dp"
-		app:cardBackgroundColor="#1D61FF"
-		app:cardCornerRadius="20dp"
-		app:cardElevation="6dp"
-		android:layout_alignParentBottom="true"
-		android:layout_alignParentEnd="true">
-		<ImageView
-			android:id="@+id/imageview6"
-			android:layout_width="match_parent"
-			android:layout_height="match_parent"
-			android:padding="12dp"
-			android:src="@drawable/icon_add"
-			android:scaleType="fitXY"
-			app:tint="#FFFFFF" />
-	</com.google.android.material.card.MaterialCardView>
 </RelativeLayout>

@@ -78,7 +78,6 @@ public class ModelsFragmentActivity extends Fragment {
 	private View dialogView;
 	private int lastGeneratedSampleRate = 22050;
 	
-	private Intent FilePicker = new Intent(Intent.ACTION_GET_CONTENT);
 	private SharedPreferences sp1;
 	private SharedPreferences sp2;
 	private SharedPreferences sp3;
@@ -96,8 +95,6 @@ public class ModelsFragmentActivity extends Fragment {
 	}
 	
 	private void initialize(Bundle _savedInstanceState, View _view) {
-		FilePicker.setType("*/*");
-		FilePicker.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 		sp1 = getContext().getSharedPreferences("sp1", Activity.MODE_PRIVATE);
 		sp2 = getContext().getSharedPreferences("sp2", Activity.MODE_PRIVATE);
 		sp3 = getContext().getSharedPreferences("sp3", Activity.MODE_PRIVATE);
@@ -329,7 +326,6 @@ public class ModelsFragmentActivity extends Fragment {
 		_setupDataAndStorage();
 		_fetchFirebaseModels();
 		_setupRecyclerViewAdapter();
-		_setupFabAndImportDialog();
 	}
 	
 	@Override
@@ -495,7 +491,7 @@ public class ModelsFragmentActivity extends Fragment {
 				String currentOnnx = item.containsKey("onnx_path") && item.get("onnx_path") != null ? item.get("onnx_path").toString() : "";
 				final String audioUrlToPlay = item.containsKey("semple") && item.get("semple") != null ? item.get("semple").toString().trim() : "";
 				
-				boolean isDownloaded = !currentOnnx.isEmpty();
+				boolean isDownloaded = !currentOnnx.isEmpty() && new java.io.File(currentOnnx).exists();
 				boolean isDownloading = item.containsKey("is_downloading") && item.get("is_downloading").toString().equals("true");
 				int progress = item.containsKey("download_progress") ? Integer.parseInt(item.get("download_progress").toString()) : 0;
 				
@@ -560,7 +556,7 @@ public class ModelsFragmentActivity extends Fragment {
 					if (progressBuffering != null) progressBuffering.setVisibility(android.view.View.VISIBLE);
 				} else {
 					if (audioUrlToPlay.isEmpty()) {
-						boxPreviewStatus.setVisibility(android.view.View.GONE);
+						boxPreviewStatus.setVisibility(android.view.View.VISIBLE);
 					} else {
 						boxPreviewStatus.setVisibility(android.view.View.VISIBLE);
 						imgPreview.setVisibility(android.view.View.VISIBLE);
@@ -706,7 +702,7 @@ public class ModelsFragmentActivity extends Fragment {
 											
 											new Thread(() -> {
 												try {
-													java.io.File internalModelsDir = new java.io.File(context.getFilesDir(), "secure_models");
+													java.io.File internalModelsDir = new java.io.File(context.getExternalFilesDir("models"), "");
 													if (!internalModelsDir.exists()) internalModelsDir.mkdirs();
 													
 													java.io.File sourceOnnx = new java.io.File(context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS), targetOnnxName);
@@ -1116,192 +1112,6 @@ public class ModelsFragmentActivity extends Fragment {
 				return modelList.size();
 			}
 		});
-		
-	}
-	
-	
-	public void _setupFabAndImportDialog() {
-		
-		binding.fabAddModel.setOnClickListener(v -> {
-			importDialog = new com.google.android.material.bottomsheet.BottomSheetDialog(getContext());
-			dialogView   = getActivity().getLayoutInflater().inflate(R.layout.dialog_import_model, null);
-			importDialog.setContentView(dialogView);
-			
-			importDialog.setOnShowListener(dialogInterface -> {
-				View bottomSheet = importDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
-				if (bottomSheet != null) {
-					bottomSheet.setBackgroundColor(Color.TRANSPARENT);
-				}
-			});
-			
-			tempOnnxPath   = "";
-			tempTokensPath = "";
-			sp1.edit().remove("temp_onnx_name").remove("temp_onnx_size").apply();
-			
-			String[] languages = getResources().getStringArray(R.array.language_list);
-			ArrayAdapter<String> langAdapter = new ArrayAdapter<>(getContext(), R.layout.custom_dropdown_item, R.id.tv_drop_item, languages);
-			AutoCompleteTextView dropdownLang = dialogView.findViewById(R.id.dropdown_lang);
-			if(dropdownLang != null) dropdownLang.setAdapter(langAdapter);
-			
-			String[] genders = new String[]{"Male", "Female", "Neutral"};
-			ArrayAdapter<String> genderAdapter = new ArrayAdapter<>(getContext(), R.layout.custom_dropdown_item, R.id.tv_drop_item, genders);
-			AutoCompleteTextView dropdownGender = dialogView.findViewById(R.id.dropdown_gender);
-			if(dropdownGender != null) dropdownGender.setAdapter(genderAdapter);
-			
-			dialogView.findViewById(R.id.btn_close).setOnClickListener(view -> importDialog.dismiss());
-			
-			dialogView.findViewById(R.id.btn_choose_onnx).setOnClickListener(view -> {
-				sp1.edit().putString("picking_mode", "onnx").apply();
-				FilePicker.setType("*/*");
-				startActivityForResult(FilePicker, REQ_CD_FILEPICKER);
-			});
-			
-			dialogView.findViewById(R.id.btn_select_tokens).setOnClickListener(view -> {
-				sp1.edit().putString("picking_mode", "tokens").apply();
-				FilePicker.setType("text/plain");
-				startActivityForResult(FilePicker, REQ_CD_FILEPICKER);
-			});
-			
-			dialogView.findViewById(R.id.btn_import_to_library).setOnClickListener(view -> {
-				
-				String selectedLang = dropdownLang != null ? dropdownLang.getText().toString().trim() : "";
-				String selectedGender = dropdownGender != null ? dropdownGender.getText().toString().trim() : "";
-				String errorMessage = "";
-				
-				if (tempOnnxPath.isEmpty()) {
-					errorMessage = "Please add an .onnx model file!";
-				} else if (tempTokensPath.isEmpty()) {
-					errorMessage = "Please add a tokens.txt file!";
-				} else if (selectedLang.isEmpty()) {
-					errorMessage = "Please select a Language!";
-				} else if (selectedGender.isEmpty()) {
-					errorMessage = "Please select a Gender!";
-				}
-				
-				if (!errorMessage.isEmpty()) {
-					Snackbar snackbar = Snackbar.make(dialogView, errorMessage, Snackbar.LENGTH_INDEFINITE)
-					.setBackgroundTint(Color.parseColor("#FF4B4B"))
-					.setTextColor(Color.WHITE)
-					.setActionTextColor(Color.WHITE);
-					snackbar.setAction("✕", v1 -> snackbar.dismiss());
-					snackbar.show();
-					return;
-				}
-				
-				String newModelName = sp1.getString("temp_onnx_name", "Unknown Model");
-				
-				boolean isDuplicate = false;
-				for (HashMap<String, Object> model : modelList) {
-					if (model.containsKey("name") && newModelName.equals(model.get("name").toString())) {
-						isDuplicate = true;
-						break;
-					}
-				}
-				
-				if (isDuplicate) {
-					Snackbar snackbar = Snackbar.make(dialogView, "This model is already in your library", Snackbar.LENGTH_INDEFINITE)
-					.setBackgroundTint(Color.parseColor("#FF4B4B"))
-					.setTextColor(Color.WHITE)
-					.setActionTextColor(Color.WHITE);
-					snackbar.setAction("✕", v1 -> snackbar.dismiss());
-					snackbar.show();
-					return;
-				}
-				
-				view.setEnabled(false);
-				view.setAlpha(0.5f);
-				
-				final Context ctx = getContext().getApplicationContext();
-				final String finalModelName       = newModelName;
-				final String finalLang            = selectedLang;
-				final String finalGender          = selectedGender;
-				final String finalOnnxUri         = tempOnnxPath;
-				final String finalTokensUri       = tempTokensPath;
-				final String finalSize            = sp1.getString("temp_onnx_size", "Unknown Size");
-				
-				new Thread(() -> {
-					File internalOnnx   = null;
-					File internalTokens = null;
-					boolean copySuccess = false;
-					
-					try {
-						File modelsDir = new File(ctx.getFilesDir(), "PiperModels");
-						if (!modelsDir.exists()) modelsDir.mkdirs();
-						
-						String safeName = finalModelName.replaceAll("[^a-zA-Z0-9]", "_") + "_" + System.currentTimeMillis();
-						internalOnnx   = new File(modelsDir, safeName + ".onnx");
-						internalTokens = new File(modelsDir, safeName + ".txt");
-						
-						try (InputStream is1 = ctx.getContentResolver().openInputStream(android.net.Uri.parse(finalOnnxUri));
-						FileOutputStream os1 = new FileOutputStream(internalOnnx)) {
-							if (is1 == null) throw new Exception("ONNX stream failed");
-							byte[] buf = new byte[16384]; int len;
-							while ((len = is1.read(buf)) != -1) os1.write(buf, 0, len);
-						}
-						
-						try (InputStream is2 = ctx.getContentResolver().openInputStream(android.net.Uri.parse(finalTokensUri));
-						FileOutputStream os2 = new FileOutputStream(internalTokens)) {
-							if (is2 == null) throw new Exception("Tokens stream failed");
-							byte[] buf = new byte[16384]; int len;
-							while ((len = is2.read(buf)) != -1) os2.write(buf, 0, len);
-						}
-						
-						copySuccess = true;
-						
-					} catch (Exception e) {
-						if (internalOnnx   != null && internalOnnx.exists())   internalOnnx.delete();
-						if (internalTokens != null && internalTokens.exists()) internalTokens.delete();
-						
-						if (getActivity() != null) {
-							getActivity().runOnUiThread(() -> {
-								view.setEnabled(true);
-								view.setAlpha(1.0f);
-								Snackbar snackbar = Snackbar.make(dialogView, "Failed to import files.", Snackbar.LENGTH_INDEFINITE)
-								.setBackgroundTint(Color.parseColor("#FF4B4B"))
-								.setTextColor(Color.WHITE)
-								.setActionTextColor(Color.WHITE);
-								snackbar.setAction("✕", v1 -> snackbar.dismiss());
-								snackbar.show();
-							});
-						}
-					}
-					
-					if (copySuccess) {
-						final String savedOnnxPath   = internalOnnx.getAbsolutePath();
-						final String savedTokensPath = internalTokens.getAbsolutePath();
-						
-						if (getActivity() != null) {
-							getActivity().runOnUiThread(() -> {
-								HashMap<String, Object> newModel = new HashMap<>();
-								newModel.put("name",        finalModelName);
-								newModel.put("onnx_path",   savedOnnxPath);
-								newModel.put("tokens_path", savedTokensPath);
-								newModel.put("size",        finalSize);
-								newModel.put("language",    finalLang);
-								newModel.put("gender",      finalGender);
-								
-								modelList.add(newModel);
-								sp1.edit().putString("models_data", new Gson().toJson(modelList)).apply();
-								
-								tempOnnxPath   = "";
-								tempTokensPath = "";
-								importDialog.dismiss();
-								
-								if (binding.recyclerviewModels.getAdapter() != null) {
-									binding.recyclerviewModels.getAdapter().notifyItemInserted(modelList.size() - 1);
-									_updateEmptyState();
-								} else {
-									binding.recyclerviewModels.setAdapter(binding.recyclerviewModels.getAdapter()); 
-								}
-							});
-						}
-					}
-				}).start();
-			});
-			
-			importDialog.show();
-		});
-		
 		
 	}
 	

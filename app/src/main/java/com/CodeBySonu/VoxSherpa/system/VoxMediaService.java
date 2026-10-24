@@ -14,6 +14,8 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.CodeBySonu.VoxSherpa.R;
+import android.os.PowerManager;
+import android.content.Context;
 import com.CodeBySonu.VoxSherpa.MainActivity;
 
 public class VoxMediaService extends Service {
@@ -21,10 +23,16 @@ public class VoxMediaService extends Service {
     private MediaSession mediaSession;
     private static final String CHANNEL_ID = "VoxSherpaMedia";
     private static final int NOTIFY_ID = 1001;
+    private PowerManager.WakeLock wakeLock;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (pm != null) {
+            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "VoxSherpa::HyperOSBypass");
+            wakeLock.acquire();
+        }
         createChannel();
 
         mediaSession = new MediaSession(this, "VoxMediaSession");
@@ -225,6 +233,7 @@ public class VoxMediaService extends Service {
     public void onDestroy() {
         super.onDestroy();
         if (mediaSession != null) mediaSession.release();
+        if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
     }
 
     @Override

@@ -14,7 +14,12 @@ android {
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
-        applicationId "com.CodeBySonu.VoxSherpa"
+        applicationId "com.foxlab.tts"
+        externalNativeBuild {
+            cmake {
+                cppFlags "-DFLUSH_TO_ZERO", "-ffast-math"
+            }
+        }
         namespace "com.CodeBySonu.VoxSherpa"
         minSdkVersion 30
         targetSdkVersion 36
@@ -25,6 +30,19 @@ android {
         // Single APK configuration supporting both 64-bit Mobile and 64-bit Emulator
         ndk {
             abiFilters 'arm64-v8a', 'x86_64'
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+        }
+    }
+    ndkVersion "25.1.8937393"
+
+    sourceSets {
+        main {
+            java.srcDirs += "src/main/cpp/sherpa-onnx/sherpa-onnx/java-api/src/main/java"
         }
     }
 
@@ -67,7 +85,6 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:34.1.0')
     implementation 'com.google.firebase:firebase-database'
     implementation 'com.google.code.gson:gson:2.11.0'
-    implementation 'com.github.k2-fsa:sherpa-onnx:1.12.26'
     implementation 'com.tom-roush:pdfbox-android:2.0.27.0'
 
     testImplementation 'junit:junit:4.13.2'

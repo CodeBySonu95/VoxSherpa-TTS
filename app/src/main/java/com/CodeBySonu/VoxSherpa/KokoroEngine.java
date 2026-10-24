@@ -145,54 +145,56 @@ public class KokoroEngine {
                 KokoroVoiceHelper.VoiceItem currentVoice = KokoroVoiceHelper.getById(activeSpeakerId);
                 String langCode = (currentVoice != null) ? currentVoice.languageCode : "en";
 
-                OfflineTtsKokoroModelConfig kokoroConfig = new OfflineTtsKokoroModelConfig();
-                kokoroConfig.setModel(onnxPath);
-                kokoroConfig.setTokens(tokensPath);
-                kokoroConfig.setVoices(voicesBinPath);
-                kokoroConfig.setDataDir(espeakDataPath);
+                OfflineTtsKokoroModelConfig.Builder kokoroConfigBuilder = OfflineTtsKokoroModelConfig.builder();
+                kokoroConfigBuilder.setModel(onnxPath);
+                kokoroConfigBuilder.setTokens(tokensPath);
+                kokoroConfigBuilder.setVoices(voicesBinPath);
+                kokoroConfigBuilder.setDataDir(espeakDataPath);
 
                 if ("zh".equalsIgnoreCase(langCode)) {
-                    kokoroConfig.setLang("en-us");
+                    kokoroConfigBuilder.setLang("en-us");
                 } else {
-                    kokoroConfig.setLang(langCode);
+                    kokoroConfigBuilder.setLang(langCode);
                 }
 
-                OfflineTtsConfig config = new OfflineTtsConfig();
+                OfflineTtsConfig.Builder configBuilder = OfflineTtsConfig.builder();
 
                 if (ttsFrontendDataPath != null && !ttsFrontendDataPath.isEmpty()) {
                     String lexiconEn = new File(ttsFrontendDataPath, "lexicon-us-en.txt").getAbsolutePath();
                     String lexiconZh = new File(ttsFrontendDataPath, "lexicon-zh.txt").getAbsolutePath();
                     
                     if ("zh".equalsIgnoreCase(langCode)) {
-                        kokoroConfig.setLexicon(lexiconEn + "," + lexiconZh);
+                        kokoroConfigBuilder.setLexicon(lexiconEn + "," + lexiconZh);
                         
                         File dictFolder = new File(ttsFrontendDataPath, "dict");
                         if (dictFolder.exists()) {
-                            kokoroConfig.setDictDir(dictFolder.getAbsolutePath());
+                            kokoroConfigBuilder.setDictDir(dictFolder.getAbsolutePath());
+					OfflineTtsKokoroModelConfig kokoroConfig = kokoroConfigBuilder.build();
                         }
                         
                         String phoneZh = new File(ttsFrontendDataPath, "phone-zh.fst").getAbsolutePath();
                         String dateZh = new File(ttsFrontendDataPath, "date-zh.fst").getAbsolutePath();
                         String numberZh = new File(ttsFrontendDataPath, "number-zh.fst").getAbsolutePath();
                         
-                        config.setRuleFsts(phoneZh + "," + dateZh + "," + numberZh);
+                        configBuilder.setRuleFsts(phoneZh + "," + dateZh + "," + numberZh);
                     } else {
-                        kokoroConfig.setLexicon(lexiconEn);
+                        kokoroConfigBuilder.setLexicon(lexiconEn);
                     }
                 }
 
-                OfflineTtsModelConfig modelConfig = new OfflineTtsModelConfig();
-                modelConfig.setKokoro(kokoroConfig);
-                modelConfig.setNumThreads(getOptimalThreadCount());
-                modelConfig.setProvider(provider);
-                modelConfig.setDebug(false);
+                OfflineTtsModelConfig.Builder modelConfigBuilder = OfflineTtsModelConfig.builder();
+                modelConfigBuilder.setKokoro(kokoroConfigBuilder.build());
+                modelConfigBuilder.setNumThreads(getOptimalThreadCount());
+                modelConfigBuilder.setProvider(provider);
+                modelConfigBuilder.setDebug(false);
+				OfflineTtsModelConfig modelConfig = modelConfigBuilder.build();
 
-                config.setModel(modelConfig);
-                config.setMaxNumSentences(1);
+                configBuilder.setModel(modelConfig);
+                configBuilder.setMaxNumSentences(1);
                 
-                config.setSilenceScale(0.2f);
+                configBuilder.setSilenceScale(0.2f);
 
-                OfflineTts candidate = new OfflineTts(null, config);
+                OfflineTts candidate = new OfflineTts(configBuilder.build());
 
                 GeneratedAudio test = candidate.generate("...", activeSpeakerId, 1.0f);
                 if (test != null && test.getSamples() != null && test.getSamples().length > 0) {
@@ -292,7 +294,7 @@ public class KokoroEngine {
                     if (tts != null && !cancelRequested) {
                         audio = tts.generate(safeText, activeSpeakerId, speedValue);
                         if (audio != null) {
-                            sampleRate = tts.sampleRate();
+                            sampleRate = tts.getSampleRate();
                         }
                     }
                 }
@@ -364,7 +366,7 @@ public class KokoroEngine {
     public synchronized int getSampleRate() {
         if (tts == null) return 0;
         try {
-            return tts.sampleRate();
+            return tts.getSampleRate();
         } catch (Throwable ignored) {
             return 0;
         }

@@ -54,6 +54,25 @@ import android.graphics.Color;
 
 
 public class MainActivity extends AppCompatActivity {
+	static {
+
+		System.loadLibrary("voxsherpa");
+
+	}
+
+	public native void initAudio();
+
+	public native void triggerHaptic();
+
+
+
+	public void performHaptic() {
+
+		binding.getRoot().performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK);
+
+	}
+
+
 	
 	private MainBinding binding;
 	public String sharedProcessText = "";

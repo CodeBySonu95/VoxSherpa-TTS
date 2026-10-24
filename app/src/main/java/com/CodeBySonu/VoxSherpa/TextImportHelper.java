@@ -103,6 +103,7 @@ public class TextImportHelper {
         // --- NAYA HELPER METHOD: Hindi Text ko normalize/fix karne ke liye ---
     private static String _fixHindiPdfText(String text) {
         if (text == null || text.isEmpty()) return "";
+        text = text.replaceAll("(.{50,}?\\s)", "$1, ");
 
         // 1. Chhoti 'ee' (ि) ko sahi jagah shift karna (e.g., "पिरवार" -> "परिवार")
         text = text.replaceAll("ि([क-हक़-य़])", "$1ि");

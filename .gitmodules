@@ -1,0 +1,6 @@
+[submodule "app/src/main/cpp/sherpa-onnx"]
+	path = app/src/main/cpp/sherpa-onnx
+	url = https://github.com/k2-fsa/sherpa-onnx
+[submodule "app/src/main/cpp/oboe"]
+	path = app/src/main/cpp/oboe
+	url = https://github.com/google/oboe
