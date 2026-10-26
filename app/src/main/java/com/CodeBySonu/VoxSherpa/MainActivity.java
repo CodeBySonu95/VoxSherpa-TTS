@@ -102,6 +102,15 @@ public class MainActivity extends AppCompatActivity {
 					navParams.height = baseHeightPx + insets.bottom;
 					bottomNav.setLayoutParams(navParams);
 					bottomNav.setPadding(0, 0, 0, insets.bottom);
+					
+					// --- NEW UI: GLASSMORPHISM BACKGROUND FOR BOTTOM NAV ---
+					android.graphics.drawable.GradientDrawable glassBg = new android.graphics.drawable.GradientDrawable();
+					glassBg.setColor(android.graphics.Color.parseColor("#E61A1D2E")); // Semi-transparent dark glass color
+					float radius = 24f * getResources().getDisplayMetrics().density; // 24dp top corner radius
+					glassBg.setCornerRadii(new float[]{radius, radius, radius, radius, 0, 0, 0, 0}); // Rounded top-left and top-right
+					bottomNav.setBackground(glassBg);
+					bottomNav.setElevation(8f * getResources().getDisplayMetrics().density); // Add slight shadow
+					// --------------------------------------------------------
 				}
 				
 				return windowInsets;
@@ -133,21 +142,18 @@ public class MainActivity extends AppCompatActivity {
 				super.onPageSelected(position);
 				
 				// --- CUSTOM HISTORY ANTI-LOOP LOGIC START ---
-				// Update history only when the user is not pressing the back button
 				if (!isPoppingBackStack) {
-					// If this tab is already in the history, remove it (No duplicates)
 					if (tabHistory.contains(position)) {
 						tabHistory.remove(Integer.valueOf(position));
 					}
-					// Push the current tab to the top of the history
 					tabHistory.push(position);
 				}
-				// Reset the flag for the next normal click
 				isPoppingBackStack = false; 
 				// --- CUSTOM HISTORY ANTI-LOOP LOGIC END ---
 				
-				int inactiveColor = android.graphics.Color.parseColor("#8E99AF");
-				int activeColor = android.graphics.Color.parseColor("#1D61FF");
+				// NEW UI COLORS UPDATED HERE
+				int inactiveColor = android.graphics.Color.parseColor("#94A3B8"); // Muted grey-blue for inactive
+				int activeColor = android.graphics.Color.parseColor("#4A9EFF"); // Vibrant blue for active
 				
 				binding.bgGenerate.setCardBackgroundColor(android.graphics.Color.TRANSPARENT);
 				binding.bgModels.setCardBackgroundColor(android.graphics.Color.TRANSPARENT);
@@ -182,7 +188,6 @@ public class MainActivity extends AppCompatActivity {
 					binding.txtSettings.setTextColor(android.graphics.Color.WHITE);
 				}
 				
-				// Ad logic completely removed to keep it free and open-source.
 				isFirstTabLoad = false;
 			}
 		});
@@ -214,7 +219,6 @@ public class MainActivity extends AppCompatActivity {
 			// 2. Share Menu (Action Send) logic
 			else if (android.content.Intent.ACTION_SEND.equals(action) && type != null) {
 				if ("text/plain".equals(type)) {
-					// Check if it's actual text and NOT a file stream
 					if (currentIntent.hasExtra(android.content.Intent.EXTRA_TEXT) && !currentIntent.hasExtra(android.content.Intent.EXTRA_STREAM)) {
 						String sharedText = currentIntent.getStringExtra(android.content.Intent.EXTRA_TEXT);
 						if (sharedText != null) {
@@ -224,7 +228,6 @@ public class MainActivity extends AppCompatActivity {
 				}
 			}
 			
-			// Intent clear karna taaki screen rotation par text dobara paste na ho
 			currentIntent.setAction(null);
 			setIntent(currentIntent);
 		}
