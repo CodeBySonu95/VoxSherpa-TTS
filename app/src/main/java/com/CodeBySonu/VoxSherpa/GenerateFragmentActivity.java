@@ -113,7 +113,7 @@ public class GenerateFragmentActivity extends Fragment {
 				if (inputText.isEmpty()) {
 					if (getView() != null) {
 						com.google.android.material.snackbar.Snackbar.make(getView(), "Please enter some text first.", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
-						.setBackgroundTint(android.graphics.Color.parseColor("#FF4B4B")).setTextColor(android.graphics.Color.WHITE).show();
+						.setBackgroundTint(android.graphics.Color.parseColor("#EF4444")).setTextColor(android.graphics.Color.WHITE).show(); // New UI Red
 					}
 					return;
 				}
@@ -137,7 +137,7 @@ public class GenerateFragmentActivity extends Fragment {
 				if (currentOnnxModel.isEmpty() || currentTokens.isEmpty()) {
 					if (getView() != null) {
 						com.google.android.material.snackbar.Snackbar.make(getView(), "Please select a Voice Model from Models tab.", com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
-						.setBackgroundTint(android.graphics.Color.parseColor("#FF4B4B")).setTextColor(android.graphics.Color.WHITE).show();
+						.setBackgroundTint(android.graphics.Color.parseColor("#EF4444")).setTextColor(android.graphics.Color.WHITE).show(); // New UI Red
 					}
 					return;
 				}
@@ -196,12 +196,11 @@ public class GenerateFragmentActivity extends Fragment {
 					binding.btnGenerate.setAlpha(1.0f);
 					binding.imageview65.setVisibility(android.view.View.GONE);
 					binding.progressGenerating.setVisibility(android.view.View.VISIBLE);
-					binding.textview69.setTextColor(android.graphics.Color.parseColor("#1D61FF"));
+					binding.textview69.setTextColor(android.graphics.Color.parseColor("#4A9EFF")); // New UI Blue
 					binding.textview92.setText("Cancel");
 					binding.imageview52.setImageResource(R.drawable.ic_close);
 					
 					final boolean isKokoro = params.modelType.equals("kokoro");
-					// NEW: Extract explicit MMS flag for loading the model safely
 					final boolean isMmsModel = params.modelType.equals("mms");
 					
 					java.util.List<String> sentences = new java.util.ArrayList<>();
@@ -245,7 +244,6 @@ public class GenerateFragmentActivity extends Fragment {
 							com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().setNoiseScaleW(noiseW);
 							
 							String activeLanguage = sp1.getString("active_language", "");
-							// FIX: Use the overloaded loadModel that accepts explicitly Boolean explicitIsMms
 							loadResult = com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().loadModel(getContext(), params.onnxModel, params.tokens, activeLanguage, isMmsModel);
 							if ("Success".equals(loadResult)) generatedSampleRate = com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().getSampleRate();
 						}
@@ -549,7 +547,7 @@ public class GenerateFragmentActivity extends Fragment {
 									binding.progressGenerating.setVisibility(android.view.View.GONE);
 									binding.imageview65.setVisibility(android.view.View.VISIBLE);
 									binding.textview69.setText("SYNTHESIS FAILED");
-									binding.textview69.setTextColor(android.graphics.Color.parseColor("#FF4B4B"));
+									binding.textview69.setTextColor(android.graphics.Color.parseColor("#EF4444")); // New UI Red
 									binding.textview92.setText("Generate");
 									binding.imageview52.setImageResource(R.drawable.icon_play_circle);
 									
@@ -561,7 +559,7 @@ public class GenerateFragmentActivity extends Fragment {
 										: "Unable to generate voice at the moment. Please try again.";
 										
 										com.google.android.material.snackbar.Snackbar.make(getView(), userFriendlyMessage, com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
-										.setBackgroundTint(android.graphics.Color.parseColor("#FF4B4B")).setTextColor(android.graphics.Color.WHITE).show();
+										.setBackgroundTint(android.graphics.Color.parseColor("#EF4444")).setTextColor(android.graphics.Color.WHITE).show();
 									}
 								}
 							});
@@ -586,19 +584,16 @@ public class GenerateFragmentActivity extends Fragment {
 				
 				int length = _charSeq.length();
 				
-				// NAYA: Hidden 25000 character limit
 				if (length > 25000) {
 					binding.etInput.setText(_charSeq.substring(0, 25000));
 					binding.etInput.setSelection(25000);
 				}
 				
-				// Reset state on text change
 				String currentText = binding.etInput.getText().toString().trim();
 				
 				if (!currentText.equals(lastGeneratedText) && !isGenerating) {
 					isAudioGeneratedForCurrentText = false;
 					
-					// UI STATE RESET
 					binding.layoutIdleState.setVisibility(android.view.View.VISIBLE);
 					binding.layoutGeneratedState.setVisibility(android.view.View.GONE);
 					binding.progressGenerating.setVisibility(android.view.View.GONE);
@@ -608,7 +603,7 @@ public class GenerateFragmentActivity extends Fragment {
 					binding.imageview52.setImageResource(R.drawable.icon_play_circle); 
 					
 					binding.textview69.setText("READY TO SYNTHESIZE");
-					binding.textview69.setTextColor(android.graphics.Color.parseColor("#3F4B61"));
+					binding.textview69.setTextColor(android.graphics.Color.parseColor("#94A3B8")); // New UI Grey
 					
 					if (audioTrack != null && audioTrack.getState() != android.media.AudioTrack.STATE_UNINITIALIZED) {
 						try { audioTrack.stop(); } catch (Exception e) {}
@@ -632,25 +627,22 @@ public class GenerateFragmentActivity extends Fragment {
 		binding.opneDropdown.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View _view) {
-				// Use the exact model type instead of guessing from the model name
 				String currentModelType = sp1.getString("active_model_type", "vits");
 				boolean kokoroActive = currentModelType.equalsIgnoreCase("kokoro");
 				
 				String activePath = sp1.getString("active_model", "");
 				int activeSpeakerCount = sp1.getInt("active_speaker_count", 1);
 				
-				// Return silently if no model is selected
 				if (activePath.isEmpty()) {
 					return;
 				}
 				
-				// Show snackbar only if it is explicitly a Piper model and has 1 or fewer speakers
 				if (!kokoroActive && activeSpeakerCount <= 1) {
 					if (_view != null) {
 						com.google.android.material.snackbar.Snackbar
 						.make(_view, "This Voice model has only one voice.",
 						com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
-						.setBackgroundTint(android.graphics.Color.parseColor("#3F4B61"))
+						.setBackgroundTint(android.graphics.Color.parseColor("#1A1D2E")) // New UI Surface color
 						.setTextColor(android.graphics.Color.WHITE)
 						.show();
 					}
@@ -673,7 +665,6 @@ public class GenerateFragmentActivity extends Fragment {
 								}
 							}
 						} else {
-							// Piper multi-speaker selection logic
 							int savedPiperSpeakerId = sp1.getInt("active_piper_speaker", 0);
 							listPopupWindow.setSelection(savedPiperSpeakerId);
 						}
@@ -719,7 +710,6 @@ public class GenerateFragmentActivity extends Fragment {
 			public void onPrevious() {} 
 		});
 		
-		// AUDIO FOCUS LOGIC
 		audioManager = (android.media.AudioManager) getContext().getSystemService(android.content.Context.AUDIO_SERVICE);
 		
 		focusListener = focusChange -> {
@@ -759,7 +749,7 @@ public class GenerateFragmentActivity extends Fragment {
 		boolean isKokoro = activeModelType.equalsIgnoreCase("kokoro");
 		if (activeModel.isEmpty()) {
 			binding.voiceNameTv.setText("No Model Selected");
-			binding.voiceNameTv.setTextColor(android.graphics.Color.parseColor("#FF4B4B"));
+			binding.voiceNameTv.setTextColor(android.graphics.Color.parseColor("#EF4444")); // New UI Red
 			binding.opneDropdown.setVisibility(android.view.View.GONE);
 		} else {
 			if (isKokoro || activeSpeakerCount > 1) {
@@ -822,7 +812,7 @@ public class GenerateFragmentActivity extends Fragment {
 		}
 		listPopupWindow = new androidx.appcompat.widget.ListPopupWindow(getContext());
 		listPopupWindow.setAnchorView(binding.voiceNameTv);
-		listPopupWindow.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.parseColor("#131B2D")));
+		listPopupWindow.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.parseColor("#1A1D2E"))); // New UI Surface
 		java.util.List<String> voiceNames = new java.util.ArrayList<>();
 		if (isKokoro) {
 			java.util.List<com.CodeBySonu.VoxSherpa.KokoroVoiceHelper.VoiceItem> allVoices = com.CodeBySonu.VoxSherpa.KokoroVoiceHelper.getAllVoices();
@@ -901,7 +891,7 @@ public class GenerateFragmentActivity extends Fragment {
 				binding.progressGenerating.setVisibility(android.view.View.GONE);
 				binding.imageview65.setVisibility(android.view.View.VISIBLE);
 				binding.textview69.setText("READY TO GENERATE");
-				binding.textview69.setTextColor(android.graphics.Color.parseColor("#718096"));
+				binding.textview69.setTextColor(android.graphics.Color.parseColor("#94A3B8")); // New UI Grey
 				binding.textview92.setText("Generate");
 				binding.imageview52.setImageResource(R.drawable.icon_play_circle);
 			} catch (Throwable t) {}
@@ -943,7 +933,6 @@ public class GenerateFragmentActivity extends Fragment {
 					audioTrack.reloadStaticData();
 					audioTrack.setPlaybackHeadPosition(targetFrame);
 					
-					// 🚀 FIX: Naya object nahi banega — fragment-level same object reuse hoga
 					_requestAudioFocus();
 					
 					audioTrack.play();
@@ -959,7 +948,6 @@ public class GenerateFragmentActivity extends Fragment {
 				playheadAnimator.addUpdateListener(anim -> {
 					float tx = (float) anim.getAnimatedValue();
 					binding.playheadLine.setTranslationX(tx);
-					// tvDuration live update during playback after seek
 					double elapsed = (tx / w) * totalSeconds;
 					binding.tvDuration.setText(String.format(java.util.Locale.US, "%d:%02d / %d:%02d",
 					(int)(elapsed / 60), (int)(elapsed % 60), totalMin, totalSec));
@@ -1045,7 +1033,7 @@ public class GenerateFragmentActivity extends Fragment {
 					public void onError(String errorMessage) {
 						if (getView() != null) {
 							com.google.android.material.snackbar.Snackbar.make(getView(), errorMessage, com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
-							.setBackgroundTint(android.graphics.Color.parseColor("#FF4B4B"))
+							.setBackgroundTint(android.graphics.Color.parseColor("#EF4444")) // New UI Red
 							.setTextColor(android.graphics.Color.WHITE)
 							.show();
 						}
@@ -1064,7 +1052,6 @@ public class GenerateFragmentActivity extends Fragment {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		// Fragment me sirf AudioTrack aur UI Animator ko release karna hai
 		if (audioTrack != null) {
 			try {
 				if (audioTrack.getState() != android.media.AudioTrack.STATE_UNINITIALIZED) {
@@ -1092,7 +1079,7 @@ public class GenerateFragmentActivity extends Fragment {
 		boolean isKokoro = activeModelType.equalsIgnoreCase("kokoro") || activeModelName.toLowerCase().contains("kokoro");
 		if (activeModel.isEmpty()) {
 			binding.voiceNameTv.setText("No Model Selected");
-			binding.voiceNameTv.setTextColor(android.graphics.Color.parseColor("#FF4B4B"));
+			binding.voiceNameTv.setTextColor(android.graphics.Color.parseColor("#EF4444")); // New UI Red
 			binding.opneDropdown.setVisibility(android.view.View.GONE);
 		} else {
 			if (isKokoro || activeSpeakerCount > 1) {
@@ -1198,7 +1185,6 @@ public class GenerateFragmentActivity extends Fragment {
 	public void onStart() {
 		super.onStart();
 		try {
-			// Check if Activity is not null and is an instance of MainActivity
 			if (getActivity() != null && getActivity() instanceof MainActivity) {
 				MainActivity mainActivity = (MainActivity) getActivity();
 				if (mainActivity.sharedProcessText != null && !mainActivity.sharedProcessText.isEmpty()) {
@@ -1213,20 +1199,16 @@ public class GenerateFragmentActivity extends Fragment {
 		
 	}
 	public void _saveAudioAction() {
-		// ─── SAVE BUTTON LOGIC ──────────────────────────────────────────────────────
-		
-		// Pehle check karenge ki audio generate hui hai ya nahi.
 		if (!isAudioGeneratedForCurrentText || lastGeneratedPcmData == null) {
 			if (getView() != null) {
 				com.google.android.material.snackbar.Snackbar.make(getView(), "Please generate audio first!", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
-				.setBackgroundTint(android.graphics.Color.parseColor("#FF4B4B"))
+				.setBackgroundTint(android.graphics.Color.parseColor("#EF4444")) // New UI Red
 				.setTextColor(android.graphics.Color.WHITE)
 				.show();
 			}
 			return;
 		}
 		
-		// Yahan se aapka original save logic shuru hota hai (Bina kisi ads ke)
 		int sampleRateToSave = lastGeneratedSampleRate > 0 ? lastGeneratedSampleRate : 22050;
 		
 		String cleanFileName = "Vox_" + System.currentTimeMillis() + ".wav";
@@ -1246,7 +1228,6 @@ public class GenerateFragmentActivity extends Fragment {
 				java.util.HashMap<String, Object> newItem = new java.util.HashMap<>();
 				newItem.put("title", cleanFileName);
 				
-				// Extract the first sentence from the generated text for a clean title
 				String rawText = (lastParams != null && lastParams.text != null) ? lastParams.text : lastGeneratedText;
 				if (rawText == null || rawText.trim().isEmpty()) {
 					rawText = binding.etInput.getText().toString().trim();
@@ -1279,7 +1260,6 @@ public class GenerateFragmentActivity extends Fragment {
 				newItem.put("full_text", rawText); 
 				newItem.put("path", savedPath);
 				
-				// Exact duration calculation to prevent UI formatting bugs
 				double totalSeconds = (lastGeneratedPcmData.length / 2.0) / sampleRateToSave;
 				int min = (int) (totalSeconds / 60);
 				int sec = (int) (totalSeconds % 60);
@@ -1295,14 +1275,14 @@ public class GenerateFragmentActivity extends Fragment {
 				
 				if (getView() != null) {
 					com.google.android.material.snackbar.Snackbar.make(getView(), "Audio saved to Library!", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
-					.setBackgroundTint(android.graphics.Color.parseColor("#1D61FF"))
+					.setBackgroundTint(android.graphics.Color.parseColor("#4A9EFF")) // New UI Blue
 					.setTextColor(android.graphics.Color.WHITE)
 					.show();
 				}
 			} catch (Exception e) {
 				if (getView() != null) {
 					com.google.android.material.snackbar.Snackbar.make(getView(), "Failed to update library data.", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
-					.setBackgroundTint(android.graphics.Color.parseColor("#FF4B4B"))
+					.setBackgroundTint(android.graphics.Color.parseColor("#EF4444")) // New UI Red
 					.setTextColor(android.graphics.Color.WHITE)
 					.show();
 				}
@@ -1310,18 +1290,15 @@ public class GenerateFragmentActivity extends Fragment {
 		} else {
 			if (getView() != null) {
 				com.google.android.material.snackbar.Snackbar.make(getView(), "Failed to save audio file.", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
-				.setBackgroundTint(android.graphics.Color.parseColor("#FF4B4B"))
+				.setBackgroundTint(android.graphics.Color.parseColor("#EF4444")) // New UI Red
 				.setTextColor(android.graphics.Color.WHITE)
 				.show();
 			}
 		}
-		// ─── SAVE BUTTON LOGIC END ──────────────────────────────────────────────────
-		
 	}
 	
 	
 	public void _forceResetToIdle() {
-		// CRITICAL SIGSEGV FIX: Cancel native engines to stop C++ background generation immediately
 		try {
 			com.CodeBySonu.VoxSherpa.VoiceEngine.getInstance().cancel();
 			com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().cancel();
@@ -1358,10 +1335,10 @@ public class GenerateFragmentActivity extends Fragment {
 		binding.progressGenerating.setVisibility(android.view.View.GONE);
 		binding.imageview65.setVisibility(android.view.View.VISIBLE);
 		
-		binding.textview92.setText("Generate"); // No confusion
+		binding.textview92.setText("Generate"); 
 		binding.imageview52.setImageResource(R.drawable.icon_play_circle);
 		binding.textview69.setText("READY TO SYNTHESIZE");
-		binding.textview69.setTextColor(android.graphics.Color.parseColor("#718096"));
+		binding.textview69.setTextColor(android.graphics.Color.parseColor("#94A3B8")); // New UI Grey
 		
 	}
 	
@@ -1398,7 +1375,6 @@ public class GenerateFragmentActivity extends Fragment {
 			final int _totalSec = (int)(totalSeconds % 60);
 			final int w = binding.imgWaveform.getWidth() > 0 ? binding.imgWaveform.getWidth() : 800;
 			
-			// 🚀 FIX: Removed 'flush()' which was causing Silent Play. Added proper reset loop.
 			if (currentHead >= totalFrames - 4000 || playState == android.media.AudioTrack.PLAYSTATE_STOPPED) {
 				try {
 					audioTrack.stop();
@@ -1470,7 +1446,6 @@ public class GenerateFragmentActivity extends Fragment {
 				try { com.CodeBySonu.VoxSherpa.KokoroEngine.getInstance().cancel(); } catch (Exception ignored) {}
 			}).start();
 			
-			// LiveStream track (Instant Silence)
 			try {
 				if (liveStreamTrack != null) {
 					liveStreamTrack.pause();
@@ -1491,7 +1466,5 @@ public class GenerateFragmentActivity extends Fragment {
 				com.CodeBySonu.VoxSherpa.system.VoxMediaController.getInstance(getContext()).hideNotification();
 			} catch (Exception ignored) {}
 		}
-		
 	}
-	
 }
