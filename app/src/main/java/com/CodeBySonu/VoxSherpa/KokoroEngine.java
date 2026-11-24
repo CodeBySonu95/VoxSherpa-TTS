@@ -403,22 +403,19 @@ public class KokoroEngine {
 
     public void destroy() {
         cancelRequested = false;
-        final OfflineTts oldTts = tts;
-        tts = null;
-        activeModelUri = "";
-        activeTokensUri = "";
-        activeVoicesBinUri = "";
-        activeContext = null;
-        activeLangCode = "";
-        isGenerating = false;
-        if (oldTts != null) {
-            new Thread(() -> {
-                synchronized (nativeLock) {
-                    try { 
-                        oldTts.release(); 
-                    } catch (Throwable ignored) {}
-                }
-            }).start();
+        synchronized (nativeLock) {
+            if (tts != null) {
+                try {
+                    tts.release();
+                } catch (Throwable ignored) {}
+                tts = null;
+            }
+            activeModelUri = "";
+            activeTokensUri = "";
+            activeVoicesBinUri = "";
+            activeContext = null;
+            activeLangCode = "";
+            isGenerating = false;
         }
     }
 }

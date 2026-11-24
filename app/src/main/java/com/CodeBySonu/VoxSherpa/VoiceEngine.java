@@ -429,11 +429,12 @@ public class VoiceEngine {
             if (tts != null) {
                 try { tts.release(); } catch (Throwable ignored) {}
                 tts = null;
-                activeModelUri = "";
-                activeTokensUri = "";
-                activeLanguage = "";
-                activeModelIsMms = false;
             }
+            activeModelUri = "";
+            activeTokensUri = "";
+            activeLanguage = "";
+            activeModelIsMms = false;
+            activeSpeakerId = 0;
         }
     }
 
